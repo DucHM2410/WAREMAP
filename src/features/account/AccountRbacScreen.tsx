@@ -17,8 +17,8 @@ import {
   Users,
   X,
 } from 'lucide-react'
-import { Btn, MonoLabel } from './shared'
-import { WareMapHeader } from './WareMapHeader'
+import { Btn, MonoLabel } from '../../shared'
+import { WareMapHeader } from '../../shared/layout/WareMapHeader'
 
 type Role = 'ADMIN_VIP' | 'MANAGER' | 'STAFF_WAREHOUSE' | 'STAFF_SALES'
 type Permission = 'yes' | 'no' | 'locked'

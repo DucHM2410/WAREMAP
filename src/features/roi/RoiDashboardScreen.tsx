@@ -24,8 +24,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { Btn, MonoLabel } from './shared'
-import { WareMapHeader } from './WareMapHeader'
+import { Btn, MonoLabel } from '../../shared'
+import { WareMapHeader } from '../../shared/layout/WareMapHeader'
 
 const pickingData = [
   { label: 'T1', before: 5.4, after: 1.4 },

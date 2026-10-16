@@ -28,8 +28,8 @@ import {
   FileDown,
   Eye,
 } from 'lucide-react'
-import { Btn, MonoLabel, Tag, WebGLFallback } from './shared'
-import { WareMapHeader } from './WareMapHeader'
+import { Btn, MonoLabel, Tag, WebGLFallback } from '../../shared'
+import { WareMapHeader } from '../../shared/layout/WareMapHeader'
 
 const C = {
   navy: '#E2E8F0',

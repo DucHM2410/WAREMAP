@@ -12,8 +12,8 @@ import {
   MapPin,
   Search,
 } from 'lucide-react'
-import { Btn, MonoLabel } from './shared'
-import { WareMapHeader } from './WareMapHeader'
+import { Btn, MonoLabel } from '../../shared'
+import { WareMapHeader } from '../../shared/layout/WareMapHeader'
 
 type BatchStatus = 'expired' | 'critical' | 'warning' | 'ok'
 type FilterId = 'all' | 'under30' | '30to90' | 'over90' | 'expired'

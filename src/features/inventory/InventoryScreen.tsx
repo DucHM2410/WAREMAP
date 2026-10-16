@@ -21,8 +21,8 @@ import {
   Trash2,
   Truck,
 } from 'lucide-react'
-import { Btn, MonoLabel } from './shared'
-import { WareMapHeader } from './WareMapHeader'
+import { Btn, MonoLabel } from '../../shared'
+import { WareMapHeader } from '../../shared/layout/WareMapHeader'
 
 type OperationId = 'import' | 'export' | 'stocktake' | 'transfer' | 'damaged'
 

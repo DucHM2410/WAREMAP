@@ -21,7 +21,7 @@ import {
   Sparkles,
   Store,
 } from 'lucide-react'
-import { Btn, MonoLabel } from './shared'
+import { Btn, MonoLabel } from '../../shared'
 
 type BusinessType = 'mother-baby' | 'cosmetics' | 'other'
 type Plan = 'free' | 'pro' | 'chain'

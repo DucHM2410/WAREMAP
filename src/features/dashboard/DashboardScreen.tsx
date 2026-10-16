@@ -2,8 +2,8 @@ import { useRef, useState } from 'react'
 import {
   AlertTriangle, Box, Check, Clock3, Map, Package, Truck,
 } from 'lucide-react'
-import { Btn, MonoLabel } from './shared'
-import { WareMapHeader } from './WareMapHeader'
+import { Btn, MonoLabel } from '../../shared'
+import { WareMapHeader } from '../../shared/layout/WareMapHeader'
 
 const lanes = [
   {

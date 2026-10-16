@@ -4,8 +4,8 @@ import {
   Lock, MoreHorizontal, PackageCheck, PackageSearch, Printer, ScanLine, Search,
   ShieldCheck, Trash2, Truck, Warehouse,
 } from 'lucide-react'
-import { Btn, MonoLabel } from './shared'
-import { WareMapHeader } from './WareMapHeader'
+import { Btn, MonoLabel } from '../../shared'
+import { WareMapHeader } from '../../shared/layout/WareMapHeader'
 
 type FilterId = 'all' | 'created' | 'picking' | 'transit' | 'receiving' | 'issue'
 type TransferStatus = 'transit' | 'done' | 'issue'

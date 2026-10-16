@@ -1,0 +1,10 @@
+{
+  "description": "Optimize inventory management and ensure compliance for Vietnamese pharmacies with actionable insights and alerts to maximize savings and minimize losses.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

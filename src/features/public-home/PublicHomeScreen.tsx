@@ -18,7 +18,7 @@ import {
   Users,
 } from 'lucide-react'
 import type { CSSProperties } from 'react'
-import { Btn, MonoLabel } from './shared'
+import { Btn, MonoLabel } from '../../shared'
 
 function navigateTo(screen: string) {
   window.dispatchEvent(new CustomEvent('waremap:navigate', { detail: screen }))

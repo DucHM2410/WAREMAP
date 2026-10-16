@@ -18,8 +18,8 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react'
-import { Btn, MonoLabel, WebGLFallback } from './shared'
-import { WareMapHeader } from './WareMapHeader'
+import { Btn, MonoLabel, WebGLFallback } from '../../shared'
+import { WareMapHeader } from '../../shared/layout/WareMapHeader'
 
 type AlertLevel = 'critical' | 'warning'
 

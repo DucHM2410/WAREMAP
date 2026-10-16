@@ -1,19 +1,19 @@
 import { useState, Suspense, useEffect, useRef } from 'react'
 import { lazy } from 'react'
-import type { AppScreen } from './shared'
+import type { AppScreen } from '../shared'
 
-const S1 = lazy(() => import('./Screen1Dashboard'))
-const S2 = lazy(() => import('./Screen2Builder'))
-const S3 = lazy(() => import('./Screen3Mobile'))
-const S4 = lazy(() => import('./Screen4Onboarding'))
-const S5 = lazy(() => import('./Screen5Batches'))
-const Scanner = lazy(() => import('./Screen6MobileScanner'))
-const Account = lazy(() => import('./Screen7AccountRbac'))
-const Settings = lazy(() => import('./Screen8Settings'))
-const Inventory = lazy(() => import('./Screen9Inventory'))
-const Login = lazy(() => import('./Screen0Login'))
-const PublicHome = lazy(() => import('./ScreenPublicHome'))
-const RoiDashboard = lazy(() => import('./Screen10RoiDashboard'))
+const S1 = lazy(() => import('../features/dashboard/DashboardScreen'))
+const S2 = lazy(() => import('../features/builder/BuilderScreen'))
+const S3 = lazy(() => import('../features/in-transit/InTransitScreen'))
+const S4 = lazy(() => import('../features/fefo-alerts/FefoAlertsScreen'))
+const S5 = lazy(() => import('../features/batches/BatchesScreen'))
+const Scanner = lazy(() => import('../features/scanner/MobileScannerScreen'))
+const Account = lazy(() => import('../features/account/AccountRbacScreen'))
+const Settings = lazy(() => import('../features/settings/SettingsScreen'))
+const Inventory = lazy(() => import('../features/inventory/InventoryScreen'))
+const Login = lazy(() => import('../features/auth/LoginScreen'))
+const PublicHome = lazy(() => import('../features/public-home/PublicHomeScreen'))
+const RoiDashboard = lazy(() => import('../features/roi/RoiDashboardScreen'))
 
 function LoadingScreen() {
   return (

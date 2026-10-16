@@ -23,8 +23,8 @@ import {
   TestTube2,
   UserCog,
 } from 'lucide-react'
-import { Btn, MonoLabel } from './shared'
-import { WareMapHeader } from './WareMapHeader'
+import { Btn, MonoLabel } from '../../shared'
+import { WareMapHeader } from '../../shared/layout/WareMapHeader'
 
 type MenuId = 'store' | 'pos' | 'zalo' | 'notifications' | 'rbac' | 'security'
 

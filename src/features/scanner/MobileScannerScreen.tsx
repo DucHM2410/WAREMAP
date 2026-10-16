@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { ArrowLeft, Check, Flashlight, FlashlightOff, Keyboard, ScanLine, ShieldCheck } from 'lucide-react'
-import { Btn } from './shared'
+import { Btn } from '../../shared'
 
 export default function Screen6MobileScanner() {
   const [flash, setFlash] = useState(false)
