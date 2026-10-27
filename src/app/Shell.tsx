@@ -6,7 +6,6 @@ import {
   Bell,
   Building2,
   ChevronDown,
-  ChevronRight,
   ClipboardList,
   LayoutDashboard,
   Map,
@@ -24,6 +23,8 @@ import { branches, roleNames, type Screen } from "./model"
 import { useApp } from "./store"
 import { useIndustry } from "../shared/context/IndustryContext"
 import { Badge, Brand, Button, SearchInput } from "./ui"
+
+import { roleDescription } from "../shared/config/demoRoles"
 
 interface NavItem {
   screen: Screen
@@ -47,9 +48,9 @@ const primaryNavigation: NavItem[] = [
     group: "Công việc chính",
   },
   {
-    screen: "onboarding",
-    label: "Cảnh báo FEFO",
-    icon: AlertCircle,
+    screen: "warehouse",
+    label: "Kho 3D",
+    icon: Map,
     group: "Công việc chính",
   },
 ]
@@ -76,9 +77,9 @@ const moreNavigation: NavItem[] = [
     roles: ["owner", "manager", "warehouse"],
   },
   {
-    screen: "warehouse",
-    label: "Bản đồ & Builder",
-    icon: Map,
+    screen: "onboarding",
+    label: "Cảnh báo FEFO",
+    icon: AlertCircle,
     group: "Xem thêm",
   },
   {
@@ -131,7 +132,7 @@ export function Shell({ children }: { children: ReactNode }) {
     group: screen === "admin" ? "Nội bộ" : "Xem thêm",
   }
   const isActive = (target: Screen) =>
-    screen === target || (screen === "builder" && target === "warehouse")
+    screen === target
   useEffect(() => {
     setMoreOpen(moreNavigation.some((n) => isActive(n.screen)))
     // Only react to screen changes; the menu stays toggleable afterwards.
@@ -151,7 +152,7 @@ export function Shell({ children }: { children: ReactNode }) {
         aria-current={screen === n.screen ? "page" : undefined}
       >
         <Icon size={18} />
-        {n.label}
+        <span>{n.label}<small>{n.screen === "warehouse" ? "Kệ · sản phẩm · vị trí" : n.screen === "inventory" ? "Tra cứu và vận hành tồn kho" : n.screen === "dashboard" ? "Việc cần làm hôm nay" : ""}</small></span>
       </button>
     )
   }
@@ -210,6 +211,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 {primaryNavigation
                   .filter((n) => !n.roles || n.roles.includes(role))
                   .map(navButton)}
+                {["owner", "manager"].includes(role) && <button className={`builder-shortcut ${screen === "builder" ? "active" : ""}`} aria-current={screen === "builder" ? "page" : undefined} onClick={() => { go("builder"); setOpen(false) }}>↳ Thiết kế kho 3D</button>}
                 <button
                   type="button"
                   className={`nav-item nav-cta ${isActive("scanner") ? "active" : ""}`}
@@ -250,7 +252,7 @@ export function Shell({ children }: { children: ReactNode }) {
             Bản dùng thử
           </div>
           <label className="role-picker">
-            Trải nghiệm vai trò
+            Đổi vai trò demo
             <select
               aria-label="Trải nghiệm vai trò"
               value={role}
@@ -263,6 +265,7 @@ export function Shell({ children }: { children: ReactNode }) {
               ))}
             </select>
           </label>
+          <details className="role-permissions"><summary>Quyền của {roleNames[role]}</summary><p>{roleDescription(role)}</p><small>Phạm vi: {role === "owner" || role === "platform" ? "Tất cả cơ sở" : branches[0]}</small></details>
           <button className="back-home" onClick={() => go("home")}>
             <ArrowLeft size={15} />
             Về trang chủ
@@ -285,13 +288,8 @@ export function Shell({ children }: { children: ReactNode }) {
           >
             <Menu />
           </button>
-          <div className="breadcrumb">
-            <span>
-              WareMap System <ChevronRight size={12} />
-              {current.group}
-            </span>
-            <strong>{current.label}</strong>
-          </div>
+          <div className="breadcrumb"><strong>{current.label}</strong></div>
+          {role !== "platform" && <button className="header-industry-pill" onClick={() => go("industry-picker")} aria-label="Đổi ngành hàng"><IndustryIcon size={17} />{config.shortLabel}<ChevronDown size={14} /></button>}
           {role !== "platform" && (
             <>
               <div className="global-search">

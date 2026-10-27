@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Truck,
 } from "lucide-react"
+import { Bell, Users, Plus } from "lucide-react"
 import { useApp } from "../../app/store"
 import { Badge, Brand, Button } from "../../app/ui"
 import { branches, money, policy } from "../../app/model"
@@ -39,7 +40,7 @@ export default function PublicHome() {
   const { hasSavedIndustry } = useIndustry()
   const startDemo = () => {
     setRole("owner")
-    if (!hasSavedIndustry) go("industry-picker")
+    go(hasSavedIndustry ? "warehouse" : "industry-picker")
   }
   return (
     <div className="landing">
@@ -68,21 +69,18 @@ export default function PublicHome() {
               Mỗi mặt hàng, một vị trí rõ ràng
             </Badge>
             <h1>
-              Biết hàng ở đâu.
-              <br />
-              <em>Quản lý kho từ xa.</em>
+              Quản lý Kho 3D Thông minh cho <em>Mẹ &amp; Bé / Mỹ phẩm</em>
             </h1>
             <p>
-              Sắp xếp vị trí hàng hóa trên bản đồ kho, tìm đúng sản phẩm và nắm
-              tình hình các cơ sở trên cùng một hệ thống.
+              Tự vẽ sơ đồ kho, quét QR đối soát, và theo dõi hàng đi đường trên một nền tảng.
             </p>
             <div className="row">
               <Button onClick={startDemo}>
-                Khám phá kho mẫu
+                Dùng thử miễn phí
                 <ArrowRight size={17} />
               </Button>
-              <Button variant="secondary" onClick={() => go("request")}>
-                Yêu cầu dùng thử
+              <Button variant="secondary" onClick={startDemo}>
+                Xem Demo Kho 3D
               </Button>
             </div>
             <p className="hero-foot">
@@ -94,59 +92,24 @@ export default function PublicHome() {
               <span>WAREMAP SYSTEM / KHO TRUNG TÂM</span>
               <span>Minh họa</span>
             </div>
-            <div className="hero-search">
-              <Search size={16} />
-              <span>Son dưỡng Daily Care · Hồng nhạt</span>
-              <CheckCircle2
-                size={16}
-                style={{ marginLeft: "auto", color: "#087e8b" }}
-              />
+            <div className="product-preview">
+              <div className="preview-library"><Box size={20} /><span>Thư viện</span><div>＋ Kệ hàng</div><div>＋ Tủ bảo quản</div></div>
+              <div className="preview-map"><MiniMap /><span className="preview-caption">KHO 3D · Chọn kệ để tùy chỉnh</span></div>
+              <div className="preview-inspector"><span>KỆ A2</span><strong>Kích thước</strong><div>2 × 1 × 2.4 m</div><strong>Số tầng</strong><div>3 tầng</div></div>
             </div>
-            <MiniMap />
-            <div className="hero-result">
-              <MapPin size={25} />
-              <div>
-                <strong>Kệ A2 · Tầng 2 · Ô 03</strong>
-                <p>Đúng vị trí. Đúng sản phẩm. Cả đội cùng tìm được.</p>
-              </div>
-            </div>
+            <div className="preview-alert"><span className="preview-alert-icon"><Bell size={18} /></span><div><strong>FEFO Alert</strong><p>Lô tại kệ A2 cần được ưu tiên xuất.</p></div></div>
+            <div className="preview-notification"><span>Z</span><div><strong>Zalo OA Notification</strong><p>Kho của bạn vừa có một cảnh báo mới.</p></div><CheckCircle2 size={17} /></div>
           </div>
         </section>
         <section id="benefits" className="public-section">
-          <span className="eyebrow">Từ việc nhỏ, đến kho ngăn nắp hơn</span>
-          <h2>Một cách quản lý dễ hình dung.</h2>
-          <p>
-            Biến những vị trí chỉ người quen kho mới nhớ thành thông tin rõ ràng
-            cho cả đội.
-          </p>
-          <div className="benefits">
-            {[
-              {
-                icon: MapPin,
-                title: "Tìm đúng chỗ, lấy đúng hàng",
-                text: "Tìm tên sản phẩm để thấy ngay kệ, tầng và ô. Nhân viên mới có điểm bắt đầu rõ ràng.",
-                foot: "Tìm hàng → Xem vị trí",
-              },
-              {
-                icon: ScanLine,
-                title: "Mỗi vị trí có một tên gọi",
-                text: "Bố trí sơ đồ theo kho thực tế, đặt mã vị trí và quét xác minh trước khi cất hoặc lấy hàng.",
-                foot: "Sắp xếp → Gán vị trí → Xác minh",
-              },
-              {
-                icon: ShieldCheck,
-                title: "Chủ động trước khi có vấn đề",
-                text: "Nhìn thấy lô cận hạn và chênh lệch chuyển kho, biết việc nào cần kiểm tra tiếp theo.",
-                foot: "Nhận biết → Kiểm tra → Xử lý",
-              },
-            ].map(({ icon: Icon, title, text, foot }) => (
-              <article className="benefit" key={title}>
-                <Icon size={27} />
-                <h3>{title}</h3>
-                <p>{text}</p>
-                <small>{foot}</small>
-              </article>
-            ))}
+          <span className="eyebrow">ÍT THAO TÁC HƠN. NẮM RÕ HƠN.</span>
+          <h2>Một nền tảng. Bốn cách làm kho nhẹ nhàng hơn.</h2>
+          <p>Từ thiết kế không gian đến phối hợp cả đội, mọi thứ ở đúng chỗ.</p>
+          <div className="usp-grid">
+            <article className="usp-card"><span className="usp-number">01 / THIẾT KẾ KHÔNG GIAN</span><div className="usp-art usp-racks"><MiniMap /></div><h3>Tự Vẽ Kho 3D Trong 5 Phút</h3><p>Thêm kệ bằng một chạm, kéo vào lưới và chỉnh kích thước theo kho thực tế.</p><Button variant="ghost" onClick={startDemo}>Khám phá Builder <ArrowRight size={16} /></Button></article>
+            <article className="usp-card"><span className="usp-number">02 / KẾT NỐI CHI NHÁNH</span><div className="usp-art transit-art">{["Xuất kho", "Đang đi", "Đã nhận"].map((step,i) => <div key={step}><span className={i < 2 ? "done" : ""}>{i === 1 ? <Truck size={22} /> : <Check size={22} />}</span><strong>{step}</strong></div>)}</div><h3>Theo Dõi Hàng Đi Đường</h3><p>Nắm rõ từng chặng chuyển kho. Đối soát số lượng ngay khi chi nhánh nhận hàng.</p></article>
+            <article className="usp-card"><span className="usp-number">03 / CHỦ ĐỘNG MỖI NGÀY</span><div className="usp-art"><div className="zalo-phone"><div className="phone-camera"/><strong>Zalo <small>OA · Minh họa</small></strong><div className="zalo-bubble">WareMap System<br/><b>Có lô hàng sắp hết hạn</b><p>Kệ A2 · Ưu tiên kiểm tra hôm nay.</p></div></div></div><h3>Cảnh Báo Zalo OA Tự Động</h3><p>Nhận nhắc nhở về lô cận hạn và biến động kho ngay trên Zalo.</p></article>
+            <article className="usp-card"><span className="usp-number">04 / PHỐI HỢP ĐÚNG VAI TRÒ</span><div className="usp-art"><div className="staff-preview"><Users size={23}/><strong>Thêm nhân viên</strong><div>Nguyễn Minh Anh <span>Nhân viên kho</span></div><div>Quyền truy cập <b>Kho trung tâm</b></div><span className="staff-invite"><Plus size={14}/> Cấp tài khoản · Minh họa</span></div></div><h3>Tạo Tài Khoản Nhân Viên (RBAC)</h3><p>Phân quyền rõ ràng cho quản lý, nhân viên kho và bán hàng. Mỗi người thấy đúng công việc.</p></article>
           </div>
         </section>
         <div className="public-tint" id="remote">

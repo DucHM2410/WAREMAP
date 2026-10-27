@@ -19,6 +19,7 @@ import {
 import { useIndustry } from "../shared/context/IndustryContext"
 const key = "waremap-demo-v3"
 export interface ScanTask {
+  productKey?: string
   transferId?: string
   mode: "lookup" | "dispatch" | "receive"
 }

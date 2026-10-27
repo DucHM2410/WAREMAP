@@ -113,7 +113,7 @@ export default function Dashboard() {
                 <Button
                   onClick={() => showProduct(critical.id, critical.branch)}
                 >
-                  Xem vị trí
+                  {role === "sales" ? `Xem sản phẩm tại Kệ ${critical.rack}` : `Đi đến Kệ ${critical.rack} để xử lý lô hàng`}
                   <ArrowRight size={15} />
                 </Button>
                 <Button
