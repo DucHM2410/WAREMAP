@@ -3,11 +3,20 @@ import { useState } from "react"
 import { useApp } from "../../app/store"
 import { Badge, Brand, Button, Panel } from "../../app/ui"
 import { branches, money, quote, today } from "../../app/model"
+import { useIndustry } from "../../shared/context/IndustryContext"
 import { MiniMap } from "../public-home/PublicHomeScreen"
+import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "../../shared/config/demoRoles"
 export default function Login() {
   const { go, setRole } = useApp()
+  const { hasSavedIndustry } = useIndustry()
   const [visible, setVisible] = useState(false),
     [message, setMessage] = useState("")
+
+  const enterWorkspace = () => {
+    setRole("owner")
+    if (!hasSavedIndustry) go("industry-picker")
+  }
+
   return (
     <div className="auth-page">
       <section className="auth-story">
@@ -38,9 +47,13 @@ export default function Login() {
           <form
             onSubmit={(e) => {
               e.preventDefault()
-              setMessage(
-                "Bản hiện tại chưa kết nối dịch vụ đăng nhập. Bạn có thể khám phá kho mẫu bên dưới.",
-              )
+              const form = new FormData(e.currentTarget)
+              const account = DEMO_ACCOUNTS.find(a => a.email === String(form.get("email")).trim().toLowerCase())
+              if (!account || form.get("password") !== DEMO_PASSWORD) {
+                setMessage("Thông tin demo chưa đúng. Chọn một vai trò bên dưới hoặc dùng email demo với mật khẩu WareMap@123.")
+                return
+              }
+              setRole(account.role)
             }}
           >
             <label className="field">
@@ -48,6 +61,7 @@ export default function Login() {
               <input
                 required
                 type="email"
+                name="email"
                 placeholder="ban@doanhnghiep.vn"
                 autoComplete="username"
               />
@@ -57,6 +71,7 @@ export default function Login() {
               <div className="row" style={{ gap: 5 }}>
                 <input
                   required
+                  name="password"
                   type={visible ? "text" : "password"}
                   placeholder="Nhập mật khẩu"
                   autoComplete="current-password"
@@ -97,10 +112,18 @@ export default function Login() {
             )}
           </form>
           <hr />
+          <section className="demo-accounts" aria-label="Tài khoản demo theo vai trò">
+            <h2>Thử trước theo vai trò</h2>
+            <p>Dữ liệu mẫu lưu trên trình duyệt. Đây là tài khoản demo cục bộ, chưa phải tài khoản dịch vụ thực.</p>
+            <p>Mật khẩu chung: <code>{DEMO_PASSWORD}</code></p>
+            {DEMO_ACCOUNTS.map(account => <button type="button" className="demo-account" key={account.role} onClick={() => setRole(account.role)}>
+              <span><strong>{account.label}</strong><small>{account.email} · {account.scope}</small><p>{account.description}</p></span><ArrowRight size={18} />
+            </button>)}
+          </section>
           <Button
             className="full"
             variant="secondary"
-            onClick={() => setRole("owner")}
+            onClick={enterWorkspace}
           >
             Khám phá kho mẫu
           </Button>

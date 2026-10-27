@@ -29,7 +29,7 @@ export default function Scanner() {
     [result, setResult] = useState(""),
     [good, setGood] = useState(false),
     [lookupKey, setLookupKey] = useState(
-      visibleProducts[0] ? productKey(visibleProducts[0]) : "",
+      scanTask.productKey || (visibleProducts[0] ? productKey(visibleProducts[0]) : ""),
     ),
     [rackId, setRackId] = useState("A1"),
     [level, setLevel] = useState(1),
@@ -58,12 +58,12 @@ export default function Scanner() {
   const destination = { branch: targetBranch, rack: rackId, level, bin }
   useEffect(() => {
     if (scanTask.mode === "lookup") {
-      setLookupKey(visibleProducts[0] ? productKey(visibleProducts[0]) : "")
+      setLookupKey(scanTask.productKey || (visibleProducts[0] ? productKey(visibleProducts[0]) : ""))
       setStep(0)
       setDone(false)
       setResult("")
     }
-  }, [branch])
+  }, [branch, scanTask.productKey])
   const expectedLocation =
     scanTask.mode === "receive"
       ? positionCode(destination)

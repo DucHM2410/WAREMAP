@@ -1,11 +1,11 @@
 import {
   AlertCircle,
   ArrowLeft,
+  Baby,
   BarChart3,
   Bell,
-  Box,
   Building2,
-  ChevronRight,
+  ChevronDown,
   ClipboardList,
   LayoutDashboard,
   Map,
@@ -13,76 +13,99 @@ import {
   Package,
   ScanLine,
   Settings,
+  Sparkles,
   Truck,
   Users,
   X,
 } from "lucide-react"
-import { useState, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { branches, roleNames, type Screen } from "./model"
 import { useApp } from "./store"
+import { useIndustry } from "../shared/context/IndustryContext"
 import { Badge, Brand, Button, SearchInput } from "./ui"
-const navigation: {
+
+import { roleDescription } from "../shared/config/demoRoles"
+
+interface NavItem {
   screen: Screen
   label: string
-  icon: typeof Box
+  icon: typeof LayoutDashboard
   group: string
   roles?: string[]
-}[] = [
+}
+
+const primaryNavigation: NavItem[] = [
   {
     screen: "dashboard",
     label: "Tổng quan",
     icon: LayoutDashboard,
-    group: "Theo dõi",
+    group: "Công việc chính",
   },
-  { screen: "warehouse", label: "Bản đồ kho", icon: Map, group: "Theo dõi" },
   {
     screen: "inventory",
     label: "Sản phẩm & tồn kho",
     icon: Package,
-    group: "Vận hành",
+    group: "Công việc chính",
   },
   {
+    screen: "warehouse",
+    label: "Kho 3D",
+    icon: Map,
+    group: "Công việc chính",
+  },
+]
+
+const scanItem: NavItem = {
+  screen: "scanner",
+  label: "Quét QR nhanh",
+  icon: ScanLine,
+  group: "Công việc chính",
+}
+
+const moreNavigation: NavItem[] = [
+  {
     screen: "batches",
-    label: "Lô hàng & hạn dùng",
+    label: "Lô hàng",
     icon: ClipboardList,
-    group: "Vận hành",
+    group: "Xem thêm",
   },
   {
     screen: "mobile",
     label: "Chuyển kho",
     icon: Truck,
-    group: "Vận hành",
+    group: "Xem thêm",
     roles: ["owner", "manager", "warehouse"],
   },
   {
     screen: "onboarding",
-    label: "Hàng cận hạn",
+    label: "Cảnh báo FEFO",
     icon: AlertCircle,
-    group: "Vận hành",
+    group: "Xem thêm",
   },
-  { screen: "scanner", label: "Quét QR", icon: ScanLine, group: "Vận hành" },
   {
     screen: "roi",
-    label: "Báo cáo hiệu quả",
+    label: "Báo cáo ROI",
     icon: BarChart3,
-    group: "Quản lý",
+    group: "Xem thêm",
     roles: ["owner", "manager"],
   },
   {
     screen: "account",
-    label: "Nhân viên & phân quyền",
+    label: "Nhân viên & RBAC",
     icon: Users,
-    group: "Quản lý",
+    group: "Xem thêm",
     roles: ["owner"],
   },
   {
     screen: "settings",
     label: "Cài đặt",
     icon: Settings,
-    group: "Quản lý",
+    group: "Xem thêm",
     roles: ["owner", "manager"],
   },
 ]
+
+const allNavigation = [...primaryNavigation, scanItem, ...moreNavigation]
 export function Shell({ children }: { children: ReactNode }) {
   const {
     screen,
@@ -98,9 +121,40 @@ export function Shell({ children }: { children: ReactNode }) {
     setScanTask,
   } = useApp()
   const [open, setOpen] = useState(false)
-  const current = navigation.find((n) => n.screen === screen) || {
+  const [moreOpen, setMoreOpen] = useState(false)
+  const { config } = useIndustry()
+  const IndustryIcon = config.icon === "Baby" ? Baby : Sparkles
+  const visibleMore = moreNavigation.filter(
+    (n) => !n.roles || n.roles.includes(role),
+  )
+  const current = allNavigation.find((n) => n.screen === screen) || {
     label: screen === "admin" ? "Quản trị WareMap" : "Thiết lập sơ đồ kho",
-    group: screen === "admin" ? "Nội bộ" : "Theo dõi",
+    group: screen === "admin" ? "Nội bộ" : "Xem thêm",
+  }
+  const isActive = (target: Screen) =>
+    screen === target
+  useEffect(() => {
+    setMoreOpen(moreNavigation.some((n) => isActive(n.screen)))
+    // Only react to screen changes; the menu stays toggleable afterwards.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen])
+  const navButton = (n: NavItem) => {
+    const Icon = n.icon
+    return (
+      <button
+        key={n.screen}
+        className={`nav-item ${isActive(n.screen) ? "active" : ""}`}
+        onClick={() => {
+          if (n.screen === "scanner") setScanTask({ mode: "lookup" })
+          go(n.screen)
+          setOpen(false)
+        }}
+        aria-current={screen === n.screen ? "page" : undefined}
+      >
+        <Icon size={18} />
+        <span>{n.label}<small>{n.screen === "warehouse" ? "Kệ · sản phẩm · vị trí" : n.screen === "inventory" ? "Tra cứu và vận hành tồn kho" : n.screen === "dashboard" ? "Việc cần làm hôm nay" : ""}</small></span>
+      </button>
+    )
   }
   return (
     <div className="workspace">
@@ -124,6 +178,26 @@ export function Shell({ children }: { children: ReactNode }) {
             <span>Không gian doanh nghiệp mẫu</span>
           </div>
         </div>
+        {role !== "platform" && (
+          <button
+            type="button"
+            className="industry-pill"
+            onClick={() => {
+              go("industry-picker")
+              setOpen(false)
+            }}
+            aria-label={`Ngành hàng đang chọn: ${config.label}. Đổi ngành hàng`}
+          >
+            <span className="industry-pill__icon">
+              <IndustryIcon size={16} />
+            </span>
+            <span className="industry-pill__copy">
+              <small>Ngành hàng</small>
+              <strong>{config.shortLabel}</strong>
+            </span>
+            <ChevronDown size={14} />
+          </button>
+        )}
         <nav>
           {role === "platform" ? (
             <button className="nav-item active" onClick={() => go("admin")}>
@@ -131,37 +205,45 @@ export function Shell({ children }: { children: ReactNode }) {
               Quản trị khách hàng
             </button>
           ) : (
-            ["Theo dõi", "Vận hành", "Quản lý"].map((group) => (
-              <div className="nav-group" key={group}>
-                <span className="nav-caption">{group}</span>
-                {navigation
-                  .filter(
-                    (n) =>
-                      n.group === group && (!n.roles || n.roles.includes(role)),
-                  )
-                  .map((n) => (
-                    <button
-                      key={n.screen}
-                      className={`nav-item ${
-                        screen === n.screen ||
-                        (screen === "builder" && n.screen === "warehouse")
-                          ? "active"
-                          : ""
-                      }`}
-                      onClick={() => {
-                        if (n.screen === "scanner")
-                          setScanTask({ mode: "lookup" })
-                        go(n.screen)
-                        setOpen(false)
-                      }}
-                      aria-current={screen === n.screen ? "page" : undefined}
-                    >
-                      <n.icon size={18} />
-                      {n.label}
-                    </button>
-                  ))}
+            <>
+              <div className="nav-group">
+                <span className="nav-caption">Công việc chính</span>
+                {primaryNavigation
+                  .filter((n) => !n.roles || n.roles.includes(role))
+                  .map(navButton)}
+                {["owner", "manager"].includes(role) && <button className={`builder-shortcut ${screen === "builder" ? "active" : ""}`} aria-current={screen === "builder" ? "page" : undefined} onClick={() => { go("builder"); setOpen(false) }}>↳ Thiết kế kho 3D</button>}
+                <button
+                  type="button"
+                  className={`nav-item nav-cta ${isActive("scanner") ? "active" : ""}`}
+                  onClick={() => {
+                    setScanTask({ mode: "lookup" })
+                    go("scanner")
+                    setOpen(false)
+                  }}
+                  aria-current={screen === "scanner" ? "page" : undefined}
+                >
+                  <ScanLine size={18} />
+                  Quét QR nhanh
+                </button>
               </div>
-            ))
+              <button
+                type="button"
+                className={`nav-more ${moreOpen ? "is-open" : ""}`}
+                aria-expanded={moreOpen}
+                aria-controls="nav-more-items"
+                onClick={() => setMoreOpen((value) => !value)}
+              >
+                <ChevronDown size={17} />
+                Xem thêm
+                <span>{visibleMore.length}</span>
+              </button>
+              {moreOpen && (
+                <div className="nav-group nav-group--more" id="nav-more-items">
+                  <span className="nav-caption">Công cụ quản lý</span>
+                  {visibleMore.map(navButton)}
+                </div>
+              )}
+            </>
           )}
         </nav>
         <div className="sidebar-footer">
@@ -170,7 +252,7 @@ export function Shell({ children }: { children: ReactNode }) {
             Bản dùng thử
           </div>
           <label className="role-picker">
-            Trải nghiệm vai trò
+            Đổi vai trò demo
             <select
               aria-label="Trải nghiệm vai trò"
               value={role}
@@ -183,6 +265,7 @@ export function Shell({ children }: { children: ReactNode }) {
               ))}
             </select>
           </label>
+          <details className="role-permissions"><summary>Quyền của {roleNames[role]}</summary><p>{roleDescription(role)}</p><small>Phạm vi: {role === "owner" || role === "platform" ? "Tất cả cơ sở" : branches[0]}</small></details>
           <button className="back-home" onClick={() => go("home")}>
             <ArrowLeft size={15} />
             Về trang chủ
@@ -205,13 +288,8 @@ export function Shell({ children }: { children: ReactNode }) {
           >
             <Menu />
           </button>
-          <div className="breadcrumb">
-            <span>
-              WareMap System <ChevronRight size={12} />
-              {current.group}
-            </span>
-            <strong>{current.label}</strong>
-          </div>
+          <div className="breadcrumb"><strong>{current.label}</strong></div>
+          {role !== "platform" && <button className="header-industry-pill" onClick={() => go("industry-picker")} aria-label="Đổi ngành hàng"><IndustryIcon size={17} />{config.shortLabel}<ChevronDown size={14} /></button>}
           {role !== "platform" && (
             <>
               <div className="global-search">

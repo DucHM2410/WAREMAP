@@ -1,4 +1,10 @@
-export type Screen = "home" | "login" | "request" | "dashboard" | "builder" | "warehouse" | "mobile" | "onboarding" | "batches" | "inventory" | "roi" | "scanner" | "account" | "settings" | "admin"
+import {
+  INDUSTRIES,
+  type Industry,
+  type IndustryConfig,
+} from "../shared/config/industries"
+
+export type Screen = "home" | "login" | "request" | "industry-picker" | "dashboard" | "builder" | "warehouse" | "mobile" | "onboarding" | "batches" | "inventory" | "roi" | "scanner" | "account" | "settings" | "admin"
 export type Role = "owner" | "manager" | "warehouse" | "sales" | "platform"
 export const roleNames: Record<Role, string> = {
   owner: "Chủ doanh nghiệp",
@@ -62,11 +68,6 @@ export const expiryLabel = (date: string) => {
       ? "Hết hạn hôm nay"
       : `Còn ${d} ngày`
 }
-const offsetDate = (days: number) => {
-  const date = new Date()
-  date.setDate(date.getDate() + days)
-  return localDate(date)
-}
 export interface Product {
   id: string
   name: string
@@ -85,86 +86,44 @@ export const locationLabel = (p: Pick<Product, "rack" | "level" | "bin">) =>
 export const positionCode = (
   p: Pick<Product, "branch" | "rack" | "level" | "bin">,
 ) => `LOC:${branches.indexOf(p.branch)}:${p.rack}:${p.level}:${p.bin}`
-export const products: Product[] = [
-  {
-    id: "WM-001",
-    name: "Son dưỡng Daily Care",
-    variant: "Hồng nhạt · 4g",
-    category: "Chăm sóc cá nhân",
-    batch: "LO-001",
-    expiry: offsetDate(23),
-    qty: 120,
-    branch: branches[0],
-    rack: "A2",
-    level: 2,
-    bin: 3,
-  },
-  {
-    id: "WM-002",
-    name: "Kem dưỡng Moisture",
-    variant: "50ml",
-    category: "Chăm sóc cá nhân",
-    batch: "LO-002",
-    expiry: offsetDate(45),
-    qty: 80,
-    branch: branches[0],
-    rack: "A1",
-    level: 1,
-    bin: 2,
-  },
-  {
-    id: "WM-003",
-    name: "Sữa bột Grow Plus",
-    variant: "800g",
-    category: "Mẹ & Bé",
-    batch: "LO-003",
-    expiry: offsetDate(12),
-    qty: 60,
-    branch: branches[1],
-    rack: "B1",
-    level: 2,
-    bin: 1,
-  },
-  {
-    id: "WM-004",
-    name: "Nước giặt dịu nhẹ",
-    variant: "1 lít",
-    category: "Hàng tiêu dùng",
-    batch: "LO-004",
-    expiry: offsetDate(180),
-    qty: 96,
-    branch: branches[0],
-    rack: "A3",
-    level: 1,
-    bin: 1,
-  },
-  {
-    id: "WM-005",
-    name: "Bánh ăn dặm Organic",
-    variant: "Vị chuối · 50g",
-    category: "Mẹ & Bé",
-    batch: "LO-005",
-    expiry: offsetDate(-4),
-    qty: 24,
-    branch: branches[2],
-    rack: "A1",
-    level: 2,
-    bin: 2,
-  },
-  {
-    id: "WM-006",
-    name: "Kem chống nắng Daily",
-    variant: "SPF50 · 30ml",
-    category: "Chăm sóc cá nhân",
-    batch: "LO-006",
-    expiry: offsetDate(240),
-    qty: 144,
-    branch: branches[1],
-    rack: "A3",
-    level: 1,
-    bin: 3,
-  },
+const sampleLocations = [
+  { rack: "A1", level: 2, bin: 2 },
+  { rack: "A2", level: 1, bin: 3 },
+  { rack: "B1", level: 2, bin: 1 },
 ]
+const sampleTransferIds = new Set(["CK-001", "CK-002"])
+// Includes the mixed-industry rows seeded before demo data became industry-aware.
+export const sampleProductIds = new Set([
+  "WM-001",
+  "WM-002",
+  "WM-003",
+  "WM-004",
+  "WM-005",
+  "WM-006",
+  ...Object.values(INDUSTRIES).flatMap((config) =>
+    config.sampleSKUs.map((sku) => sku.sku),
+  ),
+])
+const sampleExpiryISO = (value: string) => {
+  const [day, month, year] = value.split("/")
+  return `${year}-${month}-${day}`
+}
+export function industryProducts(config: IndustryConfig): Product[] {
+  return config.sampleSKUs.map((sku, index) => {
+    const batch = config.sampleBatches[index % config.sampleBatches.length]
+    return {
+      id: sku.sku,
+      name: sku.name,
+      variant: sku.unit,
+      category: sku.category,
+      batch: batch.lot,
+      expiry: sampleExpiryISO(batch.expiry),
+      qty: batch.qty,
+      branch: branches[index % branches.length],
+      ...sampleLocations[index % sampleLocations.length],
+    }
+  })
+}
 export interface Rack {
   id: string
   name: string
@@ -246,32 +205,24 @@ export interface Transfer {
   history: string[]
   reserved: boolean
 }
-export const initialTransfers: Transfer[] = [
-  {
-    id: "CK-001",
-    productId: "WM-001",
-    batch: "LO-001",
-    from: branches[0],
-    to: branches[1],
-    qty: 20,
-    status: "Chuẩn bị",
-    created: today(),
-    history: ["Đã tạo phiếu · Nguyễn An"],
-    reserved: false,
-  },
-  {
-    id: "CK-002",
-    productId: "WM-002",
-    batch: "LO-002",
-    from: branches[0],
-    to: branches[2],
-    qty: 10,
-    status: "Chuẩn bị",
-    created: today(),
-    history: ["Đã tạo phiếu · Minh Anh"],
-    reserved: false,
-  },
-]
+export function industryTransfers(items: Product[]): Transfer[] {
+  return items.slice(0, 2).map(
+    (item, index): Transfer => ({
+      id: `CK-00${index + 1}`,
+      productId: item.id,
+      batch: item.batch,
+      from: item.branch,
+      to: branches[(branches.indexOf(item.branch) + 1) % branches.length],
+      qty: index === 0 ? 20 : 10,
+      status: "Chuẩn bị",
+      created: today(),
+      history: [
+        `Đã tạo phiếu · ${index === 0 ? "Nguyễn An" : "Minh Anh"}`,
+      ],
+      reserved: false,
+    }),
+  )
+}
 export interface Staff {
   id: string
   name: string
@@ -303,6 +254,7 @@ export interface Activity {
 }
 export interface DemoData {
   version: number
+  industry: Industry
   products: Product[]
   racks: Record<string, Rack[]>
   transfers: Transfer[]
@@ -321,14 +273,37 @@ export interface DemoData {
   release: string
   releaseNote: string
 }
-export function seed(): DemoData {
+export function withIndustrySamples(
+  data: DemoData,
+  config: IndustryConfig,
+): DemoData {
+  const demoProducts = industryProducts(config)
+  return {
+    ...data,
+    industry: config.id,
+    products: [
+      ...demoProducts,
+      ...data.products.filter((p) => !sampleProductIds.has(p.id)),
+    ],
+    transfers: [
+      ...industryTransfers(demoProducts),
+      ...data.transfers.filter(
+        (t) =>
+          !sampleTransferIds.has(t.id) && !sampleProductIds.has(t.productId),
+      ),
+    ],
+  }
+}
+export function seed(config: IndustryConfig): DemoData {
+  const demoProducts = industryProducts(config)
   return {
     version: 3,
-    products,
+    industry: config.id,
+    products: demoProducts,
     racks: Object.fromEntries(
       branches.map((b) => [b, initialRacks.map((r) => ({ ...r }))]),
     ),
-    transfers: initialTransfers,
+    transfers: industryTransfers(demoProducts),
     staff: [
       {
         id: "NV-001",
