@@ -1,5 +1,7 @@
 {
-  "description": "Optimize inventory management and ensure compliance for Vietnamese pharmacies with actionable insights and alerts to maximize savings and minimize losses.",
+  "title": "WareMap System",
+  "language": "vi",
+  "description": "Biết hàng ở đâu. Quản lý kho từ xa. WareMap System kết nối vị trí hàng hóa và vận hành nhiều cơ sở.",
   "robots": {
     "index": false
   },

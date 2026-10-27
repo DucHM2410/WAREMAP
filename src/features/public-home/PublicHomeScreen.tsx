@@ -1,432 +1,316 @@
 import {
   ArrowRight,
-  BarChart3,
-  Bell,
   Box,
+  Building2,
   Check,
-  Clock3,
-  Mail,
+  CheckCircle2,
   MapPin,
-  PenTool,
-  Phone,
-  QrCode,
+  ScanLine,
   Search,
   ShieldCheck,
-  Sparkles,
-  Store,
   Truck,
-  Users,
-} from 'lucide-react'
-import type { CSSProperties } from 'react'
-import { Btn, MonoLabel } from '../../shared'
-
-function navigateTo(screen: string) {
-  window.dispatchEvent(new CustomEvent('waremap:navigate', { detail: screen }))
-}
-
-function scrollToSection(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-
-const painPoints = [
-  {
-    icon: Search,
-    title: 'Hàng nghìn SKU, vỏ hộp giống nhau',
-    result: 'Nhặt nhầm',
-    description: 'Nhân viên mất thời gian tìm kiếm và dễ lấy sai màu, sai dung tích hoặc sai lô.',
-    color: '#0891B2',
-  },
-  {
-    icon: Clock3,
-    title: 'Hàng mới chất lên hàng cũ',
-    result: 'Sót hàng hết hạn',
-    description: 'Không nhìn thấy lô cận hạn khiến hàng nằm quên trên kệ và phải tiêu hủy.',
-    color: '#D97706',
-  },
-  {
-    icon: BarChart3,
-    title: 'Dữ liệu phân mảnh giữa Sheets, Sapo, KiotViet',
-    result: 'Rác dữ liệu',
-    description: 'Tồn kho trên hệ thống và thực tế không khớp, khó xác định nguồn dữ liệu đúng.',
-    color: '#7C3AED',
-  },
-  {
-    icon: Truck,
-    title: 'Chuyển hàng giữa các cửa hàng',
-    result: 'Thất thoát',
-    description: 'Không biết hàng đang ở kho xuất, trên đường hay đã đến chi nhánh nhận.',
-    color: '#DC2626',
-  },
-]
-
-const features = [
-  {
-    icon: Box,
-    title: 'Bản đồ Kho 3D Trực quan',
-    description: 'Biết chính xác SKU nằm ở Kệ nào, Tầng nào và Ô nào. Điều hướng nhân viên đến đúng vị trí.',
-    accent: '#0891B2',
-    tag: '3D MAP',
-  },
-  {
-    icon: QrCode,
-    title: 'Xác minh QR 2 chiều & RBAC',
-    description: 'Quét đồng thời mã vị trí Kệ và mã Lô. Phân quyền đúng vai trò cho từng nhân viên.',
-    accent: '#2563EB',
-    tag: 'QR + SECURITY',
-  },
-  {
-    icon: PenTool,
-    title: 'Bộ tự vẽ Sơ đồ kho 3D',
-    description: 'Kéo thả kệ trưng bày, tủ mát và khu tester để tái hiện đúng kho thực tế.',
-    accent: '#7C3AED',
-    tag: '3D BUILDER',
-  },
-  {
-    icon: Bell,
-    title: 'Định vị FEFO & Cảnh báo Zalo OA',
-    description: 'Phát hiện lô cận hạn, chỉ đường nhặt hàng và gửi cảnh báo tự động đến quản lý.',
-    accent: '#D97706',
-    tag: 'FEFO ALERT',
-  },
-  {
-    icon: Truck,
-    title: 'Quản lý Hàng Trung chuyển Nội bộ',
-    description: 'Theo dõi hàng từ lúc rời kho, đang đi đường đến khi đối soát tại chi nhánh nhận.',
-    accent: '#059669',
-    tag: 'IN-TRANSIT',
-  },
-]
-
-const plans = [
-  {
-    name: 'FREE',
-    price: '0đ',
-    description: 'Cho cửa hàng nhỏ bắt đầu số hóa kho.',
-    features: ['1 kho hàng', '1 tài khoản Admin', 'Quản lý tồn kho cơ bản', 'Xem bản đồ 3D cơ bản'],
-    action: 'Bắt đầu miễn phí',
-    featured: false,
-  },
-  {
-    name: 'PRO',
-    price: '99.000đ',
-    description: 'Bộ công cụ đầy đủ cho cửa hàng chuyên nghiệp.',
-    features: ['3D Builder', 'QR Kệ + QR Lô', 'Quản lý Lô/Hạn & FEFO', 'Cảnh báo Zalo OA', 'Tài khoản phụ & RBAC'],
-    action: 'Dùng thử Pro',
-    featured: true,
-  },
-  {
-    name: 'CHUỖI',
-    price: '299.000đ',
-    description: 'Vận hành đồng bộ nhiều cửa hàng.',
-    features: ['Toàn bộ tính năng Pro', 'Tối đa 3 chi nhánh', 'Quản lý chuyển kho', 'Hàng đi đường', 'Đối soát chi nhánh'],
-    action: 'Dùng thử Chuỗi',
-    featured: false,
-    note: 'Chi nhánh bổ sung: 60.000đ/tháng',
-  },
-]
-
-function PublicHeader() {
+} from "lucide-react"
+import { useApp } from "../../app/store"
+import { Badge, Brand, Button } from "../../app/ui"
+import { branches, money, policy } from "../../app/model"
+export function MiniMap({ highlight = "A2" }: { highlight?: string }) {
   return (
-    <header className="ph-header">
-      <div className="ph-header-inner">
-        <div className="ph-logo" onClick={() => scrollToSection('hero')}>
-          <div><Box size={20} /></div>
-          <span>WareMap <strong>System</strong><small>V5.0</small></span>
-        </div>
-
-        <nav className="ph-nav">
-          <Btn variant="ghost" size="sm" onClick={() => scrollToSection('features')}>Tính năng</Btn>
-          <Btn variant="ghost" size="sm" onClick={() => scrollToSection('pricing')}>Bảng giá</Btn>
-          <Btn variant="ghost" size="sm" onClick={() => scrollToSection('customers')}>Khách hàng</Btn>
-          <Btn variant="ghost" size="sm" onClick={() => scrollToSection('docs')}>Tài liệu</Btn>
-          <Btn variant="ghost" size="sm" onClick={() => scrollToSection('contact')}>Liên hệ</Btn>
-        </nav>
-
-        <div className="ph-header-actions">
-          <Btn
-            variant="ghost"
-            size="sm"
-            onClick={() => navigateTo('login')}
-            style={{ color: '#2563EB', background: '#FFFFFF', borderColor: '#BFDBFE' }}
-          >
-            Đăng nhập
-          </Btn>
-          <Btn
-            variant="primary"
-            size="sm"
-            onClick={() => navigateTo('login')}
-            style={{ color: '#FFFFFF', background: '#2563EB', borderColor: '#2563EB' }}
-          >
-            Dùng thử miễn phí <ArrowRight size={13} />
-          </Btn>
-        </div>
-      </div>
-    </header>
-  )
-}
-
-function RackMockup({ label, color, selected }: { label: string; color: string; selected?: boolean }) {
-  return (
-    <div className={`ph-rack ${selected ? 'selected' : ''}`} style={{ '--rack-color': color } as CSSProperties}>
-      <div className="ph-rack-label">{label}</div>
-      {[0, 1, 2].map((level) => (
-        <div className="ph-rack-level" key={level}>
-          <span /><span /><span />
+    <div
+      className="rack-mini"
+      aria-label={`Sơ đồ minh họa, kệ ${highlight} được đánh dấu`}
+    >
+      {["A1", "A2", "A3"].map((id) => (
+        <div
+          key={id}
+          className={`rack-drawing ${highlight === id ? "highlight" : ""}`}
+        >
+          <span>{id}</span>
+          <i />
+          <i />
+          <i />
         </div>
       ))}
     </div>
   )
 }
-
-function HeroMockup() {
+export default function PublicHome() {
+  const { go, setRole, setRequestedPlan } = useApp()
   return (
-    <div className="ph-hero-visual">
-      <div className="ph-dashboard-window">
-        <div className="ph-window-bar">
-          <div><span /><span /><span /></div>
-          <strong>WareMap · Kho Trung Tâm</strong>
-          <MonoLabel size={7} color="#059669">LIVE</MonoLabel>
+    <div className="landing">
+      <header className="public-nav">
+        <Brand />
+        <nav className="public-links">
+          <a href="#benefits">Lợi ích</a>
+          <a href="#remote">Quản lý từ xa</a>
+          <a href="#pricing">Bảng giá</a>
+        </nav>
+        <div className="row">
+          <Button variant="secondary" onClick={() => go("login")}>
+            Đăng nhập
+          </Button>
+          <Button onClick={() => go("request")}>
+            Yêu cầu dùng thử
+            <ArrowRight size={15} />
+          </Button>
         </div>
-        <div className="ph-window-content">
-          <div className="ph-mini-sidebar">
-            <Box size={15} />
-            <span className="active" /><span /><span /><span />
-          </div>
-          <div className="ph-warehouse-scene">
-            <div className="ph-scene-grid" />
-            <div className="ph-racks">
-              <RackMockup label="A1" color="#2563EB" />
-              <RackMockup label="A2" color="#0891B2" selected />
-              <RackMockup label="A3" color="#059669" />
+      </header>
+      <main>
+        <section className="hero">
+          <div className="hero-copy">
+            <Badge tone="info">
+              <Box size={13} />
+              Mỗi mặt hàng, một vị trí rõ ràng
+            </Badge>
+            <h1>
+              Biết hàng ở đâu.
+              <br />
+              <em>Quản lý kho từ xa.</em>
+            </h1>
+            <p>
+              Sắp xếp vị trí hàng hóa trên bản đồ kho, tìm đúng sản phẩm và nắm
+              tình hình các cơ sở trên cùng một hệ thống.
+            </p>
+            <div className="row">
+              <Button onClick={() => setRole("owner")}>
+                Khám phá kho mẫu
+                <ArrowRight size={17} />
+              </Button>
+              <Button variant="secondary" onClick={() => go("request")}>
+                Yêu cầu dùng thử
+              </Button>
             </div>
-            <div className="ph-scene-pill"><MapPin size={11} /> Kệ A2 · Tầng 2 · Ô 03</div>
-            <div className="ph-scene-alert"><Bell size={12} /><span><strong>FEFO Alert</strong><small>Son Môi A · còn 23 ngày</small></span></div>
+            <p className="hero-foot">
+              Không cần tài khoản để khám phá · Dữ liệu mẫu riêng biệt
+            </p>
           </div>
-          <div className="ph-mini-analytics">
-            <span>TỔNG QUAN KHO</span>
-            <div><strong>1,847</strong><small>SKU</small></div>
-            <div><strong>71%</strong><small>Công suất</small></div>
-            <div className="ph-mini-chart"><i /><i /><i /><i /></div>
+          <div className="hero-visual">
+            <div className="visual-head">
+              <span>WAREMAP SYSTEM / KHO TRUNG TÂM</span>
+              <span>Minh họa</span>
+            </div>
+            <div className="hero-search">
+              <Search size={16} />
+              <span>Son dưỡng Daily Care · Hồng nhạt</span>
+              <CheckCircle2
+                size={16}
+                style={{ marginLeft: "auto", color: "#087e8b" }}
+              />
+            </div>
+            <MiniMap />
+            <div className="hero-result">
+              <MapPin size={25} />
+              <div>
+                <strong>Kệ A2 · Tầng 2 · Ô 03</strong>
+                <p>Đúng vị trí. Đúng sản phẩm. Cả đội cùng tìm được.</p>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-      <div className="ph-float-card card-one"><QrCode size={17} /><span><strong>QR đã xác minh</strong><small>Đúng Lô · Đúng Kệ</small></span><Check size={13} /></div>
-      <div className="ph-float-card card-two"><Truck size={17} /><span><strong>Đang đi đường</strong><small>Kho Tổng → CN Quận 3</small></span></div>
-    </div>
-  )
-}
-
-function HeroSection() {
-  return (
-    <section className="ph-hero" id="hero">
-      <div className="ph-container ph-hero-grid">
-        <div className="ph-hero-copy">
-          <div className="ph-eyebrow"><Sparkles size={13} /> NỀN TẢNG QUẢN LÝ KHO 3D CHO BÁN LẺ</div>
-          <h1>Quản lý Kho Mẹ & Bé / Mỹ phẩm bằng <span>Bản đồ 3D Trực quan</span></h1>
-          <p>Biết chính xác hàng nằm ở Ô nào, Kệ nào, Lô nào, Hạn bao nhiêu. Tìm đúng vị trí – Lấy đúng hàng – Quản lý chính xác tồn kho & Hàng đi đường.</p>
-          <div className="ph-hero-actions">
-            <Btn
-              variant="primary"
-              size="lg"
-              onClick={() => navigateTo('login')}
-              style={{ color: '#FFFFFF', background: '#2563EB', borderColor: '#2563EB', height: 48, borderRadius: 10 }}
-            >
-              Dùng thử miễn phí 14 ngày <ArrowRight size={16} />
-            </Btn>
-            <Btn
-              variant="outline"
-              size="lg"
-              onClick={() => navigateTo('dashboard')}
-              style={{ color: '#0891B2', background: '#FFFFFF', borderColor: '#0891B2', height: 48, borderRadius: 10 }}
-            >
-              <Box size={16} /> Xem Demo 3D
-            </Btn>
+        </section>
+        <section id="benefits" className="public-section">
+          <span className="eyebrow">Từ việc nhỏ, đến kho ngăn nắp hơn</span>
+          <h2>Một cách quản lý dễ hình dung.</h2>
+          <p>
+            Biến những vị trí chỉ người quen kho mới nhớ thành thông tin rõ ràng
+            cho cả đội.
+          </p>
+          <div className="benefits">
+            {[
+              {
+                icon: MapPin,
+                title: "Tìm đúng chỗ, lấy đúng hàng",
+                text: "Tìm tên sản phẩm để thấy ngay kệ, tầng và ô. Nhân viên mới có điểm bắt đầu rõ ràng.",
+                foot: "Tìm hàng → Xem vị trí",
+              },
+              {
+                icon: ScanLine,
+                title: "Mỗi vị trí có một tên gọi",
+                text: "Bố trí sơ đồ theo kho thực tế, đặt mã vị trí và quét xác minh trước khi cất hoặc lấy hàng.",
+                foot: "Sắp xếp → Gán vị trí → Xác minh",
+              },
+              {
+                icon: ShieldCheck,
+                title: "Chủ động trước khi có vấn đề",
+                text: "Nhìn thấy lô cận hạn và chênh lệch chuyển kho, biết việc nào cần kiểm tra tiếp theo.",
+                foot: "Nhận biết → Kiểm tra → Xử lý",
+              },
+            ].map(({ icon: Icon, title, text, foot }) => (
+              <article className="benefit" key={title}>
+                <Icon size={27} />
+                <h3>{title}</h3>
+                <p>{text}</p>
+                <small>{foot}</small>
+              </article>
+            ))}
           </div>
-          <div className="ph-hero-proof">
-            <div className="ph-avatar-stack"><span>HC</span><span>F52</span><span>MB</span></div>
-            <div><strong>Được tin dùng bởi doanh nghiệp bán lẻ</strong><span>Không cần thẻ tín dụng · Thiết lập trong 15 phút</span></div>
-          </div>
+        </section>
+        <div className="public-tint" id="remote">
+          <section className="public-section remote-section">
+            <div>
+              <span className="eyebrow">Một hệ thống, nhiều cơ sở</span>
+              <h2>
+                Không có mặt tại kho,
+                <br />
+                vẫn nắm được tình hình.
+              </h2>
+              <p>
+                Chuyển giữa kho tổng và chi nhánh, kiểm tra tồn kho, theo dõi
+                hàng đang chuyển và xem nơi nào cần chú ý.
+              </p>
+              <div className="row" style={{ marginTop: 23 }}>
+                <Button variant="secondary" onClick={() => setRole("owner")}>
+                  Xem cách quản lý nhiều kho
+                  <ArrowRight size={15} />
+                </Button>
+              </div>
+            </div>
+            <div className="panel">
+              {branches.map((b, i) => (
+                <div className="branch-card" key={b}>
+                  <Building2 size={21} color="#799baa" />
+                  <div>
+                    <strong>{b}</strong>
+                    <p>Ví dụ tình trạng theo từng cơ sở</p>
+                  </div>
+                  <Badge
+                    tone={i === 2 ? "danger" : i === 0 ? "warning" : "success"}
+                  >
+                    {i === 2
+                      ? "Có hàng hết hạn"
+                      : i === 0
+                        ? "Cần kiểm tra"
+                        : "Đang hoạt động"}
+                  </Badge>
+                </div>
+              ))}
+              <div className="section-note">
+                Minh họa · Luôn hiển thị phạm vi kho đang xem
+              </div>
+            </div>
+          </section>
         </div>
-        <HeroMockup />
-      </div>
-    </section>
-  )
-}
-
-function PainPointsSection() {
-  return (
-    <section className="ph-section ph-pains">
-      <div className="ph-container">
-        <div className="ph-section-head">
-          <MonoLabel size={9} color="#DC2626">VẤN ĐỀ VẬN HÀNH THỰC TẾ</MonoLabel>
-          <h2>Bạn có đang gặp những vấn đề này?</h2>
-          <p>Các sai lệch nhỏ trong kho tích tụ thành chi phí lớn, hàng hết hạn và trải nghiệm khách hàng kém.</p>
-        </div>
-        <div className="ph-pain-grid">
-          {painPoints.map(({ icon: Icon, title, result, description, color }) => (
-            <article key={title}>
-              <div style={{ color, background: `${color}12` }}><Icon size={22} /></div>
-              <h3>{title}</h3>
-              <span><ArrowRight size={13} /> {result}</span>
-              <p>{description}</p>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function FeaturesSection() {
-  return (
-    <section className="ph-section ph-features" id="features">
-      <div className="ph-container">
-        <div className="ph-section-head">
-          <MonoLabel size={9} color="#0891B2">5 TRỤ CỘT WAREMAP</MonoLabel>
-          <h2>WAREMAP giải quyết tất cả</h2>
-          <p>Một nền tảng thống nhất để nhìn thấy, xác minh và kiểm soát toàn bộ dòng chảy hàng hóa.</p>
-        </div>
-        <div className="ph-feature-grid">
-          {features.map(({ icon: Icon, title, description, accent, tag }, index) => (
-            <article className={index < 2 ? 'wide' : ''} key={title}>
-              <div className="ph-feature-icon" style={{ color: accent, background: `${accent}12` }}><Icon size={23} /></div>
-              <MonoLabel size={7} color={accent}>{tag}</MonoLabel>
-              <h3>{title}</h3>
-              <p>{description}</p>
-              <div className="ph-feature-link">Khám phá tính năng <ArrowRight size={12} /></div>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function PricingSection() {
-  return (
-    <section className="ph-section ph-pricing" id="pricing">
-      <div className="ph-container">
-        <div className="ph-section-head">
-          <MonoLabel size={9} color="#0891B2">BẢNG GIÁ MINH BẠCH</MonoLabel>
-          <h2>Chọn gói phù hợp với cửa hàng của bạn</h2>
-          <p>Bắt đầu miễn phí và nâng cấp khi doanh nghiệp của bạn phát triển.</p>
-        </div>
-        <div className="ph-pricing-grid">
-          {plans.map((plan) => (
-            <article className={plan.featured ? 'featured' : ''} key={plan.name}>
-              {plan.featured && <div className="ph-plan-popular"><Sparkles size={11} /> ĐƯỢC CHỌN NHIỀU NHẤT</div>}
-              <div className="ph-plan-name">{plan.name}</div>
-              <div className="ph-price"><strong>{plan.price}</strong><span>/ tháng</span></div>
-              <p>{plan.description}</p>
-              <div className="ph-plan-divider" />
-              <ul>
-                {plan.features.map((feature) => <li key={feature}><Check size={13} /> {feature}</li>)}
-              </ul>
-              {plan.note && <div className="ph-plan-note">{plan.note}</div>}
-              <Btn
-                variant={plan.featured ? 'primary' : 'outline'}
-                size="lg"
-                full
-                onClick={() => navigateTo('login')}
-                style={plan.featured
-                  ? { color: '#FFFFFF', background: '#2563EB', borderColor: '#2563EB', borderRadius: 10 }
-                  : { color: '#0891B2', background: '#FFFFFF', borderColor: '#0891B2', borderRadius: 10 }}
+        <section id="pricing" className="public-section">
+          <span className="eyebrow">Chi phí rõ ràng</span>
+          <h2>Bắt đầu phù hợp. Mở rộng khi cần.</h2>
+          <p>
+            Hai lựa chọn: miễn phí và có phí. Gói có phí linh hoạt theo số cơ
+            sở.
+          </p>
+          <div className="pricing-grid">
+            {[
+              {
+                name: "Miễn phí",
+                price: 0,
+                subtitle: "Tìm hiểu WareMap System.",
+                items: [
+                  "Khám phá kho mẫu",
+                  "Gửi yêu cầu sử dụng miễn phí",
+                  "Quyền lợi được xác nhận khi cấp gói",
+                ],
+                cta: "Yêu cầu gói miễn phí",
+              },
+              {
+                name: "Một cơ sở",
+                price: policy.single,
+                subtitle: "Cho doanh nghiệp có một địa điểm.",
+                items: [
+                  "1 cơ sở",
+                  "5 tài khoản nhân viên ban đầu",
+                  "Cấp tài khoản qua yêu cầu",
+                ],
+                cta: "Yêu cầu gói Một cơ sở",
+              },
+              {
+                name: "Chuỗi",
+                price: policy.chain,
+                subtitle: "Cho doanh nghiệp có nhiều địa điểm.",
+                items: [
+                  "Tối đa 5 cơ sở",
+                  "5 tài khoản nhân viên dùng chung",
+                  "Theo dõi tập trung giữa các kho",
+                ],
+                cta: "Yêu cầu gói Chuỗi",
+              },
+            ].map((p, i) => (
+              <article
+                className={`panel price-card ${i === 2 ? "featured" : ""}`}
+                key={p.name}
               >
-                {plan.action} <ArrowRight size={14} />
-              </Btn>
-            </article>
-          ))}
+                <Badge tone={i === 2 ? "info" : "neutral"}>{p.name}</Badge>
+                <div className="price">
+                  {money(p.price)}
+                  <small> / tháng</small>
+                </div>
+                <p>{p.subtitle}</p>
+                <ul>
+                  {p.items.map((item) => (
+                    <li key={item}>
+                      <Check size={15} />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  variant={i === 2 ? "primary" : "secondary"}
+                  onClick={() => { setRequestedPlan(i === 0 ? "free" : "paid"); go("request") }}
+                >
+                  {p.cta}
+                </Button>
+              </article>
+            ))}
+          </div>
+          <div className="grid-two" style={{ marginTop: 20 }}>
+            <div className="callout">
+              <strong>Thêm cơ sở</strong>
+              <br />
+              Vượt 5 cơ sở: +150.000đ/tháng cho mỗi block 5 cơ sở.
+            </div>
+            <div className="callout">
+              <strong>Thêm tài khoản nhân viên</strong>
+              <br />
+              Vượt 5 tài khoản: +60.000đ/tháng cho mỗi block 5 tài khoản.
+            </div>
+          </div>
+          <p className="tiny" style={{ marginTop: 14 }}>
+            Tài khoản chủ doanh nghiệp được tính riêng. Yêu cầu cấp tài khoản do
+            WareMap xét duyệt.
+          </p>
+        </section>
+        <div className="public-tint">
+          <section className="public-section">
+            <span className="eyebrow">Phù hợp với mô hình của bạn</span>
+            <h2>Từ cửa hàng đến chuỗi bán lẻ.</h2>
+            <div className="chip-row" style={{ marginTop: 20 }}>
+              {[
+                "Mẹ & Bé",
+                "Mỹ phẩm & chăm sóc cá nhân",
+                "Cửa hàng hàng nhập khẩu",
+              ].map((t) => (
+                <Badge key={t}>{t}</Badge>
+              ))}
+            </div>
+          </section>
         </div>
-        <div className="ph-pricing-note"><ShieldCheck size={15} /> Miễn phí 14 ngày. Không cần thẻ tín dụng. Không tính phí per-user.</div>
-      </div>
-    </section>
-  )
-}
-
-function CustomersSection() {
-  const customers = [
-    { name: 'HC Cosmetics', mark: 'HC' },
-    { name: 'Forever52', mark: 'F52' },
-    { name: 'Logistics Plus', mark: 'L+' },
-    { name: 'Chuỗi Mẹ & Bé', mark: 'M&B' },
-  ]
-
-  return (
-    <section className="ph-section ph-customers" id="customers">
-      <div className="ph-container">
-        <div className="ph-section-head compact">
-          <MonoLabel size={9} color="#64748B">KHÁCH HÀNG TIÊU BIỂU</MonoLabel>
-          <h2>Đồng hành cùng các thương hiệu tăng trưởng</h2>
-        </div>
-        <div className="ph-customer-grid">
-          {customers.map((customer) => (
-            <div key={customer.name}><span>{customer.mark}</span><strong>{customer.name}</strong></div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function FinalCta() {
-  return (
-    <section className="ph-final-cta">
-      <div className="ph-container">
-        <div><MonoLabel size={9} color="#CFFAFE">BẮT ĐẦU NGAY HÔM NAY</MonoLabel><h2>Sẵn sàng chuyển đổi số kho hàng của bạn?</h2><p>Thiết lập kho 3D đầu tiên trong 15 phút. Đội ngũ WareMap luôn sẵn sàng đồng hành.</p></div>
-        <Btn
-          variant="ghost"
-          size="lg"
-          onClick={() => navigateTo('login')}
-          style={{ color: '#0891B2', background: '#FFFFFF', borderColor: '#FFFFFF', height: 48, borderRadius: 10 }}
-        >
-          Dùng thử miễn phí ngay <ArrowRight size={16} />
-        </Btn>
-      </div>
-    </section>
-  )
-}
-
-function PublicFooter() {
-  const columns = [
-    { title: 'Về WareMap', links: ['Câu chuyện', 'Khách hàng', 'Bảng giá', 'Tuyển dụng'] },
-    { title: 'Tính năng', links: ['Kho 3D', 'QR & RBAC', 'FEFO Alerts', 'In-Transit'] },
-    { title: 'Hỗ trợ', links: ['Tài liệu', 'Hướng dẫn nhanh', 'API', 'Trạng thái hệ thống'] },
-  ]
-
-  return (
-    <footer className="ph-footer" id="contact">
-      <div className="ph-container">
-        <div className="ph-footer-brand">
-          <div className="ph-logo dark"><div><Box size={20} /></div><span>WareMap <strong>System</strong><small>V5.0</small></span></div>
-          <p>Nền tảng quản lý kho 3D trực quan dành cho doanh nghiệp bán lẻ Việt Nam.</p>
-          <div><MapPin size={13} /> Thành phố Hồ Chí Minh, Việt Nam</div>
-        </div>
-        {columns.map((column) => (
-          <div className="ph-footer-column" key={column.title}><strong>{column.title}</strong>{column.links.map((link) => <span key={link}>{link}</span>)}</div>
-        ))}
-        <div className="ph-footer-column" id="docs">
-          <strong>Liên hệ</strong>
-          <span><Mail size={12} /> hello@waremap.vn</span>
-          <span><Phone size={12} /> 028 7300 2026</span>
-          <span><Users size={12} /> Đặt lịch tư vấn</span>
-        </div>
-      </div>
-      <div className="ph-footer-bottom"><div className="ph-container"><span>© 2026 WareMap System v5.0. Made in Vietnam.</span><span>Điều khoản sử dụng · Chính sách bảo mật</span></div></div>
-    </footer>
-  )
-}
-
-export default function ScreenPublicHome() {
-  return (
-    <div className="ph-shell">
-      <PublicHeader />
-      <HeroSection />
-      <PainPointsSection />
-      <FeaturesSection />
-      <PricingSection />
-      <CustomersSection />
-      <FinalCta />
-      <PublicFooter />
+        <section className="public-section">
+          <div className="public-cta">
+            <h2>Hình dung kho của bạn rõ ràng hơn.</h2>
+            <p>Thử tìm một mặt hàng, xem vị trí và khám phá cách bố trí kho.</p>
+            <Button onClick={() => setRole("owner")}>
+              Mở kho mẫu
+              <ArrowRight size={16} />
+            </Button>
+          </div>
+        </section>
+      </main>
+      <footer className="public-footer">
+        <Brand />
+        <p>
+          © {new Date().getFullYear()} WareMap System · Quản lý vị trí. Kết nối
+          vận hành.
+        </p>
+        <Button variant="ghost" onClick={() => go("request")}>
+          Liên hệ sử dụng
+        </Button>
+      </footer>
     </div>
   )
 }

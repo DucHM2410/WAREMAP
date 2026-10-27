@@ -1,453 +1,363 @@
-import { useMemo, useRef, useState } from 'react'
+import { Check, Clock3, Plus, ShieldCheck, UserRound } from "lucide-react"
+import { useState } from "react"
+import { useApp } from "../../app/store"
 import {
-  Building2,
-  Check,
-  CheckCircle2,
-  Crown,
-  KeyRound,
-  Lock,
-  Mail,
-  Phone,
-  Plus,
-  Save,
-  Search,
-  Shield,
-  ShieldCheck,
-  UserRound,
-  Users,
-  X,
-} from 'lucide-react'
-import { Btn, MonoLabel } from '../../shared'
-import { WareMapHeader } from '../../shared/layout/WareMapHeader'
-
-type Role = 'ADMIN_VIP' | 'MANAGER' | 'STAFF_WAREHOUSE' | 'STAFF_SALES'
-type Permission = 'yes' | 'no' | 'locked'
-
-interface Account {
-  id: number
-  name: string
-  email: string
-  phone: string
-  branch: string
-  role: Role
-  active: boolean
-  initials: string
-  color: string
+  branches,
+  dateLabel,
+  money,
+  policy,
+  roleNames,
+  today,
+  type Staff,
+} from "../../app/model"
+import {
+  Badge,
+  Button,
+  Empty,
+  Modal,
+  PageTitle,
+  Panel,
+  SearchInput,
+} from "../../app/ui"
+export const permissions: Record<Staff["role"], string[]> = {
+  manager: [
+    "Xem và quản lý kho được phân công",
+    "Chỉnh sửa sơ đồ kho",
+    "Xử lý phiếu chuyển và đối soát",
+    "Xem báo cáo vận hành",
+  ],
+  warehouse: [
+    "Tra cứu hàng và vị trí",
+    "Nhập, xuất và kiểm kê hàng",
+    "Quét xác minh, gửi và nhận hàng",
+  ],
+  sales: [
+    "Tra cứu sản phẩm và tồn kho",
+    "Xem vị trí hàng",
+    "Quét xác minh vị trí và lô",
+  ],
 }
-
-const initialAccounts: Account[] = [
-  {
-    id: 1,
-    name: 'Nguyễn Văn A',
-    email: 'nguyenvana@waremap.vn',
-    phone: '090 123 4567',
-    branch: 'Kho Tổng',
-    role: 'MANAGER',
-    active: true,
-    initials: 'NA',
-    color: '#0891B2',
-  },
-  {
-    id: 2,
-    name: 'Trần Thị B',
-    email: 'tranthib@waremap.vn',
-    phone: '091 234 5678',
-    branch: 'CN Quận 3',
-    role: 'STAFF_WAREHOUSE',
-    active: true,
-    initials: 'TB',
-    color: '#2563EB',
-  },
-  {
-    id: 3,
-    name: 'Lê Văn C',
-    email: 'levanc@waremap.vn',
-    phone: '092 345 6789',
-    branch: 'CN Thủ Đức',
-    role: 'STAFF_SALES',
-    active: false,
-    initials: 'LC',
-    color: '#64748B',
-  },
-]
-
-const roles: Role[] = ['ADMIN_VIP', 'MANAGER', 'STAFF_WAREHOUSE', 'STAFF_SALES']
-
-const permissionRows: Array<{ feature: string; values: Record<Role, Permission> }> = [
-  { feature: 'Quản lý Tài khoản con', values: { ADMIN_VIP: 'yes', MANAGER: 'locked', STAFF_WAREHOUSE: 'no', STAFF_SALES: 'no' } },
-  { feature: 'Xem Doanh thu & Giá vốn', values: { ADMIN_VIP: 'yes', MANAGER: 'yes', STAFF_WAREHOUSE: 'locked', STAFF_SALES: 'yes' } },
-  { feature: 'Tự vẽ Sơ đồ Kho 3D', values: { ADMIN_VIP: 'yes', MANAGER: 'yes', STAFF_WAREHOUSE: 'locked', STAFF_SALES: 'no' } },
-  { feature: 'Duyệt Phiếu chuyển hàng', values: { ADMIN_VIP: 'yes', MANAGER: 'yes', STAFF_WAREHOUSE: 'locked', STAFF_SALES: 'no' } },
-  { feature: 'Tạo Phiếu Nhập/Xuất', values: { ADMIN_VIP: 'yes', MANAGER: 'yes', STAFF_WAREHOUSE: 'yes', STAFF_SALES: 'locked' } },
-  { feature: 'Quét mã QR 2 chiều', values: { ADMIN_VIP: 'yes', MANAGER: 'yes', STAFF_WAREHOUSE: 'yes', STAFF_SALES: 'yes' } },
-  { feature: 'Quick Scan Mode', values: { ADMIN_VIP: 'yes', MANAGER: 'yes', STAFF_WAREHOUSE: 'yes', STAFF_SALES: 'no' } },
-  { feature: 'Tra cứu Vị trí Kệ 3D', values: { ADMIN_VIP: 'yes', MANAGER: 'yes', STAFF_WAREHOUSE: 'yes', STAFF_SALES: 'yes' } },
-]
-
-function roleLabel(role: Role) {
-  return role.replace('_', ' ')
-}
-
-function AccountList({
-  accounts,
-  selectedId,
-  query,
-  setQuery,
-  setSelectedId,
-  onCreate,
-}: {
-  accounts: Account[]
-  selectedId: number
-  query: string
-  setQuery: (query: string) => void
-  setSelectedId: (id: number) => void
-  onCreate: () => void
-}) {
-  const filtered = accounts.filter((account) => (
-    account.name.toLowerCase().includes(query.toLowerCase())
-    || account.role.toLowerCase().includes(query.toLowerCase())
-  ))
-
-  return (
-    <aside className="ra-left">
-      <div className="ra-panel-title">
-        <div>
-          <MonoLabel size={9} color="#0891B2">SUB-ACCOUNTS</MonoLabel>
-          <strong>TÀI KHOẢN PHỤ</strong>
-          <small>Tạo tài khoản cho nhân viên theo mô hình Cha - Con</small>
-        </div>
-        <span><Users size={15} /> {accounts.length}/10</span>
-      </div>
-
-      <label className="ra-search">
-        <Search size={14} />
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm tên hoặc vai trò..." />
-        <kbd>⌘ K</kbd>
-      </label>
-
-      <Btn
-        variant="cyan"
-        size="md"
-        full
-        onClick={onCreate}
-        style={{ color: '#FFFFFF', background: '#0891B2', borderColor: '#0891B2' }}
-      >
-        <Plus size={14} /> Tạo tài khoản mới
-      </Btn>
-
-      <div className="ra-list-label"><span>DANH SÁCH NHÂN SỰ</span><small>{filtered.length} tài khoản</small></div>
-      <div className="ra-account-list">
-        {filtered.map((account) => (
-          <article
-            className={`ra-account-card ${selectedId === account.id ? 'selected' : ''}`}
-            key={account.id}
-            onClick={() => setSelectedId(account.id)}
-          >
-            <div className="ra-avatar" style={{ background: account.color }}>{account.initials}</div>
-            <div className="ra-account-copy">
-              <strong>{account.name}</strong>
-              <MonoLabel size={8}>{account.email}</MonoLabel>
-              <span className={`ra-role ${account.role.toLowerCase()}`}>{account.role}</span>
-            </div>
-            <div className={`ra-account-status ${account.active ? 'active' : 'inactive'}`}>
-              <i /> {account.active ? 'Active' : 'Inactive'}
-            </div>
-          </article>
-        ))}
-      </div>
-
-      <div className="ra-vip-note">
-        <Crown size={17} />
-        <div><strong>Gói WareMap ADMIN_VIP</strong><span>Còn 7 vị trí tài khoản phụ có thể sử dụng.</span></div>
-      </div>
-    </aside>
+export default function Accounts() {
+  const { data, update, notify } = useApp()
+  const [query, setQuery] = useState(""),
+    [requesting, setRequesting] = useState(false),
+    [detailId, setDetailId] = useState(""),
+    [count, setCount] = useState(1),
+    [role, setRole] = useState<Staff["role"]>("warehouse"),
+    [error, setError] = useState("")
+  const rows = data.staff.filter((s) =>
+    `${s.name} ${s.email} ${roleNames[s.role]}`
+      .toLocaleLowerCase("vi")
+      .includes(query.toLocaleLowerCase("vi")),
   )
-}
-
-function PermissionCell({ value }: { value: Permission }) {
-  if (value === 'yes') return <span className="ra-permission yes"><Check size={13} /></span>
-  if (value === 'no') return <span className="ra-permission no"><X size={13} /></span>
-  return <span className="ra-permission locked"><Lock size={11} /></span>
-}
-
-function PermissionMatrix() {
+  const detail = data.staff.find((s) => s.id === detailId)
+  const extra =
+    Math.ceil(
+      Math.max(0, data.staff.length + count - data.allowance) /
+        policy.blockSize,
+    ) * policy.accountBlock
   return (
-    <main className="ra-center">
-      <div className="ra-matrix-head">
-        <div><MonoLabel size={9} color="#0891B2">ROLE-BASED ACCESS CONTROL</MonoLabel><strong>MA TRẬN PHÂN QUYỀN RBAC</strong></div>
-        <span><ShieldCheck size={14} /> 4 vai trò · 8 chức năng</span>
-      </div>
-
-      <div className="ra-matrix-wrap">
-        <table className="ra-matrix">
-          <thead>
-            <tr>
-              <th>CHỨC NĂNG</th>
-              {roles.map((role) => (
-                <th key={role}>
-                  <span className={`ra-role-icon ${role.toLowerCase()}`}>
-                    {role === 'ADMIN_VIP' ? <Crown size={12} /> : role === 'MANAGER' ? <Shield size={12} /> : <UserRound size={12} />}
-                  </span>
-                  <MonoLabel size={7} color="#475569">{role}</MonoLabel>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {permissionRows.map((row) => (
-              <tr key={row.feature}>
-                <td>{row.feature}</td>
-                {roles.map((role) => <td key={role}><PermissionCell value={row.values[role]} /></td>)}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="ra-legend">
-        <span><i className="yes"><Check size={10} /></i> Được phép</span>
-        <span><i className="no"><X size={10} /></i> Không được phép</span>
-        <span><i className="locked"><Lock size={9} /></i> Khóa theo gói/chi nhánh</span>
-      </div>
-
-      <div className="ra-plan-note">
-        <Crown size={15} />
-        <span><strong>Gói PRO:</strong> Tạo không giới hạn tài khoản phụ. <strong>Gói CHUỖI:</strong> Tạo tài khoản phụ theo từng chi nhánh.</span>
-      </div>
-
-      <div className="ra-security-card">
-        <KeyRound size={18} />
-        <div><strong>Nguyên tắc quyền tối thiểu</strong><span>Mỗi nhân viên chỉ được cấp quyền cần thiết cho công việc tại chi nhánh được phân công.</span></div>
-        <span>ENFORCED</span>
-      </div>
-    </main>
-  )
-}
-
-function Field({
-  label,
-  icon: Icon,
-  value,
-  onChange,
-  type = 'text',
-}: {
-  label: string
-  icon: typeof UserRound
-  value: string
-  onChange: (value: string) => void
-  type?: string
-}) {
-  return (
-    <label className="ra-field">
-      <span>{label}</span>
-      <div><Icon size={13} /><input type={type} value={value} onChange={(event) => onChange(event.target.value)} /></div>
-    </label>
-  )
-}
-
-function SelectField({
-  label,
-  icon: Icon,
-  value,
-  options,
-  onChange,
-}: {
-  label: string
-  icon: typeof UserRound
-  value: string
-  options: string[]
-  onChange: (value: string) => void
-}) {
-  return (
-    <label className="ra-field">
-      <span>{label}</span>
-      <div>
-        <Icon size={13} />
-        <select value={value} onChange={(event) => onChange(event.target.value)}>
-          {options.map((option) => <option key={option}>{option}</option>)}
-        </select>
-      </div>
-    </label>
-  )
-}
-
-function AccountInspector({
-  account,
-  onSave,
-  onLock,
-}: {
-  account: Account
-  onSave: (account: Account) => void
-  onLock: () => void
-}) {
-  const [draft, setDraft] = useState(account)
-
-  const currentDraft = draft.id === account.id ? draft : account
-  const update = (patch: Partial<Account>) => setDraft({ ...currentDraft, ...patch })
-
-  return (
-    <aside className="ra-right">
-      <div className="ra-panel-title">
-        <div><MonoLabel size={9} color="#0891B2">ACCOUNT INSPECTOR</MonoLabel><strong>CHI TIẾT TÀI KHOẢN</strong></div>
-        <ShieldCheck size={18} />
-      </div>
-
-      <div className="ra-profile">
-        <div className="ra-profile-avatar" style={{ background: currentDraft.color }}>{currentDraft.initials}</div>
-        <div>
-          <strong>{currentDraft.name}</strong>
-          <MonoLabel size={8}>{currentDraft.email}</MonoLabel>
-          <span className={`ra-role ${currentDraft.role.toLowerCase()}`}>{currentDraft.role}</span>
-        </div>
-        <div className={`ra-account-status ${currentDraft.active ? 'active' : 'inactive'}`}><i /> {currentDraft.active ? 'Active' : 'Inactive'}</div>
-      </div>
-
-      <div className="ra-form">
-        <div className="ra-parent-id">
-          <KeyRound size={13} />
-          <span>Parent_Admin_ID</span>
-          <MonoLabel size={8} color="#0F172A">ADMIN_VIP_001</MonoLabel>
-        </div>
-        <Field label="Họ và tên" icon={UserRound} value={currentDraft.name} onChange={(name) => update({ name })} />
-        <Field label="Email" icon={Mail} type="email" value={currentDraft.email} onChange={(email) => update({ email })} />
-        <Field label="Số điện thoại" icon={Phone} value={currentDraft.phone} onChange={(phone) => update({ phone })} />
-        <SelectField
-          label="Chi nhánh"
-          icon={Building2}
-          value={currentDraft.branch}
-          options={['Kho Tổng', 'CN Quận 3', 'CN Thủ Đức', 'CN Tân Bình']}
-          onChange={(branch) => update({ branch })}
-        />
-        <SelectField
-          label="Vai trò"
-          icon={Shield}
-          value={currentDraft.role}
-          options={roles}
-          onChange={(role) => update({ role: role as Role })}
-        />
-        <div className="ra-toggle-row">
-          <div><CheckCircle2 size={14} /><span><strong>Trạng thái tài khoản</strong><small>{currentDraft.active ? 'Được phép đăng nhập hệ thống' : 'Đăng nhập đang bị vô hiệu hóa'}</small></span></div>
-          <Btn
-            variant={currentDraft.active ? 'success' : 'ghost'}
-            size="sm"
-            onClick={() => update({ active: !currentDraft.active })}
-            style={{
-              width: 44,
-              height: 25,
-              padding: 3,
-              justifyContent: currentDraft.active ? 'flex-end' : 'flex-start',
-              background: currentDraft.active ? '#059669' : '#E2E8F0',
-              borderColor: currentDraft.active ? '#059669' : '#CBD5E1',
+    <>
+      <PageTitle
+        eyebrow="Đúng người, đúng công việc"
+        title="Nhân viên & phân quyền"
+        description="Theo dõi tài khoản của doanh nghiệp. Gửi yêu cầu để WareMap xét duyệt và cấp tài khoản mới."
+        action={
+          <Button
+            onClick={() => {
+              setRequesting(true)
+              setError("")
             }}
           >
-            <span className="ra-toggle-knob" />
-          </Btn>
-        </div>
+            <Plus size={16} />
+            Yêu cầu cấp tài khoản
+          </Button>
+        }
+      />
+      <div className="grid-two" style={{ marginBottom: 24 }}>
+        <Panel>
+          <div className="panel-body row between">
+            <div>
+              <p className="tiny">Tài khoản nhân viên đã cấp</p>
+              <div className="metric-value">
+                <strong>{data.staff.length}</strong>
+                <span className="muted">/ {data.allowance}</span>
+              </div>
+              <p className="tiny">Chủ doanh nghiệp được tính riêng.</p>
+            </div>
+            <UserRound size={34} color="#83a7b1" />
+          </div>
+        </Panel>
+        <Panel>
+          <div className="panel-body">
+            <h3>Cấp thêm theo nhu cầu</h3>
+            <p className="tiny" style={{ marginTop: 8 }}>
+              5 tài khoản nhân viên ban đầu dùng chung cho doanh nghiệp. Mỗi
+              block thêm 5 tài khoản:{" "}
+              <strong>{money(policy.accountBlock)}/tháng</strong>.
+            </p>
+          </div>
+        </Panel>
       </div>
-
-      <div className="ra-scope">
-        <span>PHẠM VI TRUY CẬP</span>
-        <div><Building2 size={13} /><strong>{currentDraft.branch}</strong><small>Chỉ xem dữ liệu thuộc chi nhánh này</small></div>
-      </div>
-
-      <div className="ra-inspector-actions">
-        <Btn
-          variant="cyan"
-          size="md"
-          full
-          onClick={() => onSave(currentDraft)}
-          style={{ color: '#FFFFFF', background: '#0891B2', borderColor: '#0891B2' }}
-        >
-          <Save size={14} /> Lưu thay đổi
-        </Btn>
-        <Btn
-          variant="danger"
-          size="md"
-          full
-          onClick={onLock}
-          style={{ color: '#DC2626', background: '#FEF2F2', borderColor: '#FECACA' }}
-        >
-          <Lock size={14} /> Khóa tài khoản
-        </Btn>
-      </div>
-    </aside>
-  )
-}
-
-export default function Screen7AccountRbac() {
-  const [accounts, setAccounts] = useState(initialAccounts)
-  const [selectedId, setSelectedId] = useState(1)
-  const [query, setQuery] = useState('')
-  const [toast, setToast] = useState('RBAC đã được đồng bộ theo gói ADMIN_VIP')
-  const timer = useRef<number | null>(null)
-
-  const selectedAccount = useMemo(
-    () => accounts.find((account) => account.id === selectedId) ?? accounts[0],
-    [accounts, selectedId],
-  )
-
-  const notify = (message: string) => {
-    setToast(message)
-    if (timer.current) window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => setToast(''), 2600)
-  }
-
-  const createAccount = () => {
-    const id = Math.max(...accounts.map((account) => account.id)) + 1
-    const account: Account = {
-      id,
-      name: 'Tài khoản mới',
-      email: 'new.staff@waremap.vn',
-      phone: '090 000 0000',
-      branch: 'Kho Tổng',
-      role: 'STAFF_WAREHOUSE',
-      active: true,
-      initials: 'NEW',
-      color: '#0891B2',
-    }
-    setAccounts((current) => [...current, account])
-    setSelectedId(id)
-    notify('Đã tạo tài khoản phụ mới')
-  }
-
-  const saveAccount = (updated: Account) => {
-    setAccounts((current) => current.map((account) => account.id === updated.id ? updated : account))
-    notify(`Đã lưu thay đổi cho ${updated.name}`)
-  }
-
-  const lockAccount = () => {
-    setAccounts((current) => current.map((account) => (
-      account.id === selectedId ? { ...account, active: false } : account
-    )))
-    notify(`Đã khóa tài khoản ${selectedAccount.name}`)
-  }
-
-  return (
-    <div className="wm-shell wm-light ra-shell">
-      <WareMapHeader activeScreen="ACCOUNT" theme="light" notify={notify} />
-      <div className="ra-layout">
-        <AccountList
-          accounts={accounts}
-          selectedId={selectedId}
-          query={query}
-          setQuery={setQuery}
-          setSelectedId={setSelectedId}
-          onCreate={createAccount}
-        />
-        <PermissionMatrix />
-        <AccountInspector
-          key={selectedAccount.id}
-          account={selectedAccount}
-          onSave={saveAccount}
-          onLock={lockAccount}
+      <div className="toolbar">
+        <SearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder="Tìm nhân viên, email hoặc vai trò…"
         />
       </div>
-      <div className="ra-bottom">
-        <span><i /> Gói hiện tại: <strong>ADMIN_VIP</strong></span>
-        <span>Đang sử dụng: <strong>{accounts.length}/10 tài khoản phụ</strong></span>
-        <MonoLabel size={9}>RBAC ENGINE · POLICY ENFORCED</MonoLabel>
-      </div>
-      {toast && <div className="wm-toast"><Check size={15} /> {toast}</div>}
-    </div>
+      <Panel>
+        {rows.length ? (
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nhân viên</th>
+                  <th>Vai trò</th>
+                  <th>Cơ sở được truy cập</th>
+                  <th>Trạng thái</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((s) => (
+                  <tr key={s.id}>
+                    <td>
+                      <div className="row">
+                        <span className="avatar">
+                          {s.name.split(" ").slice(-1)[0][0]}
+                        </span>
+                        <div>
+                          <strong>{s.name}</strong>
+                          <small>{s.email}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{roleNames[s.role]}</td>
+                    <td>{s.branch}</td>
+                    <td>
+                      <Badge tone={s.active ? "success" : "neutral"}>
+                        {s.active ? "Đang hoạt động" : "Đã khóa"}
+                      </Badge>
+                    </td>
+                    <td>
+                      <Button variant="ghost" onClick={() => setDetailId(s.id)}>
+                        Xem quyền
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <Empty title="Không có nhân viên phù hợp">
+            Thử tên hoặc vai trò khác.
+          </Empty>
+        )}
+      </Panel>
+      <Panel title="Yêu cầu của doanh nghiệp" className="request-history">
+        {data.requests.filter(
+          (r) => r.company === data.company && r.kind !== "Đăng ký sử dụng",
+        ).length ? (
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Yêu cầu</th>
+                  <th>Số tài khoản</th>
+                  <th>Trạng thái</th>
+                  <th>Phản hồi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.requests
+                  .filter(
+                    (r) =>
+                      r.company === data.company &&
+                      r.kind !== "Đăng ký sử dụng",
+                  )
+                  .map((r) => (
+                    <tr key={r.id}>
+                      <td>
+                        <strong>{r.id}</strong>
+                        <small>
+                          {r.kind} · {dateLabel(r.date)}
+                        </small>
+                      </td>
+                      <td>{r.count}</td>
+                      <td>
+                        <Badge
+                          tone={
+                            r.status === "Đã cấp"
+                              ? "success"
+                              : r.status === "Từ chối"
+                                ? "danger"
+                                : "warning"
+                          }
+                        >
+                          {r.status}
+                        </Badge>
+                      </td>
+                      <td>{r.note || "Chưa có phản hồi"}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="panel-body">
+            <p className="tiny">
+              Chưa có yêu cầu. Các yêu cầu mới và phản hồi của WareMap sẽ xuất
+              hiện tại đây.
+            </p>
+          </div>
+        )}
+      </Panel>
+      {detail && (
+        <Modal title={detail.name} close={() => setDetailId("")}>
+          <div className="stack">
+            <Badge tone="info">{roleNames[detail.role]}</Badge>
+            <p className="tiny muted">Phạm vi: {detail.branch}</p>
+            <h3>Người này được làm gì?</h3>
+            <div className="permission-list">
+              {permissions[detail.role].map((p) => (
+                <div key={p}>
+                  <Check size={16} />
+                  {p}
+                </div>
+              ))}
+            </div>
+            <div className="callout">
+              Vai trò được WareMap cấp theo yêu cầu đã duyệt. Muốn thay đổi vai
+              trò hoặc khóa tài khoản, gửi yêu cầu hỗ trợ trong Cài đặt.
+            </div>
+          </div>
+        </Modal>
+      )}
+      {requesting && (
+        <Modal title="Yêu cầu cấp tài khoản" close={() => setRequesting(false)}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              const f = new FormData(e.currentTarget)
+              const email = String(f.get("email")).trim()
+              if (
+                data.staff.some(
+                  (s) => s.email.toLowerCase() === email.toLowerCase(),
+                )
+              )
+                return setError("Email này đã có tài khoản trong doanh nghiệp.")
+              update((d) => ({
+                ...d,
+                requests: [
+                  {
+                    id: "YC-" + Date.now().toString().slice(-6),
+                    kind: "Cấp tài khoản",
+                    company: d.company,
+                    name: String(f.get("name")).trim(),
+                    email,
+                    branches: d.locations,
+                    count,
+                    reason: String(f.get("reason")).trim(),
+                    role,
+                    branch: String(f.get("branch")),
+                    status: "Chờ duyệt",
+                    note: "",
+                    date: today(),
+                  },
+                  ...d.requests,
+                ],
+              }))
+              setRequesting(false)
+              notify(
+                "Đã lưu yêu cầu minh họa. Tài khoản chưa được cấp cho đến khi WareMap duyệt.",
+              )
+            }}
+          >
+            <div className="form-grid">
+              <label className="field">
+                Tên nhân viên / nhóm nhân viên
+                <input name="name" required />
+              </label>
+              <label className="field">
+                Email liên hệ
+                <input type="email" name="email" required />
+              </label>
+            </div>
+            <div className="form-grid">
+              <label className="field">
+                Số lượng cần cấp thêm
+                <input
+                  type="number"
+                  required
+                  min={1}
+                  max={100}
+                  value={count}
+                  onChange={(e) => setCount(Number(e.target.value))}
+                />
+              </label>
+              <label className="field">
+                Vai trò đề xuất
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as Staff["role"])}
+                >
+                  {Object.keys(permissions).map((r) => (
+                    <option value={r} key={r}>
+                      {roleNames[(r as Staff["role"])]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <label className="field">
+              Cơ sở làm việc
+              <select name="branch">
+                {branches.map((b) => (
+                  <option key={b}>{b}</option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              Lý do cần số lượng tài khoản này
+              <textarea
+                required
+                name="reason"
+                placeholder="Số ca, phân công công việc và nhu cầu sử dụng…"
+              />
+            </label>
+            <div className="callout">
+              Còn {Math.max(0, data.allowance - data.staff.length)} tài khoản
+              trong hạn mức hiện tại.
+              {extra > 0 && (
+                <>
+                  <br />
+                  <strong>Phí tăng thêm dự kiến: {money(extra)}/tháng</strong>{" "}
+                  theo block 5 tài khoản.
+                </>
+              )}
+            </div>
+            {count > 1 && (
+              <p className="tiny muted">
+                Bản demo sẽ tạo nhóm tài khoản cùng vai trò. Email tài khoản
+                tiếp theo được gắn hậu tố để phân biệt.
+              </p>
+            )}
+            {error && (
+              <p className="inline-error" role="alert">
+                {error}
+              </p>
+            )}
+            <div className="form-actions">
+              <Button variant="secondary" onClick={() => setRequesting(false)}>
+                Hủy
+              </Button>
+              <Button type="submit">Gửi yêu cầu minh họa</Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+    </>
   )
 }

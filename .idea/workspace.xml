@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="a5b9705e-42b9-4760-ad3c-97cfcea9560a" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.figma/make/site.json" beforeDir="false" afterPath="$PROJECT_DIR$/.figma/make/site.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/account/AccountRbacScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/account/AccountRbacScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/auth/LoginScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/auth/LoginScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/batches/BatchesScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/batches/BatchesScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/builder/BuilderScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/builder/BuilderScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/dashboard/DashboardScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/dashboard/DashboardScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/fefo-alerts/FefoAlertsScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/fefo-alerts/FefoAlertsScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/in-transit/InTransitScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/in-transit/InTransitScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/inventory/InventoryScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/inventory/InventoryScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/public-home/PublicHomeScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/public-home/PublicHomeScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/roi/RoiDashboardScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/roi/RoiDashboardScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/scanner/MobileScannerScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/scanner/MobileScannerScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/settings/SettingsScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/settings/SettingsScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.css" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="59" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3KwlpOQAt02KyD9cULT2QDXLTQy" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "lamtd",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "to.speed.mode.migration.done": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-a203e0a19954-intellij.indexing.shared.core-IU-262.10968.63" />
+        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-IU-262.10968.63" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="a5b9705e-42b9-4760-ad3c-97cfcea9560a" name="Changes" comment="" />
+      <created>1792476694102</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1792476694102</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

@@ -1,402 +1,282 @@
-import { useRef, useState } from 'react'
-import type { ReactNode } from 'react'
-import {
-  ArrowLeft,
-  ArrowRight,
-  Baby,
-  Box,
-  Check,
-  CheckCircle2,
-  Crown,
-  Eye,
-  EyeOff,
-  KeyRound,
-  LockKeyhole,
-  Mail,
-  Map,
-  MessageCircle,
-  Palette,
-  QrCode,
-  ShieldAlert,
-  Sparkles,
-  Store,
-} from 'lucide-react'
-import { Btn, MonoLabel } from '../../shared'
-
-type BusinessType = 'mother-baby' | 'cosmetics' | 'other'
-type Plan = 'free' | 'pro' | 'chain'
-
-function navigateToDashboard() {
-  window.dispatchEvent(new CustomEvent('waremap:navigate', { detail: 'dashboard' }))
-}
-
-const benefits = [
-  {
-    icon: Map,
-    title: 'Bản đồ Kho 3D',
-    description: 'Định vị chính xác từng kệ, tầng và ô hàng.',
-  },
-  {
-    icon: QrCode,
-    title: 'QR Lô & Vị trí',
-    description: 'Đối soát hai chiều ngay trên điện thoại.',
-  },
-  {
-    icon: ShieldAlert,
-    title: 'Cảnh báo FEFO',
-    description: 'Chủ động phát hiện lô cận hạn và hết hạn.',
-  },
-]
-
-function BrandingPanel() {
+import { ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff } from "lucide-react"
+import { useState } from "react"
+import { useApp } from "../../app/store"
+import { Badge, Brand, Button, Panel } from "../../app/ui"
+import { branches, money, quote, today } from "../../app/model"
+import { MiniMap } from "../public-home/PublicHomeScreen"
+export default function Login() {
+  const { go, setRole } = useApp()
+  const [visible, setVisible] = useState(false),
+    [message, setMessage] = useState("")
   return (
-    <section className="lg-brand">
-      <div className="lg-brand-orb orb-one" />
-      <div className="lg-brand-orb orb-two" />
-      <div className="lg-brand-grid" />
-
-      <div className="lg-brand-content">
-        <div className="lg-main-logo">
-          <div><Box size={33} /></div>
-          <span>WareMap <strong>System</strong><small>V5.0</small></span>
+    <div className="auth-page">
+      <section className="auth-story">
+        <Brand />
+        <div>
+          <span className="eyebrow" style={{ color: "#81c8cd" }}>
+            Rõ vị trí. Dễ vận hành.
+          </span>
+          <h1>
+            Một góc nhìn rõ hơn
+            <br />
+            về kho của bạn.
+          </h1>
+          <p>Cùng một sơ đồ, cả đội biết hàng ở đâu và việc gì cần xử lý.</p>
+          <MiniMap />
         </div>
-
-        <div className="lg-brand-copy">
-          <MonoLabel size={10} color="#CFFAFE">WAREHOUSE INTELLIGENCE PLATFORM</MonoLabel>
-          <h1>Quản lý Kho Thông minh<br />& Định vị 3D Trực quan</h1>
-          <p>Tối ưu vận hành, hạn dùng và trải nghiệm quản lý kho dành riêng cho doanh nghiệp Mẹ & Bé và Mỹ phẩm.</p>
-        </div>
-
-        <div className="lg-benefits">
-          {benefits.map(({ icon: Icon, title, description }) => (
-            <article key={title}>
-              <div><Icon size={20} /></div>
-              <span><strong>{title}</strong><small>{description}</small></span>
-            </article>
-          ))}
-        </div>
-
-        <div className="lg-trust-row">
-          <div><CheckCircle2 size={14} /> Dữ liệu được mã hóa</div>
-          <div><CheckCircle2 size={14} /> Đồng bộ thời gian thực</div>
-          <div><CheckCircle2 size={14} /> PWA hoạt động ngoại tuyến</div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function LoginField({
-  label,
-  icon: Icon,
-  value,
-  type = 'text',
-  placeholder,
-  onChange,
-  action,
-}: {
-  label: string
-  icon: typeof Mail
-  value: string
-  type?: string
-  placeholder: string
-  onChange: (value: string) => void
-  action?: ReactNode
-}) {
-  return (
-    <label className="lg-field">
-      <span>{label}</span>
-      <div>
-        <Icon size={16} />
-        <input
-          type={type}
-          value={value}
-          placeholder={placeholder}
-          onChange={(event) => onChange(event.target.value)}
-        />
-        {action}
-      </div>
-    </label>
-  )
-}
-
-function LoginForm({ onCreate }: { onCreate: () => void }) {
-  const [email, setEmail] = useState('admin@waremap.vn')
-  const [password, setPassword] = useState('WareMap@2026')
-  const [remember, setRemember] = useState(true)
-  const [passwordVisible, setPasswordVisible] = useState(false)
-  const [toast, setToast] = useState('')
-  const timer = useRef<number | null>(null)
-
-  const notify = (message: string) => {
-    setToast(message)
-    if (timer.current) window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => setToast(''), 2400)
-  }
-
-  const login = () => {
-    if (!email || !password) return notify('Vui lòng nhập đầy đủ email và mật khẩu')
-    notify('Đăng nhập thành công · Đang mở WareMap')
-    window.setTimeout(navigateToDashboard, 450)
-  }
-
-  return (
-    <div className="lg-form-card">
-      <div className="lg-mobile-brand"><Box size={19} /><strong>WareMap System</strong><span>V5.0</span></div>
-      <div className="lg-form-head">
-        <span>CHÀO MỪNG TRỞ LẠI</span>
-        <h2>Đăng nhập WareMap</h2>
-        <p>Quản lý kho hàng của bạn thông minh và trực quan hơn.</p>
-      </div>
-
-      <div className="lg-fields">
-        <LoginField
-          label="Email"
-          icon={Mail}
-          value={email}
-          placeholder="admin@cuahang.vn"
-          onChange={setEmail}
-        />
-        <LoginField
-          label="Mật khẩu"
-          icon={LockKeyhole}
-          type={passwordVisible ? 'text' : 'password'}
-          value={password}
-          placeholder="Nhập mật khẩu"
-          onChange={setPassword}
-          action={
-            <span className="lg-password-eye" onClick={() => setPasswordVisible((visible) => !visible)}>
-              {passwordVisible ? <EyeOff size={15} /> : <Eye size={15} />}
-            </span>
-          }
-        />
-      </div>
-
-      <div className="lg-login-options">
-        <div onClick={() => setRemember((checked) => !checked)}>
-          <span className={remember ? 'checked' : ''}>{remember && <Check size={12} />}</span>
-          Ghi nhớ đăng nhập
-        </div>
-        <button onClick={() => notify('Đã gửi liên kết đặt lại mật khẩu đến email')}>Quên mật khẩu?</button>
-      </div>
-
-      <Btn
-        variant="cyan"
-        size="lg"
-        full
-        onClick={login}
-        style={{ color: '#FFFFFF', background: '#0891B2', borderColor: '#0891B2', height: 46, borderRadius: 10 }}
-      >
-        Đăng nhập <ArrowRight size={16} />
-      </Btn>
-
-      <div className="lg-divider"><span>Hoặc</span></div>
-
-      <Btn
-        variant="primary"
-        size="lg"
-        full
-        onClick={() => {
-          notify('Đã xác thực Zalo · Đang mở WareMap')
-          window.setTimeout(navigateToDashboard, 450)
-        }}
-        style={{ color: '#FFFFFF', background: '#0068FF', borderColor: '#0068FF', height: 46, borderRadius: 10 }}
-      >
-        <MessageCircle size={17} /> Đăng nhập bằng Zalo
-      </Btn>
-
-      <div className="lg-create-link">
-        Chưa có tài khoản? <button onClick={onCreate}>Tạo tài khoản VIP mới</button>
-      </div>
-
-      <div className="lg-secure-note"><KeyRound size={13} /> Phiên đăng nhập được bảo vệ bằng mã hóa SSL 256-bit.</div>
-
-      {toast && <div className="lg-toast"><Check size={14} /> {toast}</div>}
-    </div>
-  )
-}
-
-function StepProgress({ step }: { step: number }) {
-  const labels = ['Loại hình', 'Cửa hàng', 'Chọn gói']
-  return (
-    <div className="lg-step-progress">
-      {labels.map((label, index) => {
-        const number = index + 1
-        const complete = number < step
-        const active = number === step
-        return (
-          <div className={complete ? 'complete' : active ? 'active' : ''} key={label}>
-            <span>{complete ? <Check size={12} /> : number}</span>
-            <small>{label}</small>
-            {index < labels.length - 1 && <i />}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function BusinessTypeStep({
-  value,
-  onChange,
-}: {
-  value: BusinessType
-  onChange: (value: BusinessType) => void
-}) {
-  const options: Array<{ id: BusinessType; title: string; description: string; icon: typeof Baby; color: string }> = [
-    { id: 'mother-baby', title: 'Mẹ & Bé', description: 'Sữa, bỉm tã, dinh dưỡng và đồ dùng cho bé.', icon: Baby, color: '#0891B2' },
-    { id: 'cosmetics', title: 'Mỹ phẩm', description: 'Chăm sóc da, trang điểm và sản phẩm làm đẹp.', icon: Palette, color: '#DB2777' },
-    { id: 'other', title: 'Khác', description: 'Mô hình bán lẻ hoặc phân phối chuyên biệt.', icon: Store, color: '#7C3AED' },
-  ]
-
-  return (
-    <div className="lg-business-options">
-      {options.map(({ id, title, description, icon: Icon, color }) => (
-        <article className={value === id ? 'selected' : ''} key={id} onClick={() => onChange(id)}>
-          <div style={{ color, background: `${color}12` }}><Icon size={22} /></div>
-          <span><strong>{title}</strong><small>{description}</small></span>
-          <span className="lg-radio">{value === id && <Check size={12} />}</span>
-        </article>
-      ))}
-    </div>
-  )
-}
-
-function StoreStep({
-  storeName,
-  setStoreName,
-  branch,
-  setBranch,
-}: {
-  storeName: string
-  setStoreName: (value: string) => void
-  branch: string
-  setBranch: (value: string) => void
-}) {
-  return (
-    <div className="lg-store-fields">
-      <LoginField
-        label="Tên cửa hàng / Doanh nghiệp"
-        icon={Store}
-        value={storeName}
-        placeholder="Ví dụ: Mẹ & Bé An Nhiên"
-        onChange={setStoreName}
-      />
-      <LoginField
-        label="Chi nhánh đầu tiên"
-        icon={Map}
-        value={branch}
-        placeholder="Ví dụ: Chi nhánh Quận 3"
-        onChange={setBranch}
-      />
-      <div className="lg-store-preview">
-        <div><Store size={18} /></div>
-        <span><strong>{storeName || 'Tên cửa hàng'}</strong><small>{branch || 'Tên chi nhánh'} · Kho chính</small></span>
-        <MonoLabel size={8} color="#0891B2">WAREMAP READY</MonoLabel>
-      </div>
-    </div>
-  )
-}
-
-function PlanStep({ plan, setPlan }: { plan: Plan; setPlan: (plan: Plan) => void }) {
-  return (
-    <>
-      <div className="lg-plans">
-        <article className={plan === 'free' ? 'selected' : ''} onClick={() => setPlan('free')}>
-          <div className="lg-plan-head"><div><span>FREE</span><strong>0đ</strong><small>/ tháng</small></div><span className="lg-radio">{plan === 'free' && <Check size={12} />}</span></div>
-          <p>Dành cho cửa hàng bắt đầu số hóa kho.</p>
-          <ul><li><Check size={12} /> 1 kho hàng</li><li><Check size={12} /> 1 tài khoản Admin</li></ul>
-        </article>
-        <article className={`pro ${plan === 'pro' ? 'selected' : ''}`} onClick={() => setPlan('pro')}>
-          <div className="lg-popular"><Crown size={11} /> KHUYÊN DÙNG</div>
-          <div className="lg-plan-head"><div><span>PRO</span><strong>99.000đ</strong><small>/ tháng</small></div><span className="lg-radio">{plan === 'pro' && <Check size={12} />}</span></div>
-          <p>Đầy đủ công cụ quản lý kho chuyên nghiệp.</p>
-          <ul><li><Check size={12} /> 3D Builder & QR</li><li><Check size={12} /> FEFO & Zalo OA</li><li><Check size={12} /> Tài khoản phụ</li></ul>
-        </article>
-        <article className={`chain ${plan === 'chain' ? 'selected' : ''}`} onClick={() => setPlan('chain')}>
-          <div className="lg-plan-head"><div><span>CHUỖI</span><strong>299.000đ</strong><small>/ tháng</small></div><span className="lg-radio">{plan === 'chain' && <Check size={12} />}</span></div>
-          <p>Vận hành đồng bộ nhiều cửa hàng.</p>
-          <ul><li><Check size={12} /> Toàn bộ tính năng Pro</li><li><Check size={12} /> Tối đa 3 chi nhánh</li><li><Check size={12} /> Quản lý In-Transit</li></ul>
-          <div className="lg-chain-note">Chi nhánh thêm: 60.000đ/tháng</div>
-        </article>
-      </div>
-      <div className="lg-trial-note"><Sparkles size={12} /> Miễn phí 14 ngày.</div>
-    </>
-  )
-}
-
-function OnboardingForm({ onBackToLogin }: { onBackToLogin: () => void }) {
-  const [step, setStep] = useState(1)
-  const [businessType, setBusinessType] = useState<BusinessType>('mother-baby')
-  const [storeName, setStoreName] = useState('Mẹ & Bé An Nhiên')
-  const [branch, setBranch] = useState('Chi nhánh Quận 3')
-  const [plan, setPlan] = useState<Plan>('pro')
-
-  const next = () => {
-    if (step < 3) return setStep((current) => current + 1)
-    navigateToDashboard()
-  }
-
-  return (
-    <div className="lg-form-card lg-onboarding-card">
-      <button className="lg-back-button" onClick={step === 1 ? onBackToLogin : () => setStep((current) => current - 1)}>
-        <ArrowLeft size={14} /> {step === 1 ? 'Đăng nhập' : 'Quay lại'}
-      </button>
-
-      <div className="lg-form-head">
-        <span>THIẾT LẬP WAREMAP</span>
-        <h2>Tạo không gian kho của bạn</h2>
-        <p>Chỉ mất khoảng 2 phút để hoàn tất cấu hình ban đầu.</p>
-      </div>
-
-      <StepProgress step={step} />
-
-      <div className="lg-onboarding-body">
-        {step === 1 && (
-          <>
-            <div className="lg-step-copy"><strong>Chọn loại hình kinh doanh</strong><span>WareMap sẽ tối ưu mẫu kho và cảnh báo phù hợp.</span></div>
-            <BusinessTypeStep value={businessType} onChange={setBusinessType} />
-          </>
-        )}
-        {step === 2 && (
-          <>
-            <div className="lg-step-copy"><strong>Thông tin cửa hàng</strong><span>Bạn có thể thêm nhiều chi nhánh sau khi hoàn tất.</span></div>
-            <StoreStep storeName={storeName} setStoreName={setStoreName} branch={branch} setBranch={setBranch} />
-          </>
-        )}
-        {step === 3 && (
-          <>
-            <div className="lg-step-copy"><strong>Chọn gói WareMap</strong><span>Có thể nâng cấp hoặc thay đổi gói bất cứ lúc nào.</span></div>
-            <PlanStep plan={plan} setPlan={setPlan} />
-          </>
-        )}
-      </div>
-
-      <Btn
-        variant="cyan"
-        size="lg"
-        full
-        onClick={next}
-        style={{ color: '#FFFFFF', background: '#0891B2', borderColor: '#0891B2', height: 46, borderRadius: 10 }}
-      >
-        {step === 3 ? <><Sparkles size={16} /> Hoàn tất & Mở WareMap</> : <>Tiếp tục <ArrowRight size={16} /></>}
-      </Btn>
-    </div>
-  )
-}
-
-export default function Screen0Login() {
-  const [onboarding, setOnboarding] = useState(false)
-
-  return (
-    <div className="lg-shell">
-      <BrandingPanel />
-      <section className="lg-form-side">
-        {onboarding
-          ? <OnboardingForm onBackToLogin={() => setOnboarding(false)} />
-          : <LoginForm onCreate={() => setOnboarding(true)} />}
-        <div className="lg-footer">© 2026 WareMap System · Điều khoản · Quyền riêng tư</div>
+        <p className="tiny">WareMap System</p>
       </section>
+      <section className="auth-form-side">
+        <div className="auth-card">
+          <Brand />
+          <Button variant="ghost" onClick={() => go("home")}>
+            <ArrowLeft size={15} />
+            Về trang chủ
+          </Button>
+          <h1>Đăng nhập</h1>
+          <p>Tiếp tục quản lý kho hàng của bạn.</p>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              setMessage(
+                "Bản hiện tại chưa kết nối dịch vụ đăng nhập. Bạn có thể khám phá kho mẫu bên dưới.",
+              )
+            }}
+          >
+            <label className="field">
+              Email
+              <input
+                required
+                type="email"
+                placeholder="ban@doanhnghiep.vn"
+                autoComplete="username"
+              />
+            </label>
+            <label className="field">
+              Mật khẩu
+              <div className="row" style={{ gap: 5 }}>
+                <input
+                  required
+                  type={visible ? "text" : "password"}
+                  placeholder="Nhập mật khẩu"
+                  autoComplete="current-password"
+                />
+                <Button
+                  variant="ghost"
+                  aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  onClick={() => setVisible((v) => !v)}
+                >
+                  {visible ? <EyeOff size={18} /> : <Eye size={18} />}
+                </Button>
+              </div>
+            </label>
+            <div className="row between">
+              <label className="check-row">
+                <input type="checkbox" />
+                Ghi nhớ đăng nhập
+              </label>
+              <Button
+                variant="ghost"
+                onClick={() =>
+                  setMessage(
+                    "Để khôi phục tài khoản, gửi yêu cầu hỗ trợ qua mục Yêu cầu sử dụng.",
+                  )
+                }
+              >
+                Quên mật khẩu?
+              </Button>
+            </div>
+            <Button type="submit">
+              Đăng nhập
+              <ArrowRight size={16} />
+            </Button>
+            {message && (
+              <p className="callout" role="status">
+                {message}
+              </p>
+            )}
+          </form>
+          <hr />
+          <Button
+            className="full"
+            variant="secondary"
+            onClick={() => setRole("owner")}
+          >
+            Khám phá kho mẫu
+          </Button>
+          <div className="auth-bottom">
+            Chưa có tài khoản?{" "}
+            <Button variant="ghost" onClick={() => go("request")}>
+              Yêu cầu cấp tài khoản
+            </Button>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+export function RequestAccess() {
+  const { go, update, requestedPlan } = useApp()
+  const [done, setDone] = useState(""),
+    [locations, setLocations] = useState(1),
+    [count, setCount] = useState(5),
+    [plan, setPlan] = useState<string>(requestedPlan)
+  const price = quote(locations, count)
+  return (
+    <div className="request-page">
+      <button className="brand-button" onClick={() => go("home")}>
+        <Brand />
+      </button>
+      {done ? (
+        <Panel>
+          <div className="empty">
+            <CheckCircle2
+              size={42}
+              color="#087e8b"
+              style={{ margin: "0 auto 20px" }}
+            />
+            <h1>Yêu cầu đã được ghi nhận</h1>
+            <p>Mã {done} · Chờ WareMap xét duyệt.</p>
+            <div className="callout">
+              Đây là yêu cầu minh họa, lưu trên trình duyệt này. Chưa gửi đến
+              dịch vụ bên ngoài và chưa tạo tài khoản hoạt động.
+            </div>
+            <div
+              className="row"
+              style={{ justifyContent: "center", marginTop: 20 }}
+            >
+              <Button onClick={() => go("home")}>Về trang chủ</Button>
+            </div>
+          </div>
+        </Panel>
+      ) : (
+        <>
+          <span className="eyebrow">Bắt đầu với WareMap System</span>
+          <h1>Yêu cầu sử dụng</h1>
+          <p>Cho chúng mình biết mô hình và nhu cầu tài khoản của bạn.</p>
+          <Panel>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                const f = new FormData(e.currentTarget)
+                const id = "YC-" + Date.now().toString().slice(-6)
+                update((d) => ({
+                  ...d,
+                  requests: [
+                    {
+                      id,
+                      kind: "Đăng ký sử dụng",
+                      company: String(f.get("company")),
+                      name: String(f.get("name")),
+                      email: String(f.get("email")),
+                      branches: locations,
+                      count,
+                      reason: `${
+                        plan === "free" ? "Gói miễn phí" : "Gói có phí"
+                      } · ${f.get("reason")}`,
+                      role: "manager",
+                      branch: branches[0],
+                      status: "Chờ duyệt",
+                      note: "",
+                      date: today(),
+                    },
+                    ...d.requests,
+                  ],
+                }))
+                setDone(id)
+              }}
+            >
+              <div className="form-grid">
+                <label className="field">
+                  Tên người liên hệ
+                  <input required name="name" autoComplete="name" />
+                </label>
+                <label className="field">
+                  Email liên hệ
+                  <input
+                    required
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                  />
+                </label>
+              </div>
+              <label className="field">
+                Tên doanh nghiệp
+                <input required name="company" />
+              </label>
+              <label className="field">
+                Gói quan tâm
+                <select value={plan} onChange={(e) => setPlan(e.target.value)}>
+                  <option value="paid">Có phí · Theo quy mô cơ sở</option>
+                  <option value="free">
+                    Miễn phí · Cần xác nhận quyền lợi
+                  </option>
+                </select>
+              </label>
+              <div className="form-grid">
+                <label className="field">
+                  Số cơ sở
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    max={500}
+                    value={locations}
+                    onChange={(e) => setLocations(Number(e.target.value))}
+                  />
+                </label>
+                <label className="field">
+                  Số tài khoản nhân viên
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    max={500}
+                    value={count}
+                    onChange={(e) => setCount(Number(e.target.value))}
+                  />
+                  <small>Chưa bao gồm chủ doanh nghiệp.</small>
+                </label>
+              </div>
+              <label className="field">
+                Vai trò và lý do cần số lượng tài khoản trên
+                <textarea
+                  name="reason"
+                  required
+                  placeholder="Ví dụ: 2 quản lý kho, 3 nhân viên làm việc theo ca…"
+                />
+              </label>
+              <div className="callout">
+                {plan === "free" ? (
+                  "Quyền lợi và hạn mức gói miễn phí được xác nhận khi WareMap xử lý yêu cầu."
+                ) : (
+                  <>
+                    <strong>Chi phí dự kiến: {money(price.total)}/tháng</strong>
+                    <br />
+                    Gói cơ bản {money(price.base)} + cơ sở bổ sung{" "}
+                    {money(price.branchExtra)} + tài khoản bổ sung{" "}
+                    {money(price.staffExtra)}.
+                  </>
+                )}
+              </div>
+              <p className="tiny muted">
+                Yêu cầu được lưu trong bản demo. WareMap là bên xét duyệt và cấp
+                tài khoản.
+              </p>
+              <div className="form-actions">
+                <Button variant="secondary" onClick={() => go("home")}>
+                  Quay lại
+                </Button>
+                <Button type="submit">
+                  Gửi yêu cầu minh họa
+                  <ArrowRight size={15} />
+                </Button>
+              </div>
+            </form>
+          </Panel>
+        </>
+      )}
     </div>
   )
 }

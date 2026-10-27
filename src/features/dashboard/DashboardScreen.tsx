@@ -1,138 +1,249 @@
-import { useRef, useState } from 'react'
 import {
-  AlertTriangle, Box, Check, Clock3, Map, Package, Truck,
-} from 'lucide-react'
-import { Btn, MonoLabel } from '../../shared'
-import { WareMapHeader } from '../../shared/layout/WareMapHeader'
-
-const lanes = [
-  {
-    title: 'Khởi tạo', tone: 'slate', count: 3,
-    cards: [
-      { id: 'TC-2608-018', route: 'Kho Tổng → CN Quận 7', qty: '186 sản phẩm', time: '11:30' },
-      { id: 'TC-2608-019', route: 'CN Gò Vấp → Kho Tổng', qty: '64 sản phẩm', time: '12:15' },
-    ],
-  },
-  {
-    title: 'Đang nhặt hàng 3D', tone: 'cyan', count: 5,
-    cards: [
-      { id: 'TC-2608-016', route: 'Kho Tổng → CN Thủ Đức', qty: '242 sản phẩm', time: '10:45', owner: 'Minh Anh' },
-      { id: 'TC-2608-017', route: 'Kho Tổng → CN Tân Bình', qty: '98 sản phẩm', time: '11:05', owner: 'Hoàng Nam' },
-    ],
-  },
-  {
-    title: 'Đang đi đường', tone: 'amber', count: 8,
-    cards: [
-      { id: 'TC-2608-014', route: 'Kho Tổng → CN Quận 3', qty: '320 sản phẩm', time: '08:30', progress: 'ETA 12:10' },
-      { id: 'TC-2608-015', route: 'CN Quận 7 → Kho Tổng', qty: '115 sản phẩm', time: '09:15', progress: 'ETA 13:20' },
-    ],
-  },
-  {
-    title: 'Đã nhận', tone: 'green', count: 8,
-    cards: [
-      { id: 'TC-2608-012', route: 'Kho Tổng → CN Phú Nhuận', qty: '208 sản phẩm', time: '10:40', progress: 'Đủ hàng' },
-      { id: 'TC-2608-011', route: 'CN Tân Bình → Kho Tổng', qty: '76 / 81 sản phẩm', time: '11:05', progress: 'Lệch 05', issue: true },
-    ],
-  },
-]
-
-const audit = [
-  ['11:42', 'Nguyễn An cập nhật vị trí', 'SKU WM-0902 → A2-02-08'],
-  ['11:28', 'CN Quận 3 đã nhận hàng', 'Phiếu TC-2608-012 · đủ 208 SP'],
-  ['10:56', 'Cảnh báo FEFO tự động', 'LOT-WM-202608 · còn 23 ngày'],
-  ['10:31', 'Hoàng Nam bắt đầu nhặt', 'Phiếu TC-2608-017'],
-]
-
-function navigateTo(screen: string) {
-  window.dispatchEvent(new CustomEvent('waremap:navigate', { detail: screen }))
-}
-
-function KanbanCard({ card }: { card: (typeof lanes)[number]['cards'][number] }) {
-  return (
-    <article className={`dk-task ${card.issue ? 'issue' : ''}`}>
-      <div><strong>{card.id}</strong><span>{card.time}</span></div>
-      <p>{card.route}</p>
-      <div className="dk-task-meta"><Package size={13} /><span>{card.qty}</span></div>
-      {(card.owner || card.progress) && (
-        <div className="dk-task-foot">
-          <span>{card.owner ? `Phụ trách: ${card.owner}` : card.progress}</span>
-          {card.issue && <b><AlertTriangle size={11} /> BÁO LỆCH</b>}
-        </div>
-      )}
-    </article>
+  AlertCircle,
+  ArrowRight,
+  Building2,
+  Clock3,
+  MapPin,
+  Package,
+  Truck,
+} from "lucide-react"
+import { useApp } from "../../app/store"
+import {
+  Badge,
+  Button,
+  Empty,
+  LinkButton,
+  PageTitle,
+  Panel,
+} from "../../app/ui"
+import { branches, daysLeft, expiryLabel, locationLabel } from "../../app/model"
+import { MiniMap } from "../public-home/PublicHomeScreen"
+export default function Dashboard() {
+  const { data, visibleProducts, branch, setBranch, go, setSelected } = useApp()
+  const alerts = visibleProducts
+    .filter((p) => p.qty > 0 && daysLeft(p.expiry) <= data.settings.expiryDays)
+    .sort((a, b) => daysLeft(a.expiry) - daysLeft(b.expiry))
+  const transfers = data.transfers.filter(
+    (t) =>
+      (branch === "all" || t.from === branch || t.to === branch) &&
+      t.status !== "Hoàn tất",
   )
-}
-
-function MiniWarehouse() {
-  return (
-    <div className="dk-map">
-      <div className="dk-grid" />
-      <div className="dk-rack r1"><i /><i /><i /></div>
-      <div className="dk-rack r2 alert"><i /><i /><i /></div>
-      <div className="dk-rack r3"><i /><i /><i /></div>
-      <div className="dk-rack r4 alert"><i /><i /><i /></div>
-      <span className="dk-map-label">KỆ A2 · FEFO 23 NGÀY</span>
-    </div>
-  )
-}
-
-export default function Screen1Dashboard() {
-  const [toast, setToast] = useState('Dữ liệu kho đã đồng bộ lúc 11:45')
-  const timer = useRef<number | null>(null)
-  const notify = (message: string) => {
-    setToast(message)
-    if (timer.current) window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => setToast(''), 2400)
+  const showProduct = (id: string, b: string) => {
+    setSelected(id)
+    setBranch(b)
+    go("warehouse")
   }
-
   return (
-    <div className="wm-shell wm-light dk-shell">
-      <WareMapHeader activeScreen="S1" theme="light" notify={notify} />
-      <div className="dk-page">
-        <div className="dk-body">
-          <main className="dk-main">
-            <div className="dk-title">
-              <div><MonoLabel size={9} color="#0891B2">TỔNG QUAN VẬN HÀNH</MonoLabel><strong className="dk-page-title">Chào buổi sáng, Quản lý</strong><p>Kiểm soát luồng hàng giữa các chi nhánh theo thời gian thực.</p></div>
-              <span><Clock3 size={14} /> Cập nhật 2 phút trước</span>
+    <>
+      <PageTitle
+        eyebrow="Một góc nhìn, toàn bộ hoạt động"
+        title="Hôm nay, kho của bạn thế nào?"
+        description={
+          branch === "all"
+            ? "Theo dõi các cơ sở và ưu tiên những việc cần xử lý."
+            : `Tình trạng tại ${branch}. Chọn một công việc để bắt đầu.`
+        }
+        action={
+          <Button onClick={() => go("warehouse")}>
+            <MapPin size={16} />
+            Xem bản đồ kho
+          </Button>
+        }
+      />
+      <div className="metric-grid compact">
+        {[
+          {
+            icon: Package,
+            label: "Mặt hàng đang quản lý",
+            value: new Set(visibleProducts.map((p) => p.id)).size,
+            note: `${visibleProducts.reduce((n, p) => n + p.qty, 0)} sản phẩm tại phạm vi đang xem`,
+          },
+          {
+            icon: AlertCircle,
+            label: "Lô cần kiểm tra hạn dùng",
+            value: alerts.length,
+            note: `${alerts.filter((p) => daysLeft(p.expiry) < 0).length} lô đã hết hạn`,
+          },
+          {
+            icon: Truck,
+            label: "Phiếu chuyển cần xử lý",
+            value: transfers.length,
+            note: `${transfers.filter((t) => t.status === "Đang chuyển").length} phiếu đang chuyển`,
+          },
+        ].map(({ icon: Icon, label, value, note }) => (
+          <Panel className="metric" key={label}>
+            <span>{label}</span>
+            <Icon className="metric-icon" size={20} />
+            <div className="metric-value">
+              <strong>{value}</strong>
             </div>
-            <div className="dk-kpis">
-              <article><span><Truck size={18} /></span><div><small>TỔNG PHIẾU CHUYỂN</small><strong>24</strong><p>+12% so với hôm qua</p></div></article>
-              <article><span><Map size={18} /></span><div><small>ĐANG ĐI ĐƯỜNG</small><strong>08</strong><p>3 phiếu sắp đến nơi</p></div></article>
-              <article className="danger"><span><AlertTriangle size={18} /></span><div><small>BÁO LỆCH</small><strong>05</strong><p>Cần đối soát ngay</p></div></article>
-            </div>
-            <section className="dk-flow">
-              <div className="dk-section-head"><div><strong className="dk-section-title">Quản lý luồng In-Transit</strong><p>Kéo thả phiếu để cập nhật trạng thái xử lý</p></div><Btn variant="outline" size="sm">Xem tất cả</Btn></div>
-              <div className="dk-board">
-                {lanes.map((lane) => (
-                  <section className={`dk-lane ${lane.tone}`} key={lane.title}>
-                    <header><span /><strong>{lane.title}</strong><b>{lane.count}</b></header>
-                    <div>{lane.cards.map((card) => <KanbanCard card={card} key={card.id} />)}</div>
-                  </section>
+            <p>{note}</p>
+          </Panel>
+        ))}
+      </div>
+      <div className="split">
+        <div className="stack">
+          <Panel
+            title="Cần xử lý"
+            action={
+              <Badge tone={alerts.length ? "warning" : "success"}>
+                {alerts.length + transfers.length} công việc
+              </Badge>
+            }
+          >
+            {!alerts.length && !transfers.length ? (
+              <Empty title="Mọi việc đang ổn">
+                Chưa có cảnh báo hoặc phiếu chuyển cần xử lý tại phạm vi này.
+              </Empty>
+            ) : (
+              <div className="action-list">
+                {alerts.slice(0, 3).map((p) => (
+                  <div key={`${p.id}-${p.branch}`}>
+                    <span
+                      className={`action-symbol ${
+                        daysLeft(p.expiry) < 0 ? "danger" : ""
+                      }`}
+                    >
+                      <AlertCircle size={20} />
+                    </span>
+                    <div className="action-copy">
+                      <strong>{p.name}</strong>
+                      <p>
+                        {expiryLabel(p.expiry)} · {p.qty} sản phẩm · {p.branch}
+                      </p>
+                    </div>
+                    <Button
+                      variant="secondary"
+                      onClick={() => showProduct(p.id, p.branch)}
+                    >
+                      Xem vị trí
+                      <ArrowRight size={14} />
+                    </Button>
+                  </div>
+                ))}
+                {transfers.slice(0, 2).map((t) => (
+                  <div key={t.id}>
+                    <span
+                      className="action-symbol"
+                      style={{ background: "#edf5f8", color: "#63889c" }}
+                    >
+                      <Truck size={20} />
+                    </span>
+                    <div className="action-copy">
+                      <strong>
+                        {t.id} · {t.status}
+                      </strong>
+                      <p>
+                        {t.from} → {t.to}
+                      </p>
+                    </div>
+                    <Button variant="secondary" onClick={() => go("mobile")}>
+                      Kiểm tra phiếu
+                      <ArrowRight size={14} />
+                    </Button>
+                  </div>
                 ))}
               </div>
-            </section>
-          </main>
-          <aside className="dk-right">
-            <section className="dk-panel">
-              <div className="dk-panel-head"><div><MonoLabel size={8} color="#0891B2">LIVE VIEW</MonoLabel><strong className="dk-section-title">Bản đồ kho 3D</strong></div><Btn variant="ghost" size="sm" onClick={() => navigateTo('builder')}><Box size={14} /> Mở 3D</Btn></div>
-              <MiniWarehouse />
-              <div className="dk-map-legend"><span><i /> Cận hạn FEFO</span><b>2 vị trí cảnh báo</b></div>
-            </section>
-            <section className="dk-panel dk-audit">
-              <div className="dk-panel-head"><div><MonoLabel size={8} color="#64748B">AUDIT LOG</MonoLabel><strong className="dk-section-title">Lịch sử luân chuyển</strong></div><Clock3 size={17} /></div>
-              {audit.map(([time, title, meta], index) => (
-                <div className={index === 2 ? 'warning' : ''} key={time}>
-                  <span>{index === 2 ? <AlertTriangle size={12} /> : <Check size={12} />}</span>
-                  <div><strong>{title}</strong><small>{meta}</small></div>
-                  <time>{time}</time>
+            )}
+            <div className="section-note">
+              <LinkButton to="onboarding">
+                Xem toàn bộ hàng cần kiểm tra
+              </LinkButton>
+            </div>
+          </Panel>
+          <Panel
+            title="Hoạt động gần đây"
+            action={<Clock3 size={17} color="#8195a3" />}
+          >
+            {data.activities.length ? (
+              <div className="action-list">
+                {data.activities.slice(0, 4).map((a) => (
+                  <div key={a.id}>
+                    <span className="avatar">
+                      <Clock3 size={16} />
+                    </span>
+                    <div className="action-copy">
+                      <strong>{a.title}</strong>
+                      <p>{a.detail}</p>
+                    </div>
+                    <small className="muted">
+                      {new Date(a.time).toLocaleTimeString("vi-VN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </small>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="panel-body">
+                <p className="tiny">
+                  Thao tác nhập hàng, chuyển kho và chỉnh sơ đồ sẽ được ghi lại
+                  tại đây.
+                </p>
+              </div>
+            )}
+          </Panel>
+        </div>
+        <div className="stack">
+          <Panel
+            title={branch === "all" ? "Các cơ sở của bạn" : "Kho đang xem"}
+          >
+            {(branch === "all" ? branches : [branch]).map((b) => {
+              const n = data.products.filter(
+                (p) =>
+                  p.branch === b &&
+                  p.qty > 0 &&
+                  daysLeft(p.expiry) <= data.settings.expiryDays,
+              ).length
+              return (
+                <div className="branch-card" key={b}>
+                  <Building2 size={21} color="#7497a7" />
+                  <div>
+                    <strong className="tiny">{b}</strong>
+                    <p>
+                      {data.products
+                        .filter((p) => p.branch === b)
+                        .reduce((a, p) => a + p.qty, 0)}{" "}
+                      sản phẩm
+                    </p>
+                  </div>
+                  <button
+                    className="icon-button"
+                    aria-label={`Xem ${b}`}
+                    onClick={() => {
+                      setBranch(b)
+                      go("warehouse")
+                    }}
+                  >
+                    <Badge tone={n ? "warning" : "success"}>
+                      {n ? `${n} cần chú ý` : "Ổn định"}
+                    </Badge>
+                  </button>
                 </div>
-              ))}
-              <Btn variant="ghost" size="sm" full>Xem toàn bộ lịch sử</Btn>
-            </section>
-          </aside>
+              )
+            })}
+          </Panel>
+          <Panel title="Mỗi mặt hàng, một vị trí">
+            <div className="panel-body">
+              <MiniMap />
+              <div className="row between" style={{ marginTop: 17 }}>
+                <div>
+                  <strong className="tiny">Tìm hàng bằng vị trí</strong>
+                  <p className="tiny">Kệ · Tầng · Ô</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  onClick={() => go("warehouse")}
+                  aria-label="Mở bản đồ kho"
+                >
+                  <ArrowRight size={18} />
+                </Button>
+              </div>
+            </div>
+          </Panel>
         </div>
       </div>
-      {toast && <div className="dk-toast"><Check size={15} /> {toast}</div>}
-    </div>
+    </>
   )
 }
