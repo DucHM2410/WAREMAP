@@ -8,12 +8,15 @@ import {
 } from "react"
 import {
   seed,
+  withIndustrySamples,
+  industryProducts,
   type DemoData,
   type Product,
   type Role,
   type Screen,
   branches,
 } from "./model"
+import { useIndustry } from "../shared/context/IndustryContext"
 const key = "waremap-demo-v3"
 export interface ScanTask {
   transferId?: string
@@ -44,19 +47,27 @@ interface State {
 }
 const Context = createContext<State | null>(null)
 export function Provider({ children }: { children: ReactNode }) {
+  const { industry, config } = useIndustry()
   const [data, setData] = useState<DemoData>(() => {
     try {
       const raw = localStorage.getItem(key)
       const saved = raw ? JSON.parse(raw) : null
-      return saved?.version === 3 ? saved : seed()
+      if (saved?.version === 3) {
+        return saved.industry === config.id
+          ? (saved as DemoData)
+          : withIndustrySamples(saved, config)
+      }
+      return seed(config)
     } catch {
-      return seed()
+      return seed(config)
     }
   })
   const [screen, setScreen] = useState<Screen>("home"),
     [branch, setBranch] = useState("all"),
     [role, setRole] = useState<Role>("owner"),
-    [selected, setSelected] = useState("WM-001"),
+    [selected, setSelected] = useState(
+      () => industryProducts(config)[0]?.id ?? "",
+    ),
     [search, setSearch] = useState(""),
     [toast, setToast] = useState(""),
     [storageError, setStorageError] = useState(false)
@@ -79,6 +90,13 @@ export function Provider({ children }: { children: ReactNode }) {
       setStorageError(true)
     }
   }, [data])
+  const appliedIndustry = useRef(industry)
+  useEffect(() => {
+    if (appliedIndustry.current === industry) return
+    appliedIndustry.current = industry
+    setData((current) => withIndustrySamples(current, config))
+    setSelected(industryProducts(config)[0]?.id ?? "")
+  }, [industry, config])
   useEffect(() => {
     if (!toast) return
     const timer = setTimeout(() => setToast(""), 4200)

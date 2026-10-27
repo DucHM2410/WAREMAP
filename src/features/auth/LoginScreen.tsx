@@ -3,11 +3,19 @@ import { useState } from "react"
 import { useApp } from "../../app/store"
 import { Badge, Brand, Button, Panel } from "../../app/ui"
 import { branches, money, quote, today } from "../../app/model"
+import { useIndustry } from "../../shared/context/IndustryContext"
 import { MiniMap } from "../public-home/PublicHomeScreen"
 export default function Login() {
   const { go, setRole } = useApp()
+  const { hasSavedIndustry } = useIndustry()
   const [visible, setVisible] = useState(false),
     [message, setMessage] = useState("")
+
+  const enterWorkspace = () => {
+    setRole("owner")
+    if (!hasSavedIndustry) go("industry-picker")
+  }
+
   return (
     <div className="auth-page">
       <section className="auth-story">
@@ -100,7 +108,7 @@ export default function Login() {
           <Button
             className="full"
             variant="secondary"
-            onClick={() => setRole("owner")}
+            onClick={enterWorkspace}
           >
             Khám phá kho mẫu
           </Button>

@@ -13,6 +13,7 @@ import {
 import { useApp } from "../../app/store"
 import { Badge, Brand, Button } from "../../app/ui"
 import { branches, money, policy } from "../../app/model"
+import { useIndustry } from "../../shared/context/IndustryContext"
 export function MiniMap({ highlight = "A2" }: { highlight?: string }) {
   return (
     <div
@@ -35,6 +36,11 @@ export function MiniMap({ highlight = "A2" }: { highlight?: string }) {
 }
 export default function PublicHome() {
   const { go, setRole, setRequestedPlan } = useApp()
+  const { hasSavedIndustry } = useIndustry()
+  const startDemo = () => {
+    setRole("owner")
+    if (!hasSavedIndustry) go("industry-picker")
+  }
   return (
     <div className="landing">
       <header className="public-nav">
@@ -71,7 +77,7 @@ export default function PublicHome() {
               tình hình các cơ sở trên cùng một hệ thống.
             </p>
             <div className="row">
-              <Button onClick={() => setRole("owner")}>
+              <Button onClick={startDemo}>
                 Khám phá kho mẫu
                 <ArrowRight size={17} />
               </Button>
@@ -157,7 +163,7 @@ export default function PublicHome() {
                 hàng đang chuyển và xem nơi nào cần chú ý.
               </p>
               <div className="row" style={{ marginTop: 23 }}>
-                <Button variant="secondary" onClick={() => setRole("owner")}>
+                <Button variant="secondary" onClick={startDemo}>
                   Xem cách quản lý nhiều kho
                   <ArrowRight size={15} />
                 </Button>
@@ -294,7 +300,7 @@ export default function PublicHome() {
           <div className="public-cta">
             <h2>Hình dung kho của bạn rõ ràng hơn.</h2>
             <p>Thử tìm một mặt hàng, xem vị trí và khám phá cách bố trí kho.</p>
-            <Button onClick={() => setRole("owner")}>
+            <Button onClick={startDemo}>
               Mở kho mẫu
               <ArrowRight size={16} />
             </Button>

@@ -2,12 +2,16 @@ import { lazy, Suspense, Component, type ReactNode } from "react"
 import { Provider, useApp } from "./store"
 import { Shell } from "./Shell"
 import { Button, Empty } from "./ui"
+import { IndustryProvider } from "../shared/context/IndustryContext"
 const Home = lazy(() => import("../features/public-home/PublicHomeScreen"))
 const Login = lazy(() => import("../features/auth/LoginScreen"))
 const Request = lazy(() =>
   import("../features/auth/LoginScreen").then((m) => ({
     default: m.RequestAccess,
   })),
+)
+const IndustryPickerPage = lazy(
+  () => import("../features/industry-picker/IndustryPickerScreen"),
 )
 const Dashboard = lazy(() => import("../features/dashboard/DashboardScreen"))
 const Builder = lazy(() => import("../features/builder/BuilderScreen"))
@@ -48,6 +52,7 @@ function Routes() {
     home: <Home />,
     login: <Login />,
     request: <Request />,
+    "industry-picker": <IndustryPickerPage />,
     dashboard: <Dashboard />,
     builder: <Builder />,
     warehouse: <Builder />,
@@ -92,7 +97,7 @@ function Routes() {
       </Suspense>
     </Boundary>
   )
-  return ["home", "login", "request"].includes(screen) ? (
+  return ["home", "login", "request", "industry-picker"].includes(screen) ? (
     content
   ) : (
     <Shell>{content}</Shell>
@@ -100,11 +105,13 @@ function Routes() {
 }
 export default function App() {
   return (
-    <Provider>
-      <a className="skip-link" href="#main-content">
-        Đến nội dung chính
-      </a>
-      <Routes />
-    </Provider>
+    <IndustryProvider>
+      <Provider>
+        <a className="skip-link" href="#main-content">
+          Đến nội dung chính
+        </a>
+        <Routes />
+      </Provider>
+    </IndustryProvider>
   )
 }
