@@ -13,8 +13,11 @@ import { WarehouseRack } from "./WarehouseRack"
 import { RACK_TEMPLATES, createRack, fitToFloor } from "./rackLibrary"
 import { CanvasPlacement, type PlacementProjector } from "./CanvasPlacement"
 import { WarehouseLocations } from "./WarehouseLocations"
+import { RackInspector } from "./RackInspector"
+import { WAREHOUSE_PERMISSIONS } from "../../app/warehousePermissions"
 import { ProductSizingPanel } from "./ProductSizingPanel"
 import type { ProductDisplay } from "./productSizing"
+import { fitsCompartment, storagePackageFor } from "./productSizing"
 import "./builder.css"
 import { productKey, ExpiryBadge } from "../../app/catalog"
 import { QRLabels } from "../../app/labels"
@@ -85,8 +88,10 @@ export default function Warehouse() {
     accessMode,
     guardNavigation,
     setScanTask,
+    scanTask,
   } = useApp()
   const { config } = useIndustry()
+  const [allTemplates,setAllTemplates] = useState(false)
   const [tool, setTool] = useState<"select" | "move" | "rotate">("select")
   const [selectedBatch, setSelectedBatch] = useState("")
   const [displayMode,setDisplayMode] = useState<ProductDisplay>("readable")
@@ -115,7 +120,7 @@ export default function Warehouse() {
     setDraft(data.racks[warehouse] || [])
     setHistory([])
     setChosen("")
-    setSelectedBatch("")
+    setSelectedBatch(scanTask.productKey?.split("|")[0] === selected && scanTask.productKey?.split("|")[2] === warehouse ? scanTask.productKey.split("|")[1] : "")
     setSaved(false)
   }, [warehouse])
   const persisted = data.racks[warehouse] || [],
@@ -157,9 +162,20 @@ export default function Warehouse() {
     setSaved(false)
     setError("")
   }
-  const change = (key: keyof Rack, value: string | number) => {
-    if (rack)
-      mutate(draft.map((r) => (r.id === rack.id ? { ...r, [key]: value } : r)))
+  const patchRack = (patch: Partial<Rack>) => {
+    if (!rack) return
+    const next = {...rack,...patch}
+    if (data.products.some(p => p.branch === warehouse && p.rack === rack.id && p.qty > 0 && (p.level > next.levels || p.bin > next.bins))) {
+      setError("Không thể bỏ tầng/ô đang có hàng. Chuyển hàng sang vị trí khác trước.")
+      return
+    }
+    if (data.products.some(p => {
+      if(p.branch !== warehouse || p.rack !== rack.id || p.qty <= 0)return false
+      const pack=storagePackageFor(p)
+      return !pack.estimated && (!fitsCompartment(pack.value,next) || pack.value.heightCm*(p.storage3d?.stackable?p.storage3d.layers:1)>next.height/next.levels*100-5.5)
+    })) {setError("Kích thước mới không đủ cho bao bì / số lớp đang lưu. Chuyển hàng hoặc chọn kệ lớn hơn trước.");return}
+    const position = fitToFloor(next.x,next.z,next.width,next.depth,next.rotation)
+    mutate(draft.map(item => item.id === rack.id ? {...next,...position} : item))
   }
   const add = (templateId = "shelf", position?: {x: number; z: number}) => {
     if (!editing || accessMode !== "authenticated" || !accessibleBranches.includes(warehouse)) return
@@ -310,6 +326,7 @@ export default function Warehouse() {
           ) : undefined
         }
       />
+      {!editing && accessMode === "authenticated" && WAREHOUSE_PERMISSIONS[role].putaway && <div className="putaway-shortcut"><div><strong>Có hàng mới cần lên kệ?</strong><p>Quét vị trí → mã thùng → xác nhận. Tồn kho và bản đồ cập nhật cùng nhau.</p></div><Button onClick={()=>go("putaway")}>Quét & nhập hàng lên kệ</Button></div>}
       {!editing && (
         <div className="toolbar">
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm sản phẩm, mã lô hoặc vị trí…" />
@@ -319,7 +336,7 @@ export default function Warehouse() {
           <select aria-label="Cách hiển thị sản phẩm 3D" value={displayMode} onChange={e => setDisplayMode(e.target.value as ProductDisplay)}><option value="readable">Bao bì dễ chọn (phóng đại)</option><option value="actual">Kích thước bao bì thực</option></select>
         </div>
       )}
-      {!editing && <p className="tiny muted product-scale-note">{displayMode === "readable" ? "Bao bì được phóng đại theo ô để dễ chọn, không phản ánh tỷ lệ thật." : "Tỷ lệ theo kích thước bao bì đã nhập; sản phẩm chưa đo dùng số tham khảo. Chọn Xem gần kệ để xem hàng nhỏ."} Mỗi vật thể đại diện một lô, không phải toàn bộ số lượng tồn.</p>}
+      {!editing && <p className="tiny muted product-scale-note">{displayMode === "readable" ? "Bao bì được phóng đại theo ô để dễ chọn, không phản ánh tỷ lệ thật." : "Tỷ lệ theo kích thước bao bì đã nhập; sản phẩm chưa đo dùng số tham khảo. Chọn Xem gần kệ để xem hàng nhỏ."} Mỗi nhóm hình đại diện một lô, minh họa tối đa 3 lớp; không vẽ toàn bộ số lượng tồn.</p>}
       {!editing && search && (
         <div className="panel" style={{ marginBottom: 18 }}>
           {matches.length ? matches.slice(0, 6).map((p) => (
@@ -354,7 +371,8 @@ export default function Warehouse() {
           <h2>Kho của bạn, cách bạn muốn.</h2>
           <p>Chọn một mẫu. Đặt vào kho. Hoàn tất.</p>
           <Button onClick={() => add("shelf")}><Plus size={20} /> Thêm Kệ</Button>
-          {RACK_TEMPLATES.map(template => <button draggable className={`rack-library-card rack-preview--${template.id}`} key={template.id}
+          <Button variant="ghost" onClick={()=>setAllTemplates(value=>!value)}>{allTemplates ? "Mẫu phù hợp ngành hàng" : "Xem thêm mẫu kho lớn"}</Button>
+          {RACK_TEMPLATES.filter(template => allTemplates || (config.id === "cosmetics" ? ["micro","tray","drawers","shelf","cabinet","packing"] : ["medium","shelf","tray","micro","stack","packing"]).includes(template.id)).map(template => <button draggable className={`rack-library-card rack-preview--${template.id}`} key={template.id}
             onDragStart={event => { event.dataTransfer.setData("application/waremap-rack", template.id); event.dataTransfer.effectAllowed = "copy"; setDraggingTemplate(template.name) }}
             onDragEnd={() => setDraggingTemplate("")}
             onClick={() => add(template.id)} aria-label={`Thêm ${template.name}`}>
@@ -633,67 +651,7 @@ export default function Warehouse() {
             <div className="panel-body stack">
               {editing ? (
                 <>
-                  <Badge tone="info">{rack.kind} · {rack.levels} tầng × {rack.bins} ô</Badge>
-                  <label className="field">
-                    Tên kệ
-                    <input
-                      value={rack.name}
-                      onChange={(e) => change("name", e.target.value)}
-                    />
-                  </label>
-                  <div className="form-grid">
-                    {([
-                      ["width", "Dài (m)"],
-                      ["depth", "Rộng (m)"],
-                      ["height", "Cao (m)"],
-                      ["levels", "Số tầng"],
-                      ["bins", "Số ô / tầng"],
-                    ] as const).map(([key, label]) => (
-                      <label className="field" key={key}>
-                        {label}
-                        <input
-                          type="number"
-                          min={key === "levels" || key === "bins" ? 1 : 0.2}
-                          max={key === "levels" || key === "bins" ? 10 : 6}
-                          step={key === "levels" || key === "bins" ? 1 : 0.1}
-                          value={rack[key]}
-                          onChange={(e) => {
-                            const n = Number(e.target.value)
-                            if (key === "levels" || key === "bins")
-                              change(
-                                key,
-                                Math.max(1, Math.min(10, Math.round(n))),
-                              )
-                            else change(key, Math.max(0.2, Math.min(6, n)))
-                          }}
-                        />
-                      </label>
-                    ))}
-                  </div>
-                  <details>
-                    <summary>Vị trí & hướng kệ</summary>
-                    <div className="stack">
-                      {(["x", "z", "rotation"] as const).map((key) => (
-                        <label className="field" key={key}>
-                          {key === "x"
-                            ? "Ngang (m)"
-                            : key === "z"
-                              ? "Dọc (m)"
-                              : "Góc xoay (độ)"}
-                          <input
-                            type="number"
-                            min={key === "rotation" ? -360 : -8}
-                            max={key === "rotation" ? 360 : 8}
-                            step={key === "rotation" ? 15 : 0.5}
-                            value={rack[key]}
-                            onChange={(e) =>
-                              change(key, Number(e.target.value))
-                            }
-                          />
-                        </label>
-                      ))}
-                    </div>
-                  </details>
+                  <RackInspector rack={rack} onPatch={patchRack}/>
                   <Button
                     variant="danger"
                     onClick={() => {
@@ -722,6 +680,8 @@ export default function Warehouse() {
                       <Badge tone="info">Vị trí sản phẩm đang chọn</Badge>
                       <h3>{product.name}</h3>
                       <p className="tiny">{product.variant} · {product.id}</p>
+                      {product.storage3d?.unitsPerContainer && <p className="callout">Lưu nguyên thùng: {product.storage3d.unitsPerContainer} đơn vị/thùng · hiện chiếm {Math.ceil(product.qty/product.storage3d.unitsPerContainer)} thùng. Hình 3D dùng số đo nguyên thùng.</p>}
+                      {product.storage3d && <Badge tone="info">{product.storage3d.stackable ? `Xếp ${product.storage3d.layers} lớp có kiểm soát` : "Một lớp · không chồng"}</Badge>}
                       <ExpiryBadge product={product} threshold={data.settings.expiryDays} />
                       <div className="callout">
                         <MapPin

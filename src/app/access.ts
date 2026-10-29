@@ -1,4 +1,5 @@
 import type { Role, Screen } from "./model"
+import { WAREHOUSE_PERMISSIONS } from "./warehousePermissions"
 
 export type AccessMode = "explore" | "trial" | "authenticated"
 export const publicScreens: Screen[] = [
@@ -15,9 +16,12 @@ export function canAccessScreen(mode: AccessMode, role: Role, screen: Screen) {
       screen === "warehouse" || (mode === "trial" && screen === "inventory")
     )
   }
+  if (role === "platform") return ["admin", "website-editor"].includes(screen)
+  if (screen === "warehouse") return WAREHOUSE_PERMISSIONS[role].view
+  if (screen === "putaway") return WAREHOUSE_PERMISSIONS[role].putaway
   if (screen === "website-editor")
-    return role === "owner" || role === "platform"
-  if (screen === "admin") return role === "platform"
+    return role === "owner"
+  if (screen === "admin") return false
   if (screen === "account") return role === "owner"
   if (["builder", "roi", "settings"].includes(screen))
     return role === "owner" || role === "manager"

@@ -25,6 +25,15 @@ export function fitsCompartment(value: ProductPackage, rack: Rack) {
   return value.widthCm <= rack.width / rack.bins * 100 && value.depthCm <= rack.depth * 100 && value.heightCm <= rack.height / rack.levels * 100 - 5.5
 }
 
+export function storagePackageFor(product: Product) {
+  const pack=product.storage3d?.containerPackage
+  return pack&&validPackage(pack)?{value:pack,estimated:false}:packageFor(product)
+}
+export function storageUnits(product: Product) {
+  const units=product.storage3d?.unitsPerContainer
+  return units&&units>0?Math.ceil(product.qty/units):product.qty
+}
+
 export function packageGeometry(value: ProductPackage, rack: Rack, mode: ProductDisplay, siblings = 1) {
   const slotWidth = rack.width / rack.bins / Math.max(1, siblings)
   const scale = mode === "actual" ? .01 : Math.min(slotWidth * .72 / value.widthCm, rack.height / rack.levels * .65 / value.heightCm, rack.depth * .72 / value.depthCm)

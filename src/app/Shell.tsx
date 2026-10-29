@@ -130,7 +130,7 @@ export function Shell({ children }: { children: ReactNode }) {
     (n) => !n.roles || n.roles.includes(role),
   )
   const current = allNavigation.find((n) => n.screen === screen) || {
-    label: screen === "admin" ? "Quản trị WareMap" : screen === "website-editor" ? "Chỉnh sửa trang chủ" : "Thiết lập sơ đồ kho",
+    label: screen === "putaway" ? "Quét & nhập hàng lên kệ" : screen === "admin" ? "Quản trị WareMap" : screen === "website-editor" ? "Chỉnh sửa trang chủ" : "Thiết lập sơ đồ kho",
     group: screen === "admin" ? "Nội bộ" : "Xem thêm",
   }
   const isActive = (target: Screen) =>

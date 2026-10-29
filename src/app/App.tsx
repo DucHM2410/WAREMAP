@@ -22,6 +22,7 @@ const Inventory = lazy(() => import("../features/inventory/InventoryScreen"))
 const Batches = lazy(() => import("../features/batches/BatchesScreen"))
 const Transit = lazy(() => import("../features/in-transit/InTransitScreen"))
 const Alerts = lazy(() => import("../features/fefo-alerts/FefoAlertsScreen"))
+const Putaway = lazy(() => import("../features/putaway/PutawayScreen"))
 const Scanner = lazy(() => import("../features/scanner/MobileScannerScreen"))
 const Reports = lazy(() => import("../features/roi/RoiDashboardScreen"))
 const Account = lazy(() => import("../features/account/AccountRbacScreen"))
@@ -66,6 +67,7 @@ function Routes() {
     mobile: <Transit />,
     onboarding: <Alerts />,
     scanner: <Scanner />,
+    putaway: <Putaway />,
     roi: <Reports />,
     account: <Account />,
     settings: <Settings />,

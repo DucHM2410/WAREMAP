@@ -219,7 +219,7 @@ export function WarehouseRack({
             <meshStandardMaterial color="#ed9b46" />
           </mesh>
         ))}
-      {["Kệ chia ô", "Tủ bảo quản", "Kệ ngăn nhỏ", "Khay chia ngăn"].includes(rack.kind) &&
+      {["Kệ chia ô", "Tủ bảo quản", "Kệ ngăn nhỏ", "Kệ khay nhựa", "Khay chia ngăn"].includes(rack.kind) &&
         Array.from({ length: Math.max(0, rack.bins - 1) }, (_, i) => (
           <mesh
             key={`divider-${i}`}
@@ -233,6 +233,7 @@ export function WarehouseRack({
             <meshStandardMaterial color={active ? color : "#bacbd5"} />
           </mesh>
         ))}
+      {rack.kind === "Kệ khay nhựa" && Array.from({length:rack.levels},(_,level)=>Array.from({length:rack.bins},(_,bin)=><mesh key={`${level}-${bin}`} position={[-rack.width/2+(bin+.5)*rack.width/rack.bins,level*shelf+shelf*.16,rack.depth/2]}><boxGeometry args={[rack.width/rack.bins*.9,shelf*.25,.025]}/><meshStandardMaterial color={active?color:"#83b5d2"}/></mesh>))}
       {rack.kind === "Tủ bảo quản" && (
         <>
           <mesh position={[0, rack.height / 2, -rack.depth / 2]}>

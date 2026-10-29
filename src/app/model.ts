@@ -4,7 +4,7 @@ import {
   type IndustryConfig,
 } from "../shared/config/industries"
 
-export type Screen = "trial-info" | "home" | "login" | "request" | "industry-picker" | "dashboard" | "builder" | "warehouse" | "mobile" | "onboarding" | "batches" | "inventory" | "roi" | "scanner" | "account" | "settings" | "admin" | "website-editor"
+export type Screen = "putaway" | "trial-info" | "home" | "login" | "request" | "industry-picker" | "dashboard" | "builder" | "warehouse" | "mobile" | "onboarding" | "batches" | "inventory" | "roi" | "scanner" | "account" | "settings" | "admin" | "website-editor"
 export type Role = "owner" | "manager" | "warehouse" | "sales" | "platform"
 export const roleNames: Record<Role, string> = {
   owner: "Chủ doanh nghiệp",
@@ -87,6 +87,7 @@ export interface Product {
   level: number
   bin: number
   package3d?: ProductPackage
+  storage3d?: {layers: number; stackable: boolean; unitsPerContainer?: number; containerPackage?: ProductPackage}
 }
 export const locationLabel = (p: Pick<Product, "rack" | "level" | "bin">) =>
   `Kệ ${p.rack} · Tầng ${p.level} · Ô ${String(p.bin).padStart(2, "0")}`
@@ -259,7 +260,17 @@ export interface Activity {
   detail: string
   time: string
 }
+export interface InboundCarton {
+  id: string
+  code: string
+  product: Product
+  status: "pending" | "stored"
+  createdAt: string
+  storedAt?: string
+  placement?: {rack: string; level: number; bin: number}
+}
 export interface DemoData {
+  inboundCartons?: InboundCarton[]
   version: number
   industry: Industry
   products: Product[]

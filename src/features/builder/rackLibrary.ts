@@ -1,19 +1,19 @@
 import type { Rack } from "../../app/model"
 
 export const RACK_TEMPLATES = [
-  { id: "micro", name: "Kệ ngăn mỹ phẩm", description: "Son, serum và hàng rất nhỏ", kind: "Kệ ngăn nhỏ", width: 1.2, depth: .4, height: 1.6, levels: 5, bins: 6 },
+  { id: "micro", name: "Kệ mỹ phẩm có khay", description: "Son, serum và hàng rất nhỏ", kind: "Kệ ngăn nhỏ", width: 1.2, depth: .4, height: 1.6, levels: 5, bins: 6 },
   { id: "tray", name: "Khay chia ngăn", description: "Khay thấp cho phụ kiện nhỏ", kind: "Khay chia ngăn", width: .8, depth: .3, height: .2, levels: 1, bins: 8 },
-  { id: "drawers", name: "Tủ nhiều ngăn nhỏ", description: "Núm ti, phụ kiện và đồ chăm sóc", kind: "Kệ ngăn nhỏ", width: 1.2, depth: .45, height: 1.8, levels: 6, bins: 10 },
-  { id: "medium", name: "Kệ hàng mẹ & bé", description: "Sữa, bỉm và hộp cỡ vừa", kind: "Kệ hàng", width: 1.8, depth: .8, height: 2, levels: 3, bins: 2 },
+  { id: "drawers", name: "Kệ khay nhựa nhỏ", description: "Khay tách núm ti, phụ kiện và đồ chăm sóc", kind: "Kệ khay nhựa", width: 1.0, depth: .4, height: 1.6, levels: 5, bins: 8 },
+  { id: "medium", name: "Kệ sắt V lỗ", description: "Kho cửa hàng: sữa, bỉm và hộp cỡ vừa", kind: "Kệ V lỗ", width: 1.2, depth: .5, height: 1.8, levels: 4, bins: 2 },
   {
     id: "shelf",
-    name: "Kệ tiêu chuẩn",
-    description: "Hàng hộp, chai và đồ dùng",
-    kind: "Kệ hàng",
-    width: 2,
-    depth: 1,
-    height: 2.4,
-    levels: 3,
+    name: "Kệ trung tải",
+    description: "Thùng hàng và hàng dự trữ tại kho vừa",
+    kind: "Kệ trung tải",
+    width: 1.5,
+    depth: .6,
+    height: 2,
+    levels: 4,
     bins: 3,
   },
   {

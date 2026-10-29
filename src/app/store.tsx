@@ -125,7 +125,7 @@ export function Provider({ children }: { children: ReactNode }) {
     if (!mayLeave()) return
     if (!canAccessScreen(accessMode, role, next)) {
       setToast("Chức năng này cần đăng nhập bằng tài khoản được cấp quyền.")
-      setScreen(accessMode === "authenticated" ? "dashboard" : "trial-info")
+      setScreen(accessMode === "authenticated" ? role === "platform" ? "admin" : "dashboard" : "trial-info")
       return
     }
     setScreen(next)

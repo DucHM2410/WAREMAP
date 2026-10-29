@@ -1,0 +1,57 @@
+import { useEffect, useRef, useState } from "react"
+import { useApp } from "../../app/store"
+import { branches, locationLabel, positionCode, today, type InboundCarton } from "../../app/model"
+import { Button, Modal, PageTitle, Panel } from "../../app/ui"
+import { productKey } from "../../app/catalog"
+import { CartonForm } from "./CartonForm"
+import { QrPreview } from "./QrPreview"
+import { ScanInput } from "./ScanInput"
+import { assessPutaway, completePutaway, parseLocation, type PutawayRequest } from "./putaway"
+import "./putaway.css"
+
+export default function PutawayScreen() {
+  const {data,update,role,accessibleBranches,branch,go,setBranch,setSelected,setScanTask,notify,log}=useApp()
+  const [create,setCreate]=useState(false),[label,setLabel]=useState<InboundCarton|null>(null)
+  const [locationInput,setLocationInput]=useState(""),[locationCode,setLocationCode]=useState(""),[cartonInput,setCartonInput]=useState(""),[cartonCode,setCartonCode]=useState("")
+  const [error,setError]=useState(""),[stacking,setStacking]=useState(false),[layers,setLayers]=useState(2),[confirmedPackaging,setConfirmedPackaging]=useState(false),[unmeasuredAck,setUnmeasuredAck]=useState(false),[placed,setPlaced]=useState(false),[done,setDone]=useState(false)
+  const [helperBranch,setHelperBranch]=useState(accessibleBranches.includes(branch)?branch:accessibleBranches[0]),[helperRack,setHelperRack]=useState(data.racks[accessibleBranches.includes(branch)?branch:accessibleBranches[0]]?.[0]?.id||""),[helperLevel,setHelperLevel]=useState(1),[helperBin,setHelperBin]=useState(1)
+  const committing=useRef(false)
+  const [separatedAck,setSeparatedAck]=useState(false)
+  const pending=(data.inboundCartons||[]).filter(c=>accessibleBranches.includes(c.product.branch)&&c.status==='pending')
+  const carton=(data.inboundCartons||[]).find(c=>c.code===cartonCode)
+  const location=parseLocation(locationCode,data,branches)
+  const request:PutawayRequest={locationCode,cartonCode,role,allowedBranches:accessibleBranches,branchNames:branches,stacking,layers,confirmedPackaging,unmeasuredAck,separatedAck,today:today()}
+  const result=carton&&location?assessPutaway(data,request):null
+  const helper=data.racks[helperBranch]?.find(r=>r.id===helperRack)
+  const helperCode=positionCode({branch:helperBranch,rack:helperRack,level:helperLevel,bin:helperBin})
+  const reset=()=>{setLocationCode("");setLocationInput("");setCartonInput("");setCartonCode("");setError("");setSeparatedAck(false);setStacking(false);setConfirmedPackaging(false);setUnmeasuredAck(false);setPlaced(false);setDone(false);committing.current=false}
+  useEffect(()=>{if(location&&branch!=="all"&&location.branch!==branch)reset()},[branch])
+  return <>
+    <PageTitle eyebrow="NHẬP HÀNG VÀO ĐÚNG CHỖ" title="Quét & nhập hàng lên kệ" description="1. Quét vị trí → 2. Quét mã thùng → 3. Kiểm tra và xác nhận. Chỉ cộng tồn một lần khi hoàn tất." action={<Button onClick={()=>setCreate(true)}>+ Tạo thùng chờ nhập</Button>}/>
+    <div className="putaway-layout"><div className="stack">
+      <nav className="putaway-progress" aria-label="Tiến trình nhập hàng"><span className={location?'complete':'active'}>1 · Vị trí</span><span className={carton?'complete':location?'active':''}>2 · Thùng hàng</span><span className={done?'complete':carton?'active':''}>3 · Xác nhận</span></nav>
+      {!done?<>
+        <Panel title="1. Quét QR vị trí kệ · tầng · ô">
+          {location?<div className="putaway-confirmed"><strong>{location.branch} · {locationLabel(location)}</strong><Button variant="ghost" onClick={reset}>Đổi vị trí</Button></div>:<ScanInput label="QR vị trí nhận hàng" value={locationInput} onChange={setLocationInput} onSubmit={()=>{const target=parseLocation(locationInput,data,branches);if(!target||!accessibleBranches.includes(target.branch)){setError("QR vị trí chưa hợp lệ hoặc ngoài phạm vi được cấp quyền.");return}setBranch(target.branch);setLocationCode(locationInput.trim());setError("")}}/>}
+          <details className="putaway-helper"><summary>Lấy nhãn QR vị trí / thử bằng mã mẫu</summary><p className="tiny muted">Nhãn phải chỉ rõ cơ sở, kệ, tầng và ô, không chỉ tên kệ.</p><div className="form-grid"><label className="field">Cơ sở trên nhãn<select value={helperBranch} onChange={e=>{setHelperBranch(e.target.value);setHelperRack(data.racks[e.target.value]?.[0]?.id||"");setHelperLevel(1);setHelperBin(1)}}>{accessibleBranches.map(b=><option key={b}>{b}</option>)}</select></label><label className="field">Kệ trên nhãn<select value={helperRack} onChange={e=>{setHelperRack(e.target.value);setHelperLevel(1);setHelperBin(1)}}>{(data.racks[helperBranch]||[]).map(r=><option value={r.id} key={r.id}>{r.name}</option>)}</select></label><label className="field">Tầng trên nhãn<select value={helperLevel} onChange={e=>setHelperLevel(Number(e.target.value))}>{Array.from({length:helper?.levels||0},(_,i)=><option value={i+1} key={i}>{i+1}</option>)}</select></label><label className="field">Ô trên nhãn<select value={helperBin} onChange={e=>setHelperBin(Number(e.target.value))}>{Array.from({length:helper?.bins||0},(_,i)=><option value={i+1} key={i}>{i+1}</option>)}</select></label></div>{helper&&<><QrPreview code={helperCode} label={`${helperBranch} · ${locationLabel({rack:helperRack,level:helperLevel,bin:helperBin})}`}/><Button variant="secondary" onClick={()=>{reset();setLocationInput(helperCode)}}>Điền mã vị trí mẫu</Button></>}</details>
+        </Panel>
+        {location&&<Panel title="2. Quét hoặc nhập mã thùng hàng">{carton?<div className="putaway-confirmed"><strong>{carton.code} · {carton.product.name}</strong><Button variant="ghost" onClick={()=>{setCartonCode("");setError("");setSeparatedAck(false);setPlaced(false)}}>Đổi thùng</Button></div>:<ScanInput label="Mã thùng hàng (CTN:...)" value={cartonInput} onChange={setCartonInput} onSubmit={()=>{const found=(data.inboundCartons||[]).find(c=>c.code===cartonInput.trim());if(!found){setError("Mã thùng chưa đăng ký. Tạo thùng chờ nhập và đối chiếu nội dung trước.");return}if(found.status!=='pending'){setError("Thùng này đã nhập lên kệ; không cộng tồn lần thứ hai.");return}if(found.product.branch!==location.branch){setError("Thùng dành cho cơ sở khác. Kiểm tra lại phiếu nhận.");return}setCartonCode(found.code);setError("");setSeparatedAck(false);setStacking(false);setUnmeasuredAck(false);setConfirmedPackaging(false);setPlaced(false)}}/>}</Panel>}
+        {carton&&location&&<Panel title="3. Kiểm tra hàng và cách xếp"><div className="stack">
+          <dl className="detail-list"><div><dt>Sản phẩm</dt><dd>{carton.product.name} · {carton.product.variant}</dd></div><div><dt>Lô / hạn dùng</dt><dd>{carton.product.batch} · {carton.product.expiry}</dd></div><div><dt>Số lượng nhập</dt><dd>{carton.product.qty} đơn vị</dd></div><div><dt>Đặt tại</dt><dd>{location.branch} · {locationLabel(location)}</dd></div></dl>
+          <p className="callout">Hàng nhỏ có thể ở chung ô khi tách khay/vùng và giữ nhãn từng lô. Không để các lô trộn lẫn hoặc che nhãn; ưu tiên lấy lô hết hạn trước.</p>
+          <p className="tiny">{carton.product.storage3d?.unitsPerContainer ? `Giữ nguyên thùng: ${carton.product.storage3d.unitsPerContainer} sản phẩm/thùng. Kiểm tra chỗ theo vỏ thùng, không theo kích thước một sản phẩm.` : "Mở thùng và xếp theo từng đơn vị sản phẩm. Kiểm tra chỗ theo bao bì từng đơn vị."}</p>
+          <label className="check-row"><input type="checkbox" checked={separatedAck} onChange={e=>setSeparatedAck(e.target.checked)}/>Nếu ô có lô khác: đã tách khay/vùng riêng và giữ nhãn từng lô</label>
+          <label className="check-row"><input type="checkbox" checked={stacking} onChange={e=>{setStacking(e.target.checked);setConfirmedPackaging(false);setPlaced(false)}}/>Xếp chồng có kiểm soát</label>
+          {stacking&&<><label className="field">Số lớp cho toàn bộ lô tại ô<select value={layers} onChange={e=>{setLayers(Number(e.target.value));setPlaced(false)}}>{[2,3,4,5].map(n=><option value={n} key={n}>{n} lớp</option>)}</select></label><label className="check-row"><input type="checkbox" checked={confirmedPackaging} onChange={e=>setConfirmedPackaging(e.target.checked)}/>Bao bì cho phép xếp chồng; đã kiểm tra giới hạn lớp, độ ổn định và tải trọng thực tế</label><p className="tiny muted">Không chồng rời chai/hũ dễ vỡ. Không xem số lớp trong demo là chứng nhận an toàn.</p></>}
+          <label className="check-row"><input type="checkbox" checked={unmeasuredAck} onChange={e=>setUnmeasuredAck(e.target.checked)}/>Nếu chưa đủ số đo: đã kiểm tra chỗ trống thực tế và tách khay/vùng cho từng lô. Không áp dụng để bỏ qua lỗi sức chứa đã biết.</label>
+          {result?.error?<p className="callout" role="status">{result.error}</p>:<p className="callout success">{result?.capacityNote}</p>}
+          <label className="check-row"><input type="checkbox" checked={placed} onChange={e=>setPlaced(e.target.checked)}/>Đã đối chiếu đủ số lượng, đúng lô/hạn dùng và đặt hàng vào vị trí trên</label>
+          <Button disabled={!placed||!!result?.error||committing.current} onClick={()=>{if(committing.current)return;const check=assessPutaway(data,request);if(check.error){setError(check.error);return}committing.current=true;update(current=>completePutaway(current,request).data);setDone(true);setError("");log("Nhập thùng lên kệ",`${carton.code} · ${carton.product.qty} · ${location.branch} · ${locationLabel(location)}`);notify("Đã nhập thùng một lần và cập nhật tồn kho / Kho 3D.")}}>Xác nhận nhập {carton.product.qty} đơn vị lên kệ</Button>
+        </div></Panel>}
+      </>:<Panel title="Đã nhập hàng lên kệ"><div className="stack"><p className="callout success">{carton?.code} đã hoàn tất. Quét lại thùng này sẽ không cộng tồn lần nữa.</p><Button onClick={()=>{if(!result?.product&&!carton)return;const p=result?.product||carton!.product;setBranch(p.branch);setSelected(p.id);setScanTask({mode:"lookup",productKey:productKey(p)});go("warehouse")}}>Xem vị trí trên Kho 3D</Button><Button variant="secondary" onClick={reset}>Nhập thùng tiếp theo</Button></div></Panel>}
+      {error&&<p className="inline-error" role="alert">{error}</p>}
+    </div><aside className="stack"><Panel title={`Thùng chờ nhập (${pending.length})`}><p className="tiny muted">Mã thùng riêng liên kết SKU, lô, hạn dùng và số lượng. QR SKU/LOT đơn lẻ chưa đủ để xác định một thùng.</p>{pending.length?pending.map(c=><div className="putaway-carton" key={c.id}><strong>{c.product.name}</strong><code>{c.code}</code><small>{c.product.branch} · {c.product.batch} · {c.product.qty} đơn vị</small><div className="row"><Button variant="secondary" onClick={()=>{setCartonInput(c.code);setLabel(c)}}>Xem nhãn / điền mã</Button></div></div>):<p className="empty">Chưa có thùng chờ nhập. Tạo thùng đầu tiên để thử luồng.</p>}</Panel><p className="tiny muted">Bản demo: dữ liệu chỉ lưu trên thiết bị đang dùng, chưa đồng bộ giữa các thành viên.</p></aside></div>
+    {create&&<Modal title="Khai báo hàng mới / thùng chờ nhập" close={()=>setCreate(false)}><CartonForm onCreated={c=>{setCreate(false);setLabel(c);setCartonInput(c.code);notify("Đã tạo thùng chờ nhập. Tồn kho chưa tăng.")}}/></Modal>}
+    {label&&<Modal title="Nhãn QR thùng hàng" close={()=>setLabel(null)}><QrPreview code={label.code} label={`${label.product.name} · ${label.product.batch} · ${label.product.qty} đơn vị`}/><p className="tiny muted">Đây là mã thùng nội bộ để thử nghiệm, chưa kết nối nhãn thùng của nhà cung cấp.</p><Button onClick={()=>setLabel(null)}>Tiếp tục quét nhập lên kệ</Button></Modal>}
+  </>
+}

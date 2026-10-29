@@ -79,10 +79,10 @@ export default function Inventory() {
         description="Tra cứu hàng hóa, kiểm tra số lượng và xác định nơi đang lưu trữ."
         action={
           canWrite ? (
-            <Button onClick={() => openOperation("Nhập hàng")}>
+            <div className="row"><Button onClick={() => go("putaway")}>Quét nhập lên kệ</Button><Button variant="secondary" onClick={() => openOperation("Nhập hàng")}>
               <Plus size={16} />
-              Nhập hàng
-            </Button>
+              Nhập thủ công
+            </Button></div>
           ) : undefined
         }
       />

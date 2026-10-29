@@ -1,4 +1,5 @@
 import { Building2, Boxes, MapPin, ArrowUpRight } from "lucide-react"
+import { WarehousePermissionTable } from "./WarehousePermissionTable"
 import { useApp } from "../../app/store"
 
 export function WarehouseLocations({
@@ -90,6 +91,7 @@ export function WarehouseLocations({
           hiện tại.
         </p>
       )}
+      <WarehousePermissionTable />
     </section>
   )
 }
