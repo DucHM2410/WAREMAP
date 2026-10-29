@@ -1096,7 +1096,8 @@ h1,h2 { color:#192C45; } h3 { color:#243B57; }
 .brand.brand-logo { display:inline-flex; width:180px; height:45px; position:relative; overflow:hidden; align-items:center; justify-content:center; flex-shrink:0; }
 .brand-logo img { width:214px; height:auto; max-width:none; flex-shrink:0; object-fit:contain; }
 .sidebar .brand.brand-logo { width:180px; height:42px; }
-.auth-story .brand-logo { background:white; border-radius:7px; }
+.auth-story .brand-logo { background:#A9CFF8; border-radius:0; mix-blend-mode:screen; }
+.auth-story .brand-logo img { filter:grayscale(1) invert(1); mix-blend-mode:multiply; }
 body.industry-mom .button.primary, body.industry-cosmetics .button.primary { background:#0B57C7; color:#fff; }
 body.industry-mom .button.primary:hover, body.industry-cosmetics .button.primary:hover { background:#0846A6; }
 body .button.secondary { border-color:#c5d8f2; color:#0B57C7; background:white; }
@@ -1109,4 +1110,5 @@ body .nav-item.nav-cta { background:#0B57C7; color:white; }
 .website-editor-link { flex-shrink:0; border:1px solid #d7e6fa; margin-top:10px; }
 body .auth-story { background:linear-gradient(145deg,#192C45,#0B3677); }
 body .auth-story p { color:#bacde5; }
+body .auth-story h1 { color:#FFFFFF; }
 @media(max-width:960px) and (min-width:701px) { .sidebar .brand.brand-logo { width:160px; }.sidebar .brand-logo img { width:194px; } }
