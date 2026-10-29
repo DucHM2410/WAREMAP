@@ -35,6 +35,7 @@ export function SiteSection({
   onRegister,
 
   onDemo,
+  onTrial,
 }: {
   section: ContentSection
 
@@ -43,6 +44,7 @@ export function SiteSection({
   onRegister: (plan?: "free" | "paid") => void
 
   onDemo: () => void
+  onTrial: () => void
 }) {
   const [slide, setSlide] = useState(0)
 
@@ -110,7 +112,7 @@ export function SiteSection({
           <h2>{s.title}</h2>
           <p>{s.description}</p>
         </div>
-        <button className="wm-btn wm-btn-white" onClick={() => onRegister()}>
+        <button className="wm-btn wm-btn-white" onClick={onTrial}>
           {ctaLabel}
           <ArrowRight size={18} />
         </button>
@@ -237,7 +239,7 @@ export function SiteSection({
                 className={`wm-btn ${
                   i === 1 ? "wm-btn-primary" : "wm-btn-outline"
                 }`}
-                onClick={() => onRegister(i === 0 ? "free" : "paid")}
+                onClick={() => i === 0 ? onTrial() : onRegister("paid")}
               >
                 Đăng ký dùng thử
                 <ArrowRight size={16} />

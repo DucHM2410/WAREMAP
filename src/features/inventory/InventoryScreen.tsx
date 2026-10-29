@@ -28,6 +28,7 @@ export default function Inventory() {
     visibleProducts,
     branch,
     role,
+    accessMode,
     search,
     setSearch,
     update,
@@ -48,7 +49,7 @@ export default function Inventory() {
     ),
     [rackId, setRackId] = useState("A1"),
     [error, setError] = useState("")
-  const canWrite = ["owner", "manager", "warehouse"].includes(role)
+  const canWrite = accessMode === "authenticated" && ["owner", "manager", "warehouse"].includes(role)
   const filtered = visibleProducts.filter(
     (p) =>
       matchesProduct(p, search) &&
@@ -101,7 +102,7 @@ export default function Inventory() {
             <option key={c}>{c}</option>
           ))}
         </select>
-        <Download
+        {accessMode === "authenticated" && <Download
           name="ton-kho.csv"
           rows={[
             ["Mã", "Tên hàng", "Lô", "Kho", "Số lượng", "Vị trí"],
@@ -114,7 +115,7 @@ export default function Inventory() {
               locationLabel(p),
             ]),
           ]}
-        />
+        />}
       </div>
       {canWrite && (
         <div className="chip-row" style={{ marginBottom: 20 }}>
@@ -264,10 +265,10 @@ export default function Inventory() {
                 <dd>{locationLabel(actualDetail)}</dd>
               </div>
             </dl>
-            <details>
+            {accessMode === "authenticated" && <details>
               <summary>Nhãn QR vị trí & lô hàng</summary>
               <QRLabels product={actualDetail} />
-            </details>
+            </details>}
             <Button
               onClick={() => {
                 setSelected(actualDetail.id)

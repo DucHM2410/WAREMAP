@@ -1,6 +1,8 @@
 import { lazy, Suspense, Component, type ReactNode } from "react"
 import { Provider, useApp } from "./store"
 import { Shell } from "./Shell"
+import { canAccessScreen, publicScreens } from "./access"
+import { GuestWorkspace, TrialInfo } from "../features/auth/GuestExperience"
 import { Button, Empty } from "./ui"
 import { IndustryProvider } from "../shared/context/IndustryContext"
 import { SiteContentProvider } from "../features/site-content/SiteContentContext"
@@ -49,9 +51,10 @@ class Boundary extends Component<{ children: ReactNode }, { error: boolean }> {
   }
 }
 function Routes() {
-  const { screen, role, go } = useApp()
+  const { screen, role, accessMode, go } = useApp()
   const views = {
     home: <Home />,
+    "trial-info": <TrialInfo />,
     login: <Login />,
     request: <Request />,
     "industry-picker": <IndustryPickerPage />,
@@ -69,14 +72,7 @@ function Routes() {
     admin: <Admin />,
     "website-editor": <WebsiteEditor />,
   }
-  const denied =
-    (screen === "website-editor" && !["owner", "platform"].includes(role)) ||
-    (screen === "admin" && role !== "platform") ||
-    (screen === "account" && role !== "owner") ||
-    (screen === "builder" && !["owner", "manager"].includes(role)) ||
-    (["roi", "settings"].includes(screen) &&
-      !["owner", "manager"].includes(role)) ||
-    (screen === "mobile" && role === "sales")
+  const denied = !canAccessScreen(accessMode, role, screen)
   const content = (
     <Boundary key={screen}>
       <Suspense
@@ -93,7 +89,7 @@ function Routes() {
               <Button onClick={() => go("dashboard")}>Về Tổng quan</Button>
             }
           >
-            Bạn có thể đổi vai trò trong phần trải nghiệm bản demo.
+            Đăng nhập bằng tài khoản được cấp quyền để sử dụng chức năng này.
           </Empty>
         ) : (
           views[screen]
@@ -101,10 +97,10 @@ function Routes() {
       </Suspense>
     </Boundary>
   )
-  return ["home", "login", "request", "industry-picker"].includes(screen) ? (
+  return publicScreens.includes(screen) || screen === "industry-picker" ? (
     content
   ) : (
-    <Shell>{content}</Shell>
+    accessMode === "authenticated" ? <Shell>{content}</Shell> : <GuestWorkspace>{content}</GuestWorkspace>
   )
 }
 export default function App() {

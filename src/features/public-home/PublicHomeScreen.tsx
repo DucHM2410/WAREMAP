@@ -66,6 +66,7 @@ export function PublicSite({
   onLogin = () => {},
 
   onDemo = () => {},
+  onTrial = () => {},
 }: {
   content: SiteContent
 
@@ -78,6 +79,7 @@ export function PublicSite({
   onLogin?: () => void
 
   onDemo?: () => void
+  onTrial?: () => void
 }) {
   const [page, setPage] = useState<PublicPage>(initialPage)
 
@@ -230,7 +232,7 @@ export function PublicSite({
             <div className="wm-hero-actions">
               <button
                 className="wm-btn wm-btn-primary"
-                onClick={() => onRegister()}
+                onClick={onTrial}
               >
                 {content.ctaLabel}
                 <ArrowRight size={18} />
@@ -247,7 +249,7 @@ export function PublicSite({
               </span>
               <span>
                 <Check size={15} />
-                Dễ dàng bắt đầu
+                Kho mẫu chỉ xem · Có giới hạn
               </span>
             </div>
           </div>
@@ -285,6 +287,7 @@ export function PublicSite({
             section={s}
             ctaLabel={content.ctaLabel}
             onRegister={onRegister}
+            onTrial={onTrial}
             onDemo={onDemo}
           />
         ))}
@@ -351,7 +354,7 @@ export function PublicSite({
 }
 
 export default function PublicHome() {
-  const { go, setRole, setRequestedPlan } = useApp()
+  const { go, startGuest, setRequestedPlan } = useApp()
 
   const { content } = useSiteContent()
 
@@ -364,11 +367,8 @@ export default function PublicHome() {
         go("request")
       }}
       onLogin={() => go("login")}
-      onDemo={() => {
-        setRole("owner")
-
-        go("warehouse")
-      }}
+      onTrial={() => go("trial-info")}
+      onDemo={() => startGuest("explore")}
     />
   )
 }

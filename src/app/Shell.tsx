@@ -114,7 +114,7 @@ export function Shell({ children }: { children: ReactNode }) {
     branch,
     setBranch,
     role,
-    setRole,
+    logout,
     search,
     setSearch,
     storageError,
@@ -251,22 +251,9 @@ export function Shell({ children }: { children: ReactNode }) {
         <div className="sidebar-footer">
           <div className="demo-label">
             <span />
-            Bản dùng thử
+            Tài khoản demo đã đăng nhập
           </div>
-          <label className="role-picker">
-            Đổi vai trò demo
-            <select
-              aria-label="Trải nghiệm vai trò"
-              value={role}
-              onChange={(e) => setRole(e.target.value as typeof role)}
-            >
-              {Object.entries(roleNames).map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Button variant="secondary" onClick={logout}>Đăng xuất / Đổi tài khoản</Button>
           <details className="role-permissions"><summary>Quyền của {roleNames[role]}</summary><p>{roleDescription(role)}</p><small>Phạm vi: {role === "owner" || role === "platform" ? "Tất cả cơ sở" : branches[0]}</small></details>
           <button className="back-home" onClick={() => go("home")}>
             <ArrowLeft size={15} />

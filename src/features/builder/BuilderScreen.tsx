@@ -74,6 +74,7 @@ export default function Warehouse() {
     log,
     notify,
     role,
+    accessMode,
     guardNavigation,
     setScanTask,
   } = useApp()
@@ -690,9 +691,9 @@ export default function Warehouse() {
                           <dd>{product.qty}</dd>
                         </div>
                       </dl>
-                      <Button onClick={() => { setScanTask({ mode: "lookup", productKey: productKey(product) }); go("scanner") }}>Quét QR xác minh sản phẩm</Button>
-                      <Button variant="secondary" onClick={() => setShowQR(true)}><QrCode size={16} />Nhãn QR vị trí & lô</Button>
-                      <Button variant="secondary" onClick={() => go("batches")}>
+                      <Button disabled={accessMode !== "authenticated"} onClick={() => { setScanTask({ mode: "lookup", productKey: productKey(product) }); go("scanner") }}>Quét QR xác minh sản phẩm</Button>
+                      <Button disabled={accessMode !== "authenticated"} variant="secondary" onClick={() => setShowQR(true)}><QrCode size={16} />Nhãn QR vị trí & lô</Button>
+                      <Button disabled={accessMode !== "authenticated"} variant="secondary" onClick={() => go("batches")}>
                         Xem lô & hạn dùng
                       </Button>
                     </>

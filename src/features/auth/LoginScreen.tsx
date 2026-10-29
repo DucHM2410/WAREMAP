@@ -3,18 +3,17 @@ import { useState } from "react"
 import { useApp } from "../../app/store"
 import { Badge, Brand, Button, Panel } from "../../app/ui"
 import { branches, money, quote, today } from "../../app/model"
-import { useIndustry } from "../../shared/context/IndustryContext"
 import { MiniMap } from "../public-home/PublicHomeScreen"
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "../../shared/config/demoRoles"
 export default function Login() {
-  const { go, setRole } = useApp()
-  const { hasSavedIndustry } = useIndustry()
+  const { go, authenticate, startGuest } = useApp()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [visible, setVisible] = useState(false),
     [message, setMessage] = useState("")
 
   const enterWorkspace = () => {
-    setRole("owner")
-    if (!hasSavedIndustry) go("industry-picker")
+    startGuest("explore")
   }
 
   return (
@@ -50,12 +49,10 @@ export default function Login() {
             onSubmit={(e) => {
               e.preventDefault()
               const form = new FormData(e.currentTarget)
-              const account = DEMO_ACCOUNTS.find(a => a.email === String(form.get("email")).trim().toLowerCase())
-              if (!account || form.get("password") !== DEMO_PASSWORD) {
+              if (!authenticate(String(form.get("email")), String(form.get("password")))) {
                 setMessage("Thông tin demo chưa đúng. Chọn một vai trò bên dưới hoặc dùng email demo với mật khẩu WareMap@123.")
                 return
               }
-              setRole(account.role)
             }}
           >
             <label className="field">
@@ -64,6 +61,7 @@ export default function Login() {
                 required
                 type="email"
                 name="email"
+                value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="ban@doanhnghiep.vn"
                 autoComplete="username"
               />
@@ -74,6 +72,7 @@ export default function Login() {
                 <input
                   required
                   name="password"
+                  value={password} onChange={e => setPassword(e.target.value)}
                   type={visible ? "text" : "password"}
                   placeholder="Nhập mật khẩu"
                   autoComplete="current-password"
@@ -115,10 +114,10 @@ export default function Login() {
           </form>
           <hr />
           <section className="demo-accounts" aria-label="Tài khoản demo theo vai trò">
-            <h2>Thử trước theo vai trò</h2>
+            <h2>Tài khoản demo · cần đăng nhập</h2>
             <p>Dữ liệu mẫu lưu trên trình duyệt. Đây là tài khoản demo cục bộ, chưa phải tài khoản dịch vụ thực.</p>
             <p>Mật khẩu chung: <code>{DEMO_PASSWORD}</code></p>
-            {DEMO_ACCOUNTS.map(account => <button type="button" className="demo-account" key={account.role} onClick={() => setRole(account.role)}>
+            {DEMO_ACCOUNTS.map(account => <button type="button" className="demo-account" key={account.role} onClick={() => { setEmail(account.email); setPassword(DEMO_PASSWORD); setMessage("Đã điền tài khoản demo. Bấm Đăng nhập để tiếp tục."); window.scrollTo({ top: 0, behavior: "smooth" }) }}>
               <span><strong>{account.label}</strong><small>{account.email} · {account.scope}</small><p>{account.description}</p></span><ArrowRight size={18} />
             </button>)}
           </section>
@@ -141,7 +140,7 @@ export default function Login() {
   )
 }
 export function RequestAccess() {
-  const { go, update, requestedPlan } = useApp()
+  const { go, submitRequest, requestedPlan } = useApp()
   const [done, setDone] = useState(""),
     [locations, setLocations] = useState(1),
     [count, setCount] = useState(5),
@@ -185,10 +184,7 @@ export function RequestAccess() {
                 e.preventDefault()
                 const f = new FormData(e.currentTarget)
                 const id = "YC-" + Date.now().toString().slice(-6)
-                update((d) => ({
-                  ...d,
-                  requests: [
-                    {
+                submitRequest({
                       id,
                       kind: "Đăng ký sử dụng",
                       company: String(f.get("company")),
@@ -204,10 +200,7 @@ export function RequestAccess() {
                       status: "Chờ duyệt",
                       note: "",
                       date: today(),
-                    },
-                    ...d.requests,
-                  ],
-                }))
+                })
                 setDone(id)
               }}
             >
