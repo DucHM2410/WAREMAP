@@ -38,7 +38,7 @@ export const permissions: Record<Staff["role"], string[]> = {
   ],
 }
 export default function Accounts() {
-  const { data, update, notify } = useApp()
+  const { data, update, notify, go } = useApp()
   const [query, setQuery] = useState(""),
     [requesting, setRequesting] = useState(false),
     [detailId, setDetailId] = useState(""),
@@ -74,6 +74,7 @@ export default function Accounts() {
           </Button>
         }
       />
+      <div className="row" style={{ marginBottom: 20 }}><Button variant="secondary" onClick={() => go("website-editor")}>Chỉnh sửa trang chủ & nội dung website</Button></div>
       <div className="grid-two" style={{ marginBottom: 24 }}>
         <Panel>
           <div className="panel-body row between">

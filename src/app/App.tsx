@@ -3,6 +3,7 @@ import { Provider, useApp } from "./store"
 import { Shell } from "./Shell"
 import { Button, Empty } from "./ui"
 import { IndustryProvider } from "../shared/context/IndustryContext"
+import { SiteContentProvider } from "../features/site-content/SiteContentContext"
 const Home = lazy(() => import("../features/public-home/PublicHomeScreen"))
 const Login = lazy(() => import("../features/auth/LoginScreen"))
 const Request = lazy(() =>
@@ -24,6 +25,7 @@ const Reports = lazy(() => import("../features/roi/RoiDashboardScreen"))
 const Account = lazy(() => import("../features/account/AccountRbacScreen"))
 const Settings = lazy(() => import("../features/settings/SettingsScreen"))
 const Admin = lazy(() => import("../features/account/AdminScreen"))
+const WebsiteEditor = lazy(() => import("../features/site-content/HomepageEditorScreen"))
 class Boundary extends Component<{ children: ReactNode }, { error: boolean }> {
   state = { error: false }
   static getDerivedStateFromError() {
@@ -65,8 +67,10 @@ function Routes() {
     account: <Account />,
     settings: <Settings />,
     admin: <Admin />,
+    "website-editor": <WebsiteEditor />,
   }
   const denied =
+    (screen === "website-editor" && !["owner", "platform"].includes(role)) ||
     (screen === "admin" && role !== "platform") ||
     (screen === "account" && role !== "owner") ||
     (screen === "builder" && !["owner", "manager"].includes(role)) ||
@@ -106,12 +110,14 @@ function Routes() {
 export default function App() {
   return (
     <IndustryProvider>
+      <SiteContentProvider>
       <Provider>
         <a className="skip-link" href="#main-content">
           Đến nội dung chính
         </a>
         <Routes />
       </Provider>
+      </SiteContentProvider>
     </IndustryProvider>
   )
 }

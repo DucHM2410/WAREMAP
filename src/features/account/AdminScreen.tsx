@@ -19,7 +19,7 @@ import {
   SearchInput,
 } from "../../app/ui"
 export default function Admin() {
-  const { data, update, notify, log } = useApp()
+  const { data, update, notify, log, go } = useApp()
   const [tab, setTab] = useState("Yêu cầu"),
     [filter, setFilter] = useState("Chờ duyệt"),
     [query, setQuery] = useState(""),
@@ -115,6 +115,7 @@ export default function Admin() {
       <PageTitle
         eyebrow="Không gian nội bộ WareMap"
         title="Quản trị khách hàng"
+          action={<Button variant="secondary" onClick={() => go("website-editor")}>Chỉnh sửa trang chủ</Button>}
         description="Tiếp nhận yêu cầu và quản lý hạn mức. Không gian này tách biệt với các chức năng của khách hàng."
       />
       <div className="callout" style={{ marginBottom: 24 }}>

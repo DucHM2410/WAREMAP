@@ -4,7 +4,7 @@ import {
   type IndustryConfig,
 } from "../shared/config/industries"
 
-export type Screen = "home" | "login" | "request" | "industry-picker" | "dashboard" | "builder" | "warehouse" | "mobile" | "onboarding" | "batches" | "inventory" | "roi" | "scanner" | "account" | "settings" | "admin"
+export type Screen = "home" | "login" | "request" | "industry-picker" | "dashboard" | "builder" | "warehouse" | "mobile" | "onboarding" | "batches" | "inventory" | "roi" | "scanner" | "account" | "settings" | "admin" | "website-editor"
 export type Role = "owner" | "manager" | "warehouse" | "sales" | "platform"
 export const roleNames: Record<Role, string> = {
   owner: "Chủ doanh nghiệp",

@@ -7,6 +7,7 @@ import {
 } from "react"
 import { createPortal } from "react-dom"
 import { useApp } from "./store"
+import waremapLogo from "../assets/brand/waremap-logo.jpg"
 export function Button({
   children,
   variant = "primary",
@@ -26,14 +27,7 @@ export function Button({
 }
 export function Brand() {
   return (
-    <span className="brand">
-      <span className="brand-icon">
-        <Box size={23} />
-      </span>
-      <span>
-        WareMap <b>System</b>
-      </span>
-    </span>
+    <span className="brand brand-logo"><img src={waremapLogo} alt="WAREMAP"/></span>
   )
 }
 export function PageTitle({

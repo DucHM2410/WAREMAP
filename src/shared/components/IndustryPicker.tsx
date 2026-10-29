@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import type { CSSProperties } from 'react'
 import { INDUSTRIES, type Industry } from '../config/industries'
 import { useIndustry } from '../context/IndustryContext'
+import { Brand } from '../../app/ui'
 
 const icons: Record<string, typeof Baby> = { Baby, Sparkles }
 
@@ -38,12 +39,7 @@ export function IndustryPicker({
     >
       <div className="industry-picker__inner">
         <header className="industry-picker__head">
-          <span className="industry-picker__brand">
-            <span>
-              <Box size={16} />
-            </span>
-            WareMap
-          </span>
+          <Brand />
           <span className="eyebrow">Thiết lập không gian</span>
           <h1 id="industry-picker-title">Cửa hàng của bạn bán gì?</h1>
           <p>
