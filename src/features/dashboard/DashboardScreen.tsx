@@ -124,7 +124,7 @@ export default function Dashboard() {
                 </Button>
               </div>
             </>
-          ) : nextTransfer ? (
+          ) : nextTransfer && role !== "sales" ? (
             <>
               <h1>Phiếu {nextTransfer.id} đang chờ xử lý</h1>
               <p className="today-hero__line">
@@ -217,7 +217,7 @@ export default function Dashboard() {
               : `Trong ${data.settings.expiryDays} ngày tới`}
           </small>
         </button>
-        <button
+        {role !== "sales" && (<button
           type="button"
           className="today-kpi"
           onClick={() => go("mobile")}
@@ -228,7 +228,7 @@ export default function Dashboard() {
           <span className="today-kpi__label">Phiếu chuyển</span>
           <strong>{transfers.length}</strong>
           <small>{inTransit} phiếu đang chuyển</small>
-        </button>
+        </button>)}
       </div>
 
       <Panel
@@ -332,7 +332,7 @@ export default function Dashboard() {
               <LinkButton to="onboarding">Xem tất cả</LinkButton>
             </section>
 
-            <section className="today-column">
+            {role !== "sales" && (<section className="today-column">
               <header>
                 <span className="dot info" />
                 <strong>Phiếu chuyển</strong>
@@ -362,14 +362,8 @@ export default function Dashboard() {
               ) : (
                 <p className="tiny muted">Không có phiếu chuyển đang chờ.</p>
               )}
-              {role !== "sales" ? (
-                <LinkButton to="mobile">Mở chuyển kho</LinkButton>
-              ) : (
-                <p className="tiny muted">
-                  Liên hệ quản lý kho để xử lý phiếu chuyển.
-                </p>
-              )}
-            </section>
+              <LinkButton to="mobile">Mở chuyển kho</LinkButton>
+            </section>)}
           </div>
 
           <div className="split">

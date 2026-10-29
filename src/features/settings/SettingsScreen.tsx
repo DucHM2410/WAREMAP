@@ -230,7 +230,7 @@ export default function Settings() {
                   Thay đổi được lưu trên trình duyệt hiện tại. Tải bản sao để
                   giữ lại dữ liệu bạn đã thử.
                 </p>
-                <Button
+                {role === "owner" && (<Button
                   variant="secondary"
                   onClick={() => {
                     const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -246,7 +246,7 @@ export default function Settings() {
                 >
                   <DownloadIcon size={16} />
                   Tải bản sao dữ liệu
-                </Button>
+                </Button>)}
               </div>
             </Panel>
             <Panel title="Hỗ trợ tài khoản">
