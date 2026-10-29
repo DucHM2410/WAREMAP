@@ -113,6 +113,7 @@ export function Shell({ children }: { children: ReactNode }) {
     go,
     branch,
     setBranch,
+    accessibleBranches,
     role,
     logout,
     search,
@@ -299,10 +300,10 @@ export function Shell({ children }: { children: ReactNode }) {
                   value={branch}
                   onChange={(e) => setBranch(e.target.value)}
                 >
-                  {role === "owner" && (
+                  {accessibleBranches.length > 1 && (
                     <option value="all">Tất cả cơ sở</option>
                   )}
-                  {(role === "owner" ? branches : [branches[0]]).map((b) => (
+                  {accessibleBranches.map((b) => (
                     <option key={b}>{b}</option>
                   ))}
                 </select>

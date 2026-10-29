@@ -21,6 +21,7 @@ import {
 import { useIndustry } from "../shared/context/IndustryContext"
 import { canAccessScreen, type AccessMode } from "./access"
 import { guestData } from "./guestData"
+import { warehouseScope } from "./warehouseScope"
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "../shared/config/demoRoles"
 const key = "waremap-demo-v3"
 export interface ScanTask {
@@ -34,6 +35,7 @@ interface State {
   screen: Screen
   go: (screen: Screen) => void
   branch: string
+  accessibleBranches: string[]
   setBranch: (branch: string) => void
   role: Role
   accessMode: AccessMode
@@ -85,6 +87,9 @@ export function Provider({ children }: { children: ReactNode }) {
   const sample = useMemo(() => seed(config), [config])
   const guestSample = useMemo(() => guestData(sample, branches[0]), [sample])
   const data = accessMode === "authenticated" ? accountData : guestSample
+  const accessibleBranches = warehouseScope(accessMode, role, data.locations, branches)
+  const scopedBranch = branch === "all" && accessibleBranches.length > 1
+    ? "all" : accessibleBranches.includes(branch) ? branch : accessibleBranches[0]
   const [scanTask, setScanTask] = useState<ScanTask>({ mode: "lookup" })
   const [requestedPlan, setRequestedPlan] = useState<"free" | "paid">("paid")
   const guard = useRef<(() => boolean) | null>(null)
@@ -150,7 +155,7 @@ export function Provider({ children }: { children: ReactNode }) {
   const changeRole = (next: Role) => {
     if (!mayLeave()) return
     setRole(next)
-    setBranch(next === "owner" || next === "platform" ? "all" : branches[0])
+    setBranch(warehouseScope("authenticated", next, accountData.locations, branches).length > 1 ? "all" : branches[0])
     setScanTask({ mode: "lookup" })
     setScreen(next === "platform" ? "admin" : "dashboard")
     setSearch("")
@@ -182,7 +187,7 @@ export function Provider({ children }: { children: ReactNode }) {
     setScreen("login")
   }
   const changeBranch = (next: string) => {
-    if (accessMode !== "authenticated" || (!["owner", "platform"].includes(role) && next !== branches[0])) return
+    if (accessMode !== "authenticated" || (next === "all" ? accessibleBranches.length < 2 : !accessibleBranches.includes(next))) return
     if (next !== branch && !mayLeave()) return
     setBranch(next)
   }
@@ -194,7 +199,8 @@ export function Provider({ children }: { children: ReactNode }) {
         submitRequest: (request) => setData(d => ({ ...d, requests: [request, ...d.requests] })),
         screen,
         go,
-        branch: accessMode === "authenticated" ? branch : branches[0],
+        branch: scopedBranch,
+        accessibleBranches,
         setBranch: changeBranch,
         role,
         accessMode,
@@ -208,7 +214,7 @@ export function Provider({ children }: { children: ReactNode }) {
         notify: setToast,
         log,
         visibleProducts: data.products.filter(
-          (p) => accessMode !== "authenticated" || branch === "all" || p.branch === branch,
+          (p) => accessibleBranches.includes(p.branch) && (scopedBranch === "all" || p.branch === scopedBranch),
         ),
         storageError,
         scanTask,

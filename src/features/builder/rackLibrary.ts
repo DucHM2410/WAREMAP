@@ -1,0 +1,110 @@
+import type { Rack } from "../../app/model"
+
+export const RACK_TEMPLATES = [
+  {
+    id: "shelf",
+    name: "Kệ tiêu chuẩn",
+    description: "Hàng hộp, chai và đồ dùng",
+    kind: "Kệ hàng",
+    width: 2,
+    depth: 1,
+    height: 2.4,
+    levels: 3,
+    bins: 3,
+  },
+  {
+    id: "pallet",
+    name: "Kệ pallet",
+    description: "Kiện lớn và hàng nặng",
+    kind: "Kệ pallet",
+    width: 3,
+    depth: 1.4,
+    height: 3.6,
+    levels: 3,
+    bins: 2,
+  },
+  {
+    id: "cubicles",
+    name: "Kệ chia ô",
+    description: "Nhiều ô cho hàng nhỏ",
+    kind: "Kệ chia ô",
+    width: 2,
+    depth: 0.7,
+    height: 2,
+    levels: 4,
+    bins: 4,
+  },
+  {
+    id: "cabinet",
+    name: "Tủ bảo quản",
+    description: "Khoang kín, có vách ngăn",
+    kind: "Tủ bảo quản",
+    width: 1.6,
+    depth: 0.8,
+    height: 2.2,
+    levels: 4,
+    bins: 2,
+  },
+  {
+    id: "stack",
+    name: "Ô xếp hàng",
+    description: "Thùng xếp trên bục thấp",
+    kind: "Ô xếp hàng",
+    width: 2.4,
+    depth: 1.8,
+    height: 1.2,
+    levels: 2,
+    bins: 2,
+  },
+  {
+    id: "packing",
+    name: "Bàn kiểm đếm",
+    description: "Bàn thao tác và tầng dưới",
+    kind: "Khu kiểm đếm",
+    width: 2,
+    depth: 1.2,
+    height: 0.9,
+    levels: 1,
+    bins: 2,
+  },
+] as const
+
+export function fitToFloor(
+  x: number,
+  z: number,
+  width: number,
+  depth: number,
+  rotation = 0,
+) {
+  const angle = (rotation * Math.PI) / 180
+  const halfX =
+    (Math.abs(Math.cos(angle)) * width + Math.abs(Math.sin(angle)) * depth) / 2
+  const halfZ =
+    (Math.abs(Math.sin(angle)) * width + Math.abs(Math.cos(angle)) * depth) / 2
+  return {
+    x: Math.max(-8 + halfX, Math.min(8 - halfX, Math.round(x * 2) / 2)),
+    z: Math.max(-6 + halfZ, Math.min(8 - halfZ, Math.round(z * 2) / 2)),
+  }
+}
+
+export function createRack(
+  templateId: string,
+  existing: Rack[],
+  position?: { x: number
+ z: number },
+): Rack | null {
+  const template = RACK_TEMPLATES.find((t) => t.id === templateId)
+  if (!template) return null
+  const number =
+    Math.max(0, ...existing.map((r) => Number(r.id.replace(/\D/g, "")) || 0)) +
+    1
+  const id = `K${number}`
+  const { id: _, name, description: __, ...dimensions } = template
+  const location = fitToFloor(
+    position?.x ?? ((existing.length % 4) - 1.5) * 3,
+    position?.z ?? 5,
+    template.width,
+    template.depth,
+  )
+  return { ...dimensions, id, name: `${name} ${id}`, rotation: 0, ...location }
+}
