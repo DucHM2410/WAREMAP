@@ -1,4 +1,5 @@
 import {
+  LockKeyhole,
   AlertCircle,
   ArrowLeft,
   Baby,
@@ -181,14 +182,10 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
         </div>
         {role !== "platform" && (
-          <button
-            type="button"
+          <div
             className="industry-pill"
-            onClick={() => {
-              go("industry-picker")
-              setOpen(false)
-            }}
-            aria-label={`Ngành hàng đang chọn: ${config.label}. Đổi ngành hàng`}
+            aria-label={`Phân hệ doanh nghiệp: ${config.label}. Đã khóa`}
+            title="Phân hệ khóa trong phiên demo. Đăng xuất rồi đăng nhập lại Chủ doanh để chọn lại"
           >
             <span className="industry-pill__icon">
               <IndustryIcon size={16} />
@@ -197,8 +194,8 @@ export function Shell({ children }: { children: ReactNode }) {
               <small>Ngành hàng</small>
               <strong>{config.shortLabel}</strong>
             </span>
-            <ChevronDown size={14} />
-          </button>
+            <LockKeyhole size={14} />
+          </div>
         )}
         <nav>
           {role === "platform" ? (
@@ -279,7 +276,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <Menu />
           </button>
           <div className="breadcrumb"><strong>{current.label}</strong></div>
-          {role !== "platform" && <button className="header-industry-pill" onClick={() => go("industry-picker")} aria-label="Đổi ngành hàng"><IndustryIcon size={17} />{config.shortLabel}<ChevronDown size={14} /></button>}
+          {role !== "platform" && <span className="header-industry-pill" title="Phân hệ đã được Chủ doanh xác nhận"><IndustryIcon size={17} />{config.shortLabel}<LockKeyhole size={14} /></span>}
           {role !== "platform" && (
             <>
               <div className="global-search">

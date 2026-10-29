@@ -273,6 +273,7 @@ export interface DemoData {
   inboundCartons?: InboundCarton[]
   version: number
   industry: Industry
+  industryConfirmed?: boolean
   products: Product[]
   racks: Record<string, Rack[]>
   transfers: Transfer[]

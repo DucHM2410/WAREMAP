@@ -364,6 +364,58 @@ body.industry-cosmetics .nav-item.nav-cta.active {
   filter: brightness(0.93);
 }
 
+.modal:has(.industry-confirm) {
+  margin: auto;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.industry-confirm {
+  display: grid;
+  gap: 16px;
+  color: #183153;
+}
+
+.industry-confirm p {
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.industry-confirm__name {
+  display: block;
+  padding: 18px;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 22px;
+  line-height: 1.4;
+}
+
+.industry-confirm__warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  background: #fffbeb;
+  color: #78350f;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.industry-confirm__warning svg { flex-shrink: 0; margin-top: 2px; }
+.industry-confirm__actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.industry-confirm__actions .button.primary { background: #1d4ed8; color: #fff; }
+.industry-confirm__actions .button.primary:hover { background: #1e40af; }
+@media (max-width: 540px) {
+  .industry-confirm__actions { flex-direction: column-reverse; }
+  .industry-confirm__actions .button { width: 100%; white-space: normal; }
+}
+
 .industry-picker__foot {
   display: flex;
   align-items: center;

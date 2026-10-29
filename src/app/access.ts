@@ -17,6 +17,7 @@ export function canAccessScreen(mode: AccessMode, role: Role, screen: Screen) {
     )
   }
   if (role === "platform") return ["admin", "website-editor"].includes(screen)
+  if (screen === "industry-picker") return role === "owner"
   if (screen === "warehouse") return WAREHOUSE_PERMISSIONS[role].view
   if (screen === "putaway") return WAREHOUSE_PERMISSIONS[role].putaway
   if (screen === "website-editor")

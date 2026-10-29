@@ -21,6 +21,8 @@ import {
 import { useIndustry } from "../shared/context/IndustryContext"
 import { canAccessScreen, type AccessMode } from "./access"
 import { guestData } from "./guestData"
+import { beginIndustryDemoSession, confirmBusinessIndustry } from "./industryPolicy"
+import { INDUSTRIES, type Industry } from "../shared/config/industries"
 import { warehouseScope } from "./warehouseScope"
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "../shared/config/demoRoles"
 const key = "waremap-demo-v3"
@@ -42,6 +44,8 @@ interface State {
   startGuest: (mode: "explore" | "trial") => void
   authenticate: (email: string, password: string) => boolean
   logout: () => void
+  industryConfirmed: boolean
+  confirmIndustry: (choice: Industry) => boolean
   submitRequest: (request: AccessRequest) => void
   selected: string
   setSelected: (id: string) => void
@@ -59,13 +63,13 @@ interface State {
 }
 const Context = createContext<State | null>(null)
 export function Provider({ children }: { children: ReactNode }) {
-  const { industry, config } = useIndustry()
+  const { industry, config, setIndustry } = useIndustry()
   const [accountData, setData] = useState<DemoData>(() => {
     try {
       const raw = localStorage.getItem(key)
       const saved = raw ? JSON.parse(raw) : null
       if (saved?.version === 3) {
-        return saved.industry === config.id
+        return saved.industryConfirmed || saved.industry === config.id
           ? (saved as DemoData)
           : withIndustrySamples(saved, config)
       }
@@ -109,13 +113,31 @@ export function Provider({ children }: { children: ReactNode }) {
       setStorageError(true)
     }
   }, [accountData])
-  const appliedIndustry = useRef(industry)
   useEffect(() => {
-    if (appliedIndustry.current === industry) return
-    appliedIndustry.current = industry
-    setData((current) => withIndustrySamples(current, config))
-    setSelected(industryProducts(config)[0]?.id ?? "")
-  }, [industry, config])
+    if (accountData.industryConfirmed && industry !== accountData.industry) {
+      setIndustry(accountData.industry)
+    }
+  }, [accountData.industryConfirmed, accountData.industry, industry])
+  const confirmedRef = useRef(Boolean(accountData.industryConfirmed))
+  const confirmIndustry = (choice: Industry) => {
+    if (accessMode !== "authenticated" || role !== "owner" || confirmedRef.current) return false
+    const next = confirmBusinessIndustry(accountData, role, choice)
+    if (next === accountData) return false
+    try {
+      // Do not leave setup if the confirmed business profile cannot be saved.
+      localStorage.setItem(key, JSON.stringify(next))
+    } catch {
+      setStorageError(true)
+      setToast("Không lưu được phân hệ. Hãy cho phép trình duyệt lưu dữ liệu rồi thử lại.")
+      return false
+    }
+    confirmedRef.current = true
+    setData(next)
+    setIndustry(choice)
+    setSelected(industryProducts(INDUSTRIES[choice])[0]?.id ?? "")
+    setScreen("dashboard")
+    return true
+  }
   useEffect(() => {
     if (!toast) return
     const timer = setTimeout(() => setToast(""), 4200)
@@ -126,6 +148,10 @@ export function Provider({ children }: { children: ReactNode }) {
     if (!canAccessScreen(accessMode, role, next)) {
       setToast("Chức năng này cần đăng nhập bằng tài khoản được cấp quyền.")
       setScreen(accessMode === "authenticated" ? role === "platform" ? "admin" : "dashboard" : "trial-info")
+      return
+    }
+    if (next === "industry-picker" && accountData.industryConfirmed) {
+      setToast("Phân hệ đã khóa trong phiên demo này. Đăng xuất rồi đăng nhập lại Chủ doanh để chọn lại.")
       return
     }
     setScreen(next)
@@ -157,7 +183,7 @@ export function Provider({ children }: { children: ReactNode }) {
     setRole(next)
     setBranch(warehouseScope("authenticated", next, accountData.locations, branches).length > 1 ? "all" : branches[0])
     setScanTask({ mode: "lookup" })
-    setScreen(next === "platform" ? "admin" : "dashboard")
+    setScreen(next === "platform" ? "admin" : next === "owner" ? "industry-picker" : "dashboard")
     setSearch("")
   }
   const startGuest = (mode: "explore" | "trial") => {
@@ -173,6 +199,10 @@ export function Provider({ children }: { children: ReactNode }) {
   const authenticate = (email: string, password: string) => {
     const account = DEMO_ACCOUNTS.find(a => a.email === email.trim().toLowerCase())
     if (!account || password !== DEMO_PASSWORD || !mayLeave()) return false
+    if (account.role === "owner") {
+      confirmedRef.current = false
+      setData(d => beginIndustryDemoSession(d, account.role))
+    }
     setAccessMode("authenticated")
     changeRole(account.role)
     return true
@@ -195,7 +225,15 @@ export function Provider({ children }: { children: ReactNode }) {
     <Context.Provider
       value={{
         data,
-        update: (fn) => { if (accessMode === "authenticated") setData(fn) },
+        update: (fn) => {
+          if (accessMode !== "authenticated") return
+          setData(current => {
+            const next = fn(current)
+            return current.industryConfirmed
+              ? { ...next, industry: current.industry, industryConfirmed: true }
+              : next
+          })
+        },
         submitRequest: (request) => setData(d => ({ ...d, requests: [request, ...d.requests] })),
         screen,
         go,
@@ -207,6 +245,8 @@ export function Provider({ children }: { children: ReactNode }) {
         startGuest,
         authenticate,
         logout,
+        industryConfirmed: Boolean(accountData.industryConfirmed),
+        confirmIndustry,
         selected,
         setSelected,
         search,

@@ -22,6 +22,8 @@ const readSavedIndustry = () => {
 export function IndustryProvider({ children }: { children: ReactNode }) {
   const [industry, setIndustryState] = useState<Industry>(() => {
     try {
+      const business = JSON.parse(localStorage.getItem('waremap-demo-v3') || 'null')
+      if (business?.version === 3 && business.industryConfirmed && INDUSTRIES[business.industry as Industry]) return business.industry as Industry
       const stored = localStorage.getItem('waremap_industry') as Industry | null
       return stored && INDUSTRIES[stored] ? stored : DEFAULT_INDUSTRY
     } catch {
