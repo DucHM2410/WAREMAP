@@ -105,15 +105,14 @@ export function SiteSection({
   if (s.layout === "cta")
     return (
       <section id={s.id} className="wm-section wm-cta">
-        <div>
-          <span className="wm-eyebrow">{s.eyebrow}</span>
+        <div className="wm-cta-panel">
+          {s.eyebrow && <span className="wm-eyebrow">{s.eyebrow}</span>}
           <h2>{s.title}</h2>
-          <p>{s.description}</p>
+          {s.description && <p>{s.description}</p>}
+          <button className="wm-btn wm-cta-btn" onClick={() => onRegister()}>
+            {ctaLabel}
+          </button>
         </div>
-        <button className="wm-btn wm-btn-white" onClick={() => onRegister()}>
-          {ctaLabel}
-          <ArrowRight size={18} />
-        </button>
       </section>
     )
 

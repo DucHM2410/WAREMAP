@@ -134,6 +134,11 @@ export function PublicSite({
 
   const current = content.pages[page]
 
+  const titleParts =
+    page === "solution"
+      ? current.title.split(/(bản đồ 3D)/i)
+      : [current.title]
+
   return (
     <div className={`wm-site ${embedded ? "wm-site-embedded" : ""}`}>
       <header className="wm-header">
@@ -218,14 +223,24 @@ export function PublicSite({
         <section
           className={`wm-section wm-hero ${
             page === "home" ? "wm-hero-home" : "wm-hero-subpage"
-          }`}
+          } ${page === "solution" ? "wm-hero-solution" : ""}`}
         >
           <div className="wm-hero-copy">
             <span className="wm-pill">
               <i />
               {current.eyebrow}
             </span>
-            <h1>{current.title}</h1>
+            <h1>
+              {titleParts.map((part, i) =>
+                /^bản đồ 3D$/i.test(part) ? (
+                  <span className="wm-title-accent" key={i}>
+                    {part}
+                  </span>
+                ) : (
+                  part
+                ),
+              )}
+            </h1>
             <p>{current.description}</p>
             <div className="wm-hero-actions">
               <button
@@ -235,21 +250,25 @@ export function PublicSite({
                 {content.ctaLabel}
                 <ArrowRight size={18} />
               </button>
-              <button className="wm-btn wm-btn-outline" onClick={onDemo}>
-                Khám phá kho 3D
-                <ArrowUpRight size={17} />
-              </button>
+              {page !== "solution" && (
+                <button className="wm-btn wm-btn-outline" onClick={onDemo}>
+                  Khám phá kho 3D
+                  <ArrowUpRight size={17} />
+                </button>
+              )}
             </div>
-            <div className="wm-hero-assurance">
-              <span>
-                <Check size={15} />
-                Không cần cài đặt
-              </span>
-              <span>
-                <Check size={15} />
-                Dễ dàng bắt đầu
-              </span>
-            </div>
+            {page !== "solution" && (
+              <div className="wm-hero-assurance">
+                <span>
+                  <Check size={15} />
+                  Không cần cài đặt
+                </span>
+                <span>
+                  <Check size={15} />
+                  Dễ dàng bắt đầu
+                </span>
+              </div>
+            )}
           </div>
           <div className="wm-hero-art">
             <EditableImage src={current.image} alt={current.imageAlt} />

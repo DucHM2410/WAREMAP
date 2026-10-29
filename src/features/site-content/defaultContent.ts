@@ -305,7 +305,7 @@ const solution: SitePage = {
   eyebrow: "GIỚI THIỆU WAREMAP",
   title: "Quản lý kho trực quan hơn với bản đồ 3D",
   description:
-    "WareMap giúp biến những vị trí khó nhớ thành thông tin rõ ràng. Từ tìm kiếm đến kiểm soát lô hàng, cả đội cùng làm việc trên một sơ đồ dễ hiểu.",
+    "WareMap là phần mềm quản lý kho 3D và định vị hàng hóa, giúp kết nối dữ liệu hàng hóa với vị trí lưu trữ thực tế trong kho. Thay vì chỉ theo dõi số lượng tồn kho, WareMap giúp người dùng xác định hàng hóa đang nằm ở đâu, từ khu vực, kệ, tầng đến vị trí lưu trữ cụ thể.",
   image: "",
   imageAlt: "Bản đồ kho trực quan WareMap",
   sections: [
