@@ -1084,3 +1084,29 @@ body { --industry-primary: #DB2777; --industry-accent: #7C3AED; --industry-soft:
 .sidebar .workspace-name { margin-top:16px; padding:9px; }
 .sidebar-footer { margin-top:10px; padding-top:10px; }
 @media(max-height:760px) { .sidebar { padding-top:18px; }.sidebar .workspace-name { margin-top:12px; }.sidebar-footer .demo-label { margin-bottom:8px; }.role-permissions { margin:8px 0; padding:7px; } }
+
+/* Official WareMap identity — October 2026 brand specification. */
+:root, body, body.industry-mom, body.industry-cosmetics {
+  font-family:'Be Vietnam Pro',system-ui,sans-serif;
+  --ink:#192C45; --navy:#192C45; --muted:#64748B; --line:#E2E8F0; --bg:#F5F9FF; --teal:#0B57C7;
+  --industry-primary:#0B57C7; --industry-accent:#1685F9; --industry-soft:#EAF3FF; --industry-tint:#F5F9FF;
+  color:#334155; background:#F5F9FF;
+}
+h1,h2 { color:#192C45; } h3 { color:#243B57; }
+.brand.brand-logo { display:inline-flex; width:180px; height:45px; position:relative; overflow:hidden; align-items:center; justify-content:center; flex-shrink:0; }
+.brand-logo img { width:214px; height:auto; max-width:none; flex-shrink:0; object-fit:contain; }
+.sidebar .brand.brand-logo { width:180px; height:42px; }
+.auth-story .brand-logo { background:white; border-radius:7px; }
+body.industry-mom .button.primary, body.industry-cosmetics .button.primary { background:#0B57C7; color:#fff; }
+body.industry-mom .button.primary:hover, body.industry-cosmetics .button.primary:hover { background:#0846A6; }
+body .button.secondary { border-color:#c5d8f2; color:#0B57C7; background:white; }
+body .button.secondary:hover { background:#EAF3FF; }
+body .eyebrow { color:#0B57C7; }
+body .workspace-name { background:#F5F9FF; }
+body .industry-pill,body .header-industry-pill { background:#EAF3FF; color:#0B57C7; border-color:#cfe2fa; }
+body.industry-mom .nav-item.active,body.industry-cosmetics .nav-item.active { background:#EAF3FF; color:#0B57C7; }
+body .nav-item.nav-cta { background:#0B57C7; color:white; }
+.website-editor-link { flex-shrink:0; border:1px solid #d7e6fa; margin-top:10px; }
+body .auth-story { background:linear-gradient(145deg,#192C45,#0B3677); }
+body .auth-story p { color:#bacde5; }
+@media(max-width:960px) and (min-width:701px) { .sidebar .brand.brand-logo { width:160px; }.sidebar .brand-logo img { width:194px; } }

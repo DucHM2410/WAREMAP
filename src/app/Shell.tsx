@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Map,
   Menu,
+  PanelsTopLeft,
   Package,
   ScanLine,
   Settings,
@@ -128,7 +129,7 @@ export function Shell({ children }: { children: ReactNode }) {
     (n) => !n.roles || n.roles.includes(role),
   )
   const current = allNavigation.find((n) => n.screen === screen) || {
-    label: screen === "admin" ? "Quản trị WareMap" : "Thiết lập sơ đồ kho",
+    label: screen === "admin" ? "Quản trị WareMap" : screen === "website-editor" ? "Chỉnh sửa trang chủ" : "Thiết lập sơ đồ kho",
     group: screen === "admin" ? "Nội bộ" : "Xem thêm",
   }
   const isActive = (target: Screen) =>
@@ -200,7 +201,7 @@ export function Shell({ children }: { children: ReactNode }) {
         )}
         <nav>
           {role === "platform" ? (
-            <button className="nav-item active" onClick={() => go("admin")}>
+            <button className={`nav-item ${screen === "admin" ? "active" : ""}`} onClick={() => go("admin")}>
               <Users size={18} />
               Quản trị khách hàng
             </button>
@@ -246,6 +247,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </>
           )}
         </nav>
+        {["owner", "platform"].includes(role) && <button className={`nav-item website-editor-link ${screen === "website-editor" ? "active" : ""}`} aria-current={screen === "website-editor" ? "page" : undefined} onClick={() => { go("website-editor"); setOpen(false) }}><PanelsTopLeft size={18}/><span>Chỉnh sửa trang chủ<small>Nội dung · hình ảnh · ngành hàng</small></span></button>}
         <div className="sidebar-footer">
           <div className="demo-label">
             <span />
