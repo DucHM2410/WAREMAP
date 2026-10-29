@@ -142,9 +142,9 @@ export default function Login() {
 export function RequestAccess() {
   const { go, submitRequest, requestedPlan } = useApp()
   const [done, setDone] = useState(""),
-    [locations, setLocations] = useState(1),
-    [count, setCount] = useState(5),
-    [plan, setPlan] = useState<string>(requestedPlan)
+    [locations, setLocations] = useState(requestedPlan === "chain" ? 5 : 1),
+    [count, setCount] = useState(requestedPlan === "chain" ? 18 : 4),
+    [plan, setPlan] = useState(requestedPlan)
   const price = quote(locations, count)
   return (
     <div className="request-page">
@@ -193,7 +193,7 @@ export function RequestAccess() {
                       branches: locations,
                       count,
                       reason: `${
-                        plan === "free" ? "Gói miễn phí" : "Gói có phí"
+                        plan === "free" ? "Free Trial 0đ/7 ngày · 1 Chủ doanh + 1 Quản lý kho + 3 Nhân viên" : plan === "single" ? "Đơn lẻ 149.000đ/tháng · 1 Chủ doanh + 1 Quản lý kho + 3 Nhân viên" : "Chuỗi 399.000đ/tháng · 1 Chủ doanh + 3 Quản lý kho + 15 Nhân viên"
                       } · ${f.get("reason")}`,
                       role: "manager",
                       branch: branches[0],
@@ -225,11 +225,15 @@ export function RequestAccess() {
               </label>
               <label className="field">
                 Gói quan tâm
-                <select value={plan} onChange={(e) => setPlan(e.target.value)}>
-                  <option value="paid">Có phí · Theo quy mô cơ sở</option>
-                  <option value="free">
-                    Miễn phí · Cần xác nhận quyền lợi
-                  </option>
+                <select value={plan} onChange={(e) => {
+                  const next = e.target.value as typeof plan
+                  setPlan(next)
+                  setLocations(next === "chain" ? 5 : 1)
+                  setCount(next === "chain" ? 18 : 4)
+                }}>
+                  <option value="free">Free Trial · 0đ / 7 ngày</option>
+                  <option value="single">Đơn lẻ · 149.000đ/tháng</option>
+                  <option value="chain">Chuỗi · 399.000đ/tháng</option>
                 </select>
               </label>
               <div className="form-grid">
@@ -238,23 +242,25 @@ export function RequestAccess() {
                   <input
                     type="number"
                     required
-                    min={1}
                     max={500}
+                    disabled={plan !== "chain"}
+                    min={plan === "chain" ? 2 : 1}
                     value={locations}
                     onChange={(e) => setLocations(Number(e.target.value))}
                   />
                 </label>
                 <label className="field">
-                  Số tài khoản nhân viên
+                  Số tài khoản Quản lý kho & Nhân viên
                   <input
                     type="number"
                     required
-                    min={1}
+                    min={plan === "chain" ? 18 : 4}
                     max={500}
+                    disabled={plan === "free"}
                     value={count}
                     onChange={(e) => setCount(Number(e.target.value))}
                   />
-                  <small>Chưa bao gồm chủ doanh nghiệp.</small>
+                  <small>Chưa bao gồm 1 Chủ doanh. {plan === "chain" ? "Gói gồm 3 Quản lý kho + 15 Nhân viên, dùng chung tối đa 5 cơ sở." : "Gói gồm 1 Quản lý kho + 3 Nhân viên."} {plan !== "free" && "Tài khoản vượt hạn mức mua theo block 2 tài khoản."}</small>
                 </label>
               </div>
               <label className="field">
@@ -267,14 +273,14 @@ export function RequestAccess() {
               </label>
               <div className="callout">
                 {plan === "free" ? (
-                  "Quyền lợi và hạn mức gói miễn phí được xác nhận khi WareMap xử lý yêu cầu."
+                  "Free Trial 0đ/7 ngày: 1 cơ sở, 1 Chủ doanh + 1 Quản lý kho + 3 Nhân viên."
                 ) : (
                   <>
                     <strong>Chi phí dự kiến: {money(price.total)}/tháng</strong>
                     <br />
-                    Gói cơ bản {money(price.base)} + cơ sở bổ sung{" "}
-                    {money(price.branchExtra)} + tài khoản bổ sung{" "}
-                    {money(price.staffExtra)}.
+                    Gói cơ bản {money(price.base)}/tháng + cơ sở bổ sung{" "}
+                    {money(price.branchExtra)}/tháng. Tài khoản bổ sung{" "}
+                    {money(price.staffExtra)} thanh toán một lần. Chưa bao gồm phí tài khoản trong thuê bao tháng.
                   </>
                 )}
               </div>

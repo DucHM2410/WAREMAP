@@ -41,6 +41,7 @@ interface State {
   setBranch: (branch: string) => void
   role: Role
   accessMode: AccessMode
+  startTrialDemo: () => void
   startGuest: (mode: "explore" | "trial") => void
   authenticate: (email: string, password: string) => boolean
   logout: () => void
@@ -58,8 +59,8 @@ interface State {
   scanTask: ScanTask
   setScanTask: (task: ScanTask) => void
   guardNavigation: (guard: (() => boolean) | null) => void
-  requestedPlan: "free" | "paid"
-  setRequestedPlan: (plan: "free" | "paid") => void
+  requestedPlan: "free" | "single" | "chain"
+  setRequestedPlan: (plan: "free" | "single" | "chain") => void
 }
 const Context = createContext<State | null>(null)
 export function Provider({ children }: { children: ReactNode }) {
@@ -68,6 +69,7 @@ export function Provider({ children }: { children: ReactNode }) {
     try {
       const raw = localStorage.getItem(key)
       const saved = raw ? JSON.parse(raw) : null
+      if (saved?.version === 3 && saved.allowance === 5) saved.allowance = saved.locations === 1 ? 4 : 18
       if (saved?.version === 3) {
         return saved.industryConfirmed || saved.industry === config.id
           ? (saved as DemoData)
@@ -95,7 +97,7 @@ export function Provider({ children }: { children: ReactNode }) {
   const scopedBranch = branch === "all" && accessibleBranches.length > 1
     ? "all" : accessibleBranches.includes(branch) ? branch : accessibleBranches[0]
   const [scanTask, setScanTask] = useState<ScanTask>({ mode: "lookup" })
-  const [requestedPlan, setRequestedPlan] = useState<"free" | "paid">("paid")
+  const [requestedPlan, setRequestedPlan] = useState<"free" | "single" | "chain">("single")
   const guard = useRef<(() => boolean) | null>(null)
   const guardNavigation = (fn: (() => boolean) | null) => {
     guard.current = fn
@@ -186,6 +188,17 @@ export function Provider({ children }: { children: ReactNode }) {
     setScreen(next === "platform" ? "admin" : next === "owner" ? "industry-picker" : "dashboard")
     setSearch("")
   }
+  const startTrialDemo = () => {
+    if (!mayLeave()) return
+    confirmedRef.current = false
+    setData(d => ({ ...beginIndustryDemoSession(d, "owner"), trialDemo: true, locations: 1, allowance: 4 }))
+    setAccessMode("authenticated")
+    setRole("owner")
+    setBranch(branches[0])
+    setScreen("industry-picker")
+    setSearch("")
+    setScanTask({ mode: "lookup" })
+  }
   const startGuest = (mode: "explore" | "trial") => {
     if (!mayLeave()) return
     setAccessMode(mode)
@@ -243,6 +256,7 @@ export function Provider({ children }: { children: ReactNode }) {
         role,
         accessMode,
         startGuest,
+        startTrialDemo,
         authenticate,
         logout,
         industryConfirmed: Boolean(accountData.industryConfirmed),

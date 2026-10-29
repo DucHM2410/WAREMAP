@@ -364,6 +364,21 @@ body.industry-cosmetics .nav-item.nav-cta.active {
   filter: brightness(0.93);
 }
 
+.trial-plan-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.trial-plan-card strong { font-size: 14px; }
+.trial-plan-card ul { margin: 0; padding-left: 18px; list-style: disc; }
+
 .modal:has(.industry-confirm) {
   margin: auto;
   width: min(560px, calc(100vw - 32px));

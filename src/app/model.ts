@@ -19,13 +19,13 @@ export const branches = [
   "Chi nhánh Thủ Đức",
 ]
 export const policy = {
-  single: 99000,
-  chain: 299000,
-  branchBlock: 150000,
-  accountBlock: 60000,
+  single: 149000,
+  chain: 399000,
+  branchBlock: 199000,
+  accountBlock: 99000,
   includedBranches: 5,
-  includedStaff: 5,
-  blockSize: 5,
+  includedStaff: 4,
+  blockSize: 2,
 }
 export function quote(locations: number, staff: number) {
   locations = Math.max(
@@ -39,13 +39,13 @@ export function quote(locations: number, staff: number) {
       Math.max(0, locations - policy.includedBranches) / policy.blockSize,
     ) * policy.branchBlock
   const staffExtra =
-    Math.ceil(Math.max(0, staff - policy.includedStaff) / policy.blockSize) *
+    Math.ceil(Math.max(0, staff - (locations === 1 ? 4 : 18)) / policy.blockSize) *
     policy.accountBlock
   return {
     base,
     branchExtra,
     staffExtra,
-    total: base + branchExtra + staffExtra,
+    total: base + branchExtra,
   }
 }
 export const money = (n: number) =>
@@ -273,6 +273,7 @@ export interface DemoData {
   inboundCartons?: InboundCarton[]
   version: number
   industry: Industry
+  trialDemo?: boolean
   industryConfirmed?: boolean
   products: Product[]
   racks: Record<string, Rack[]>
@@ -351,7 +352,7 @@ export function seed(config: IndustryConfig): DemoData {
     ],
     requests: [],
     activities: [],
-    allowance: 5,
+    allowance: 18,
     locations: 3,
     company: "An Nhiên Retail",
     settings: { expiryDays: 30, notifications: true, pos: false, zalo: false },

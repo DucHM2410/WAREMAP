@@ -74,7 +74,7 @@ export function PublicSite({
 
   embedded?: boolean
 
-  onRegister?: (plan?: "free" | "paid") => void
+  onRegister?: (plan?: "free" | "single" | "chain") => void
 
   onLogin?: () => void
 

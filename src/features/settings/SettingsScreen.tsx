@@ -94,10 +94,17 @@ export default function Settings() {
         {active === "Gói & hạn mức" && (
           <div className="stack">
             <Panel
-              title={data.locations === 1 ? "Gói Một cơ sở" : "Gói Chuỗi"}
+              title={data.trialDemo ? "Free Trial demo · 7 ngày" : data.locations === 1 ? "Gói Đơn lẻ" : "Gói Chuỗi"}
               action={<Badge tone="info">Gói minh họa</Badge>}
             >
               <div className="panel-body stack">
+                {data.trialDemo && (
+                  <section className="trial-plan-card" aria-label="Hạn mức Free Trial">
+                    <strong>Quyền lợi Free Trial trong 7 ngày</strong>
+                    <span>1 cơ sở · 1 Chủ doanh + 1 Quản lý kho + 3 Nhân viên</span>
+                    <span>Tổng cộng 5 tài khoản. Đây là hạn mức được cấp, không phải số người đang hoạt động.</span>
+                  </section>
+                )}
                 <div className="stat-pair">
                   <div>
                     <small>Hạn mức cơ sở</small>
@@ -105,11 +112,11 @@ export default function Settings() {
                       {data.locations === 1
                         ? 1
                         : 5 +
-                          Math.ceil(Math.max(0, data.locations - 5) / 5) * 5}
+                          Math.ceil(Math.max(0, data.locations - 5) / 2) * 2}
                     </strong>
                   </div>
                   <div>
-                    <small>Tài khoản nhân viên</small>
+                    <small>Quản lý kho & nhân viên</small>
                     <strong>
                       {data.staff.length}/{data.allowance}
                     </strong>
@@ -118,7 +125,7 @@ export default function Settings() {
                 <dl className="detail-list">
                   <div>
                     <dt>Gói cơ bản</dt>
-                    <dd>{money(price.base)}/tháng</dd>
+                    <dd>{money(data.trialDemo ? 0 : price.base)}/tháng</dd>
                   </div>
                   <div>
                     <dt>Block cơ sở bổ sung</dt>
@@ -126,17 +133,15 @@ export default function Settings() {
                   </div>
                   <div>
                     <dt>Block tài khoản bổ sung</dt>
-                    <dd>{money(price.staffExtra)}/tháng</dd>
+                    <dd>{money(price.staffExtra)} một lần</dd>
                   </div>
                   <div>
                     <dt>Tổng dự kiến</dt>
-                    <dd className="text-teal">{money(price.total)}/tháng</dd>
+                    <dd className="text-teal">{money(data.trialDemo ? 0 : price.total)}/tháng</dd>
                   </div>
                 </dl>
                 <div className="callout">
-                  Một cơ sở: 99.000đ/tháng. Chuỗi tối đa 5 cơ sở:
-                  299.000đ/tháng. Thêm 5 cơ sở: 150.000đ/tháng. Thêm 5 tài khoản
-                  nhân viên: 60.000đ/tháng.
+                  Đơn lẻ: 149.000đ/tháng (1 Chủ doanh + 1 Quản lý kho + 3 Nhân viên). Chuỗi: 399.000đ/tháng (1 Chủ doanh + 3 Quản lý kho + 15 Nhân viên). Thêm 2 cơ sở: 199.000đ/tháng, chỉ gói Chuỗi. Thêm 2 tài khoản: 99.000đ một lần, phân quyền Quản lý kho hoặc Nhân viên.
                 </div>
                 <Button onClick={() => setRequest(true)}>
                   Yêu cầu thay đổi hạn mức
@@ -386,10 +391,10 @@ export default function Settings() {
                 />
               </label>
               <label className="field">
-                Tổng số tài khoản nhân viên
+                Tổng số Quản lý kho & Nhân viên
                 <input
                   type="number"
-                  min={Math.max(5, data.staff.length, data.allowance)}
+                  min={Math.max(data.locations === 1 ? 4 : 18, data.staff.length, data.allowance)}
                   max={500}
                   required
                   value={staff}
@@ -408,8 +413,7 @@ export default function Settings() {
             <div className="callout">
               <strong>Dự kiến {money(preview.total)}/tháng</strong>
               <br />
-              Gói {money(preview.base)} + cơ sở {money(preview.branchExtra)} +
-              tài khoản {money(preview.staffExtra)}. Chưa thu phí.
+              Gói {money(preview.base)}/tháng + cơ sở {money(preview.branchExtra)}/tháng. Tài khoản bổ sung {money(preview.staffExtra)} một lần, không cộng vào phí tháng. Chưa thu phí.
             </div>
             <div className="form-actions">
               <Button variant="secondary" onClick={() => setRequest(false)}>

@@ -247,6 +247,17 @@ export function Shell({ children }: { children: ReactNode }) {
         </nav>
         {["owner", "platform"].includes(role) && <button className={`nav-item website-editor-link ${screen === "website-editor" ? "active" : ""}`} aria-current={screen === "website-editor" ? "page" : undefined} onClick={() => { go("website-editor"); setOpen(false) }}><PanelsTopLeft size={18}/><span>Chỉnh sửa trang chủ<small>Nội dung · hình ảnh · ngành hàng</small></span></button>}
         <div className="sidebar-footer">
+          {data.trialDemo && role !== "platform" && (
+            <section className="trial-plan-card" aria-label="Quyền lợi Free Trial">
+              <strong>Free Trial · 0đ / 7 ngày</strong>
+              <span>1 cơ sở · Tổng cộng 5 tài khoản</span>
+              <ul>
+                <li>1 Chủ doanh</li>
+                <li>1 Quản lý kho</li>
+                <li>3 Nhân viên</li>
+              </ul>
+            </section>
+          )}
           <div className="demo-label">
             <span />
             Tài khoản demo đã đăng nhập
@@ -318,7 +329,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <div className="demo-strip">
           <span>
             <span className="status-dot" />
-            Dữ liệu minh họa · Thay đổi lưu trên trình duyệt này
+            {data.trialDemo ? "Free Trial demo · 0đ/7 ngày · 1 cơ sở · 1 Chủ doanh + 1 Quản lý kho + 3 Nhân viên · Không đếm hạn thật" : "Dữ liệu minh họa · Thay đổi lưu trên trình duyệt này"}
           </span>
           <Badge>{roleNames[role]}</Badge>
         </div>

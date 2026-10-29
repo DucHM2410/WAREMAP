@@ -4,7 +4,7 @@ import { useApp } from "../../app/store"
 import { Brand, Button } from "../../app/ui"
 
 export function TrialInfo() {
-  const { go, startGuest, setRequestedPlan } = useApp()
+  const { go, startGuest, startTrialDemo, setRequestedPlan } = useApp()
   return (
     <main id="main-content" className="guest-info">
       <button className="brand-button" onClick={() => go("home")}>
@@ -30,16 +30,17 @@ export function TrialInfo() {
           </Button>
         </article>
         <article>
-          <span className="eyebrow">Dùng thử miễn phí · chưa đăng nhập</span>
-          <h2>Thử tìm hàng trong kho</h2>
-          <p>1 kho mẫu · tối đa 3 mã hàng mẫu · chỉ xem</p>
+          <span className="eyebrow">Free Trial · 0đ / 7 ngày</span>
+          <h2>Trải nghiệm vận hành một cơ sở</h2>
+          <p>1 cơ sở · 1 Chủ doanh + 1 Quản lý kho + 3 Nhân viên</p>
           <ul>
-            <li>Bao gồm trải nghiệm kho 3D</li>
-            <li>Xem, tìm kiếm và lọc danh sách hàng mẫu</li>
-            <li>Không lưu dữ liệu hay tải dữ liệu riêng lên</li>
+            <li>3D Builder, QR Kệ và QR Lô</li>
+            <li>Nhập xuất, kiểm kê, lô hàng và cảnh báo FEFO</li>
+            <li>Báo cáo và phân quyền theo tài khoản demo</li>
           </ul>
-          <Button onClick={() => startGuest("trial")}>
-            Bắt đầu dùng thử giới hạn
+          <p className="tiny">Mô phỏng gói thử 7 ngày; không đếm hạn hoặc tạo tài khoản thật. Đổi tài khoản ở trang Đăng nhập để thử quyền Chủ doanh, Quản lý kho, Nhân viên kho và Bán hàng.</p>
+          <Button onClick={startTrialDemo}>
+            Xem demo với vai trò Chủ doanh
           </Button>
         </article>
       </div>
@@ -62,7 +63,7 @@ export function TrialInfo() {
               go("request")
             }}
           >
-            Yêu cầu cấp tài khoản miễn phí
+            Đăng ký dùng thử miễn phí 7 ngày
           </Button>
           <Button variant="secondary" onClick={() => go("login")}>
             Đã có tài khoản? Đăng nhập
