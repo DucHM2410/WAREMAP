@@ -37,11 +37,13 @@ export default function Login() {
       </section>
       <section className="auth-form-side">
         <div className="auth-card">
-          <Brand />
-          <Button variant="ghost" onClick={() => go("home")}>
-            <ArrowLeft size={15} />
-            Về trang chủ
-          </Button>
+          <div className="auth-card-header">
+            <Brand />
+            <Button variant="ghost" onClick={() => go("home")}>
+              <ArrowLeft size={15} />
+              Về trang chủ
+            </Button>
+          </div>
           <h1>Đăng nhập</h1>
           <p>Tiếp tục quản lý kho hàng của bạn.</p>
           <form
