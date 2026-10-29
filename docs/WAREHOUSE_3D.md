@@ -11,7 +11,16 @@
 
 ## Thư viện
 
-Sáu mẫu có kích thước và hình dạng riêng: kệ tiêu chuẩn, kệ pallet, kệ chia ô, tủ bảo quản, ô xếp hàng và bàn kiểm đếm. Kệ chia ô và tủ hiển thị vách chia theo số ô. Chỉnh tầng / ô cập nhật ngay trên 3D.
+Mười mẫu có kích thước và hình dạng riêng. Ngoài sáu mẫu ban đầu còn có kệ ngăn mỹ phẩm, khay chia ngăn, tủ nhiều ngăn nhỏ và kệ hàng mẹ & bé. Kệ chia ô, khay và tủ hiển thị vách chia theo số ô. Chỉnh tầng / ô cập nhật ngay trên 3D. Khay có chiều dài và chiều rộng không quá 1 m dùng lưới di chuyển 10 cm; các kệ khác dùng lưới 50 cm.
+
+## Sản phẩm cỡ vừa và rất nhỏ
+
+- Chọn hàng trên bản đồ để xem kích thước một đơn vị bao bì bằng cm. Nếu chưa nhập số đo, hệ thống dùng kích thước tham khảo theo nhóm hàng và ghi rõ chưa xác nhận.
+- Chủ doanh nghiệp, quản lý và nhân viên kho có thể nhập số đo thực tế và chọn dạng hộp / túi, chai / lọ, hũ / lon hoặc tuýp / thỏi. Số đo lưu cho mã hàng và lô tại cơ sở đang chọn; không thay đổi số lượng tồn.
+- **Bao bì dễ chọn (phóng đại)** điều chỉnh kích thước hiển thị theo ô. **Kích thước bao bì thực** đổi cm sang mét và dùng tỷ lệ thật trong không gian 3D; các sản phẩm chưa đo vẫn dùng số tham khảo có nhãn.
+- **Xem gần kệ** ẩn các kệ khác để tránh che khuất, đưa camera đến kệ đang chọn và cho phép phóng gần hơn. **Xem toàn kho** trả lại không gian đầy đủ.
+- Một vật thể đại diện cho một lô tại ô, không vẽ từng đơn vị hàng tồn. Vùng bấm rộng bằng ô giúp chọn được cả bao bì rất nhỏ.
+- Cảnh báo khi một đơn vị bao bì vượt chiều ngang, chiều sâu hoặc khoảng hở tầng theo hướng hiện tại. Đây chưa phải tính toán sức chứa hay thuật toán xếp toàn bộ số lượng hàng vào ô.
 
 ## Phạm vi hiện tại
 

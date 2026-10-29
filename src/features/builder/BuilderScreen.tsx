@@ -13,6 +13,8 @@ import { WarehouseRack } from "./WarehouseRack"
 import { RACK_TEMPLATES, createRack, fitToFloor } from "./rackLibrary"
 import { CanvasPlacement, type PlacementProjector } from "./CanvasPlacement"
 import { WarehouseLocations } from "./WarehouseLocations"
+import { ProductSizingPanel } from "./ProductSizingPanel"
+import type { ProductDisplay } from "./productSizing"
 import "./builder.css"
 import { productKey, ExpiryBadge } from "../../app/catalog"
 import { QRLabels } from "../../app/labels"
@@ -87,6 +89,8 @@ export default function Warehouse() {
   const { config } = useIndustry()
   const [tool, setTool] = useState<"select" | "move" | "rotate">("select")
   const [selectedBatch, setSelectedBatch] = useState("")
+  const [displayMode,setDisplayMode] = useState<ProductDisplay>("readable")
+  const [focusedRack,setFocusedRack] = useState<string | null>(null)
   const [showQR, setShowQR] = useState(false)
   const [draggingTemplate, setDraggingTemplate] = useState("")
   const placement = useRef<PlacementProjector | null>(null)
@@ -121,6 +125,9 @@ export default function Warehouse() {
   )
   const activeId = editing ? chosen : product?.rack || chosen
   const rack = racks.find((r) => r.id === activeId)
+  useEffect(() => {
+    setFocusedRack(current => current === activeId && view === "3d" ? current : null)
+  }, [warehouse, activeId, view])
   const chooseProduct = (p: Product) => {
     if (editing) { setChosen(p.rack); return }
     setChosen(p.rack); setSelected(p.id); setSelectedBatch(p.batch)
@@ -309,8 +316,10 @@ export default function Warehouse() {
           <select aria-label="Lớp thông tin" style={{ width: "auto" }} value={layer} onChange={(e) => setLayer(e.target.value)}>
             <option>Vị trí hàng</option><option>Hạn dùng</option>
           </select>
+          <select aria-label="Cách hiển thị sản phẩm 3D" value={displayMode} onChange={e => setDisplayMode(e.target.value as ProductDisplay)}><option value="readable">Bao bì dễ chọn (phóng đại)</option><option value="actual">Kích thước bao bì thực</option></select>
         </div>
       )}
+      {!editing && <p className="tiny muted product-scale-note">{displayMode === "readable" ? "Bao bì được phóng đại theo ô để dễ chọn, không phản ánh tỷ lệ thật." : "Tỷ lệ theo kích thước bao bì đã nhập; sản phẩm chưa đo dùng số tham khảo. Chọn Xem gần kệ để xem hàng nhỏ."} Mỗi vật thể đại diện một lô, không phải toàn bộ số lượng tồn.</p>}
       {!editing && search && (
         <div className="panel" style={{ marginBottom: 18 }}>
           {matches.length ? matches.slice(0, 6).map((p) => (
@@ -370,7 +379,7 @@ export default function Warehouse() {
                 <Button variant="ghost" disabled={!history.length} onClick={() => { setDraft(history[history.length - 1]); setHistory(h => h.slice(0, -1)) }}><Undo2 size={15} />Hoàn tác</Button>
                 <Button variant="ghost" disabled={!rack} onClick={() => { setTool("rotate"); setView("3d") }}>Xoay kệ trong 3D</Button>
                 <Button variant="ghost" onClick={() => { controls.current?.reset(); setCameraKey(k => k + 1) }}>Đặt lại góc nhìn</Button>
-                <small>Di chuyển theo lưới 0.5 m. Đổi kích thước tại bảng chi tiết kệ.</small>
+                <small>Lưới kệ 50 cm; khay nhỏ 10 cm. Đổi kích thước tại bảng chi tiết kệ.</small>
               </div></details>
             </div>}
             <div className="map-overlay">
@@ -412,10 +421,11 @@ export default function Warehouse() {
                       fadeDistance={30}
                       position={[0, -0.03, 0]}
                     />
-                    {racks.map((r) => (
+                    {racks.filter(r => !focusedRack || r.id === focusedRack).map((r) => (
                       <WarehouseRack
                         key={r.id}
                         rack={r}
+                        displayMode={displayMode}
                         contents={data.products.filter(
                           (p) => p.branch === warehouse && p.rack === r.id,
                         )}
@@ -461,7 +471,7 @@ export default function Warehouse() {
             <span className="map-help">
               {editing && view === "plan"
                 ? "Kéo kệ để bố trí · Hoặc nhập vị trí trong bảng chi tiết"
-                : editing && tool === "move" ? "Kéo trực tiếp kệ để di chuyển · Nền trống để xoay · Bố trí theo lưới 0.5 m"
+                : editing && tool === "move" ? "Kéo trực tiếp kệ để di chuyển · Nền trống để xoay · Kệ: lưới 50 cm · Khay nhỏ: 10 cm"
                 : editing && tool === "rotate" ? "Kéo vòng tròn quanh kệ để xoay · Lưu sơ đồ khi xong"
                 : editing ? "Chọn kệ để chỉnh kích thước · Di chuyển để bố trí trực tiếp trong 3D"
                 : "Nhấn kiện hàng để xem sản phẩm · Kéo nền để xoay · Cuộn để phóng to"}
@@ -480,11 +490,28 @@ export default function Warehouse() {
                 <Box size={13} />
                 3D
               </Button>
+              <Button variant="ghost" disabled={!rack || view !== "3d"} onClick={() => {
+                if (!rack || !controls.current) return
+                if (focusedRack) {
+                  setFocusedRack(null)
+                  controls.current?.reset()
+                  setCameraKey(key => key + 1)
+                  return
+                }
+                setFocusedRack(rack.id)
+                const target = controls.current
+                const distance = Math.max(rack.width,rack.height,rack.depth,1) * 1.6
+                target.target.set(rack.x,rack.height / 2,rack.z)
+                target.object.position.set(rack.x + distance * .35,rack.height / 2 + distance * .3,rack.z + distance)
+                target.minDistance = .3
+                target.update()
+              }}>{focusedRack ? "Xem toàn kho" : "Xem gần kệ"}</Button>
               <Button
                 variant="ghost"
                 aria-label="Về góc nhìn ban đầu"
                 onClick={() => {
                   controls.current?.reset()
+                  setFocusedRack(null)
                   setCameraKey((k) => k + 1)
                 }}
               >
@@ -713,6 +740,7 @@ export default function Warehouse() {
                           <dd>{product.qty}</dd>
                         </div>
                       </dl>
+                      <ProductSizingPanel key={productKey(product)} product={product} rack={rack}/>
                       <Button disabled={accessMode !== "authenticated"} onClick={() => { setScanTask({ mode: "lookup", productKey: productKey(product) }); go("scanner") }}>Quét QR xác minh sản phẩm</Button>
                       <Button disabled={accessMode !== "authenticated"} variant="secondary" onClick={() => setShowQR(true)}><QrCode size={16} />Nhãn QR vị trí & lô</Button>
                       <Button disabled={accessMode !== "authenticated"} variant="secondary" onClick={() => go("batches")}>

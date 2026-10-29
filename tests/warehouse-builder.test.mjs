@@ -7,15 +7,15 @@ import {
 } from "../src/features/builder/rackLibrary.ts"
 import { warehouseScope } from "../src/app/warehouseScope.ts"
 
-test("six rack templates have distinct shapes and independent editable instances", () => {
-  assert.equal(RACK_TEMPLATES.length, 6)
+test("ten rack templates have distinct shapes and independent editable instances", () => {
+  assert.equal(RACK_TEMPLATES.length, 10)
   assert.equal(
     new Set(
       RACK_TEMPLATES.map((t) =>
         [t.width, t.depth, t.height, t.levels, t.bins].join("/"),
       ),
     ).size,
-    6,
+    10,
   )
   const first = createRack("cubicles", [], { x: 2, z: 3 })
   const second = createRack("cubicles", [first])

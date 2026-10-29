@@ -68,6 +68,12 @@ export const expiryLabel = (date: string) => {
       ? "Hết hạn hôm nay"
       : `Còn ${d} ngày`
 }
+export interface ProductPackage {
+  widthCm: number
+  depthCm: number
+  heightCm: number
+  shape: "box" | "bottle" | "jar" | "tube"
+}
 export interface Product {
   id: string
   name: string
@@ -80,6 +86,7 @@ export interface Product {
   rack: string
   level: number
   bin: number
+  package3d?: ProductPackage
 }
 export const locationLabel = (p: Pick<Product, "rack" | "level" | "bin">) =>
   `Kệ ${p.rack} · Tầng ${p.level} · Ô ${String(p.bin).padStart(2, "0")}`

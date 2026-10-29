@@ -5,13 +5,17 @@ import { TransformControls } from "@react-three/drei"
 import { CanvasTexture, Group, Plane, Vector3 } from "three"
 
 import { fitToFloor } from "./rackLibrary"
+import { ProductGlyph } from "./ProductGlyph"
+import type { ProductDisplay } from "./productSizing"
 
 import { type Product, type Rack, daysLeft } from "../../app/model"
 
 import { productKey } from "../../app/catalog"
 
-function RackLabel({ text, height }: { text: string
- height: number }) {
+function RackLabel({ text, height, width }: { text: string
+ height: number
+ width: number }) {
+  const labelWidth = Math.min(1.55, Math.max(.35, width * .8))
   const texture = useMemo(() => {
     const canvas = document.createElement("canvas")
 
@@ -37,7 +41,7 @@ function RackLabel({ text, height }: { text: string
   useEffect(() => () => texture.dispose(), [texture])
 
   return (
-    <sprite position={[0, height + 0.35, 0]} scale={[1.55, 0.39, 1]}>
+    <sprite position={[0, height + Math.max(.08, labelWidth * .2), 0]} scale={[labelWidth, labelWidth * .25, 1]}>
       <spriteMaterial map={texture} transparent depthTest={false} />
     </sprite>
   )
@@ -57,6 +61,7 @@ export function WarehouseRack({
   expiryDays,
   draggable,
   onDragging,
+  displayMode = "readable",
 }: {
   rack: Rack
   active: boolean
@@ -74,6 +79,7 @@ export function WarehouseRack({
   expiryLayer: boolean
   expiryDays: number
 
+  displayMode?: ProductDisplay
   draggable?: boolean
   onDragging?: (dragging: boolean) => void
 }) {
@@ -193,12 +199,16 @@ export function WarehouseRack({
           </mesh>
         )),
       )}
-      {Array.from({ length: rack.levels + 1 }, (_, i) => (
+      {Array.from({ length: rack.kind === "Khay chia ngăn" ? 1 : rack.levels + 1 }, (_, i) => (
         <mesh key={i} position={[0, i * shelf, 0]}>
           <boxGeometry args={[rack.width + 0.08, 0.055, rack.depth + 0.07]} />
           <meshStandardMaterial color={active ? color : "#c3cdd3"} />
         </mesh>
       ))}
+      {rack.kind === "Khay chia ngăn" && <>
+        {[-1,1].map(side => <mesh key={side} position={[side * rack.width / 2,rack.height / 2,0]}><boxGeometry args={[.025,rack.height,rack.depth]}/><meshStandardMaterial color={active ? color : "#bacbd5"}/></mesh>)}
+        <mesh position={[0,rack.height / 2,-rack.depth / 2]}><boxGeometry args={[rack.width,rack.height,.025]}/><meshStandardMaterial color={active ? color : "#bacbd5"}/></mesh>
+      </>}
       {rack.kind === "Kệ pallet" &&
         Array.from({ length: rack.levels }, (_, i) => (
           <mesh
@@ -209,7 +219,7 @@ export function WarehouseRack({
             <meshStandardMaterial color="#ed9b46" />
           </mesh>
         ))}
-      {["Kệ chia ô", "Tủ bảo quản"].includes(rack.kind) &&
+      {["Kệ chia ô", "Tủ bảo quản", "Kệ ngăn nhỏ", "Khay chia ngăn"].includes(rack.kind) &&
         Array.from({ length: Math.max(0, rack.bins - 1) }, (_, i) => (
           <mesh
             key={`divider-${i}`}
@@ -268,40 +278,16 @@ export function WarehouseRack({
                 : "#71ac97"
             : color
 
-          return (
-            <mesh
-              key={productKey(p)}
-              position={[
-                -rack.width / 2 +
-                  (p.bin - 0.5) * binWidth +
-                  ((index - (siblings.length - 1) / 2) * binWidth * 0.8) /
-                    siblings.length,
-                (p.level - 1) * shelf + shelf * 0.42,
-                0,
-              ]}
-              onClick={(e) => {
-                e.stopPropagation()
-                if (!manipulating.current) onProductSelect(p)
-              }}
-            >
-              <boxGeometry
-                args={[
-                  (binWidth * 0.72) / siblings.length,
-                  shelf * 0.65,
-                  rack.depth * 0.72,
-                ]}
-              />
-              <meshStandardMaterial
-                color={selected ? "#f4b24d" : fill}
-                emissive={selected ? "#f4b24d" : "#000"}
-                emissiveIntensity={selected ? 0.25 : 0}
-                transparent
-                opacity={active || selected ? 1 : 0.75}
-              />
-            </mesh>
-          )
+          return <group key={productKey(p)} position={[
+            -rack.width / 2 + (p.bin - .5) * binWidth + (index - (siblings.length - 1) / 2) * binWidth * .8 / siblings.length,
+            (p.level - 1) * shelf, 0,
+          ]} onClick={event => { event.stopPropagation(); if (!manipulating.current) onProductSelect(p) }}>
+            <ProductGlyph product={p} rack={rack} mode={displayMode} siblings={siblings.length} color={fill} selected={selected}/>
+            {/* A whole-slot hit target keeps tiny packages selectable at warehouse scale. */}
+            <mesh position={[0,shelf * .45,0]}><boxGeometry args={[binWidth * .8 / siblings.length,shelf * .85,rack.depth * .8]}/><meshBasicMaterial transparent opacity={0} depthWrite={false}/></mesh>
+          </group>
         })}
-      <RackLabel text={rack.name} height={rack.height} />
+      <RackLabel text={rack.name} height={rack.height} width={rack.width} />
     </group>
   )
 

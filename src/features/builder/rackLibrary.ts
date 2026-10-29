@@ -1,6 +1,10 @@
 import type { Rack } from "../../app/model"
 
 export const RACK_TEMPLATES = [
+  { id: "micro", name: "Kệ ngăn mỹ phẩm", description: "Son, serum và hàng rất nhỏ", kind: "Kệ ngăn nhỏ", width: 1.2, depth: .4, height: 1.6, levels: 5, bins: 6 },
+  { id: "tray", name: "Khay chia ngăn", description: "Khay thấp cho phụ kiện nhỏ", kind: "Khay chia ngăn", width: .8, depth: .3, height: .2, levels: 1, bins: 8 },
+  { id: "drawers", name: "Tủ nhiều ngăn nhỏ", description: "Núm ti, phụ kiện và đồ chăm sóc", kind: "Kệ ngăn nhỏ", width: 1.2, depth: .45, height: 1.8, levels: 6, bins: 10 },
+  { id: "medium", name: "Kệ hàng mẹ & bé", description: "Sữa, bỉm và hộp cỡ vừa", kind: "Kệ hàng", width: 1.8, depth: .8, height: 2, levels: 3, bins: 2 },
   {
     id: "shelf",
     name: "Kệ tiêu chuẩn",
@@ -81,9 +85,11 @@ export function fitToFloor(
     (Math.abs(Math.cos(angle)) * width + Math.abs(Math.sin(angle)) * depth) / 2
   const halfZ =
     (Math.abs(Math.sin(angle)) * width + Math.abs(Math.cos(angle)) * depth) / 2
+  const step = Math.max(width, depth) <= 1 ? .1 : .5
+  const snap = (n: number) => Number((Math.round(n / step) * step).toFixed(3))
   return {
-    x: Math.max(-8 + halfX, Math.min(8 - halfX, Math.round(x * 2) / 2)),
-    z: Math.max(-6 + halfZ, Math.min(8 - halfZ, Math.round(z * 2) / 2)),
+    x: Math.max(-8 + halfX, Math.min(8 - halfX, snap(x))),
+    z: Math.max(-6 + halfZ, Math.min(8 - halfZ, snap(z))),
   }
 }
 

@@ -37,6 +37,13 @@
 .rack-preview--cabinet .rack-thumbnail { background:#b9d1df; border-width:5px; }
 .rack-preview--stack .rack-thumbnail { height:38px; width:78px; border-color:#b6966a; background:#ecdac0; }
 .rack-preview--packing .rack-thumbnail { height:30px; width:80px; background:transparent; border-bottom:0; border-top:6px solid #a3b6c6; }
+.rack-preview--tray .rack-thumbnail { height:28px; width:76px; border-bottom:6px solid #7394aa; }
+.rack-preview--micro .rack-thumbnail i,.rack-preview--drawers .rack-thumbnail i { border-right:1px solid #7394aa; background:#d9d8f2; }
+.product-sizing { border:1px solid var(--line); border-radius:12px; padding:14px; background:#f8fafc; }
+.product-sizing p { line-height:1.6; margin:8px 0; }
+.product-sizing summary { cursor:pointer; font-size:12px; color:var(--industry-primary); font-weight:600; }
+.product-sizing form { margin-top:14px; }
+.product-scale-note { margin:-4px 0 18px; line-height:1.7; }
 .is-drop-target { outline:3px dashed var(--industry-primary); outline-offset:-5px; }
 .rack-drop-hint { position:absolute; z-index:6; pointer-events:none; inset:42% 12% auto; padding:20px; border-radius:14px; text-align:center; font-weight:600; background:#ffffffed; color:var(--industry-primary); box-shadow:0 8px 30px #19324a15; }
 @media(max-width:900px) { .warehouse-location-grid { grid-template-columns:1fr; }.warehouse-locations:not(.warehouse-locations--overview) .warehouse-location-grid { display:flex; overflow-x:auto; padding:3px; }.warehouse-locations:not(.warehouse-locations--overview) .warehouse-location { min-width:220px; }.warehouse-location-heading { align-items:flex-start; flex-direction:column; } }
