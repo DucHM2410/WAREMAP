@@ -22,7 +22,7 @@ export default function Login() {
       <section className="auth-story">
         <Brand />
         <div>
-          <span className="eyebrow" style={{ color: "#81c8cd" }}>
+          <span className="eyebrow" style={{ color: "#A9CFF8" }}>
             Rõ vị trí. Dễ vận hành.
           </span>
           <h1>
