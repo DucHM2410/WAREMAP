@@ -1,13 +1,16 @@
 import {
   ArrowRight,
   ArrowUpRight,
+  Boxes,
   Check,
   ChevronDown,
-  Headphones,
+  KeyRound,
   Layers,
+  Map,
   MapPin,
   PackageSearch,
   ScanLine,
+  Search,
   ShieldCheck,
   Truck,
 } from "lucide-react"
@@ -21,6 +24,8 @@ import type { ContentSection } from "../site-content/types"
 import { EditableImage } from "./SiteImage"
 
 const icons = [MapPin, PackageSearch, Layers, ShieldCheck, Truck, ScanLine]
+
+const solutionIcons = [Search, Map, KeyRound, Boxes]
 
 export function SiteSection({
   section: s,
@@ -83,7 +88,15 @@ export function SiteSection({
 
   const heading = (
     <div className="wm-section-head">
-      <span className="wm-eyebrow">{s.eyebrow}</span>
+      {s.eyebrow && (
+        <span
+          className={`wm-eyebrow ${
+            s.id === "challenges" ? "wm-eyebrow-boxed" : ""
+          }`}
+        >
+          {s.eyebrow}
+        </span>
+      )}
       <h2>{s.title}</h2>
       {s.description && <p>{s.description}</p>}
     </div>
@@ -127,22 +140,44 @@ export function SiteSection({
       <section id={s.id} className="wm-section wm-feature-showcase">
         {heading}
         <div className="wm-card-grid wm-feature-grid">
-          {s.cards.map((c, i) => {
-            const Icon = icons[i % icons.length]
-
-            return (
-              <article key={i}>
-                <span className="wm-icon">
-                  <Icon size={23} />
-                </span>
-                <h3>{c.title}</h3>
-                <p>{c.text}</p>
-              </article>
-            )
-          })}
+          {s.cards.map((c, i) => (
+            <article key={i}>
+              <h3>{c.title}</h3>
+              <p>{c.text}</p>
+            </article>
+          ))}
         </div>
         <div className="wm-showcase-art">
           <EditableImage src={s.image} alt={s.imageAlt} compact />
+        </div>
+      </section>
+    )
+
+  if (s.layout === "features" && s.id === "warehouse-solution")
+    return (
+      <section id={s.id} className="wm-section wm-solution">
+        {heading}
+        <div className="wm-solution-body">
+          <div className="wm-solution-cards">
+            {s.cards.map((c, i) => {
+              const Icon = solutionIcons[i % solutionIcons.length]
+
+              return (
+                <article key={i}>
+                  <div className="wm-solution-card-head">
+                    <span className="wm-icon">
+                      <Icon size={22} />
+                    </span>
+                    <h3>{c.title}</h3>
+                  </div>
+                  <p>{c.text}</p>
+                </article>
+              )
+            })}
+          </div>
+          <div className="wm-solution-visual">
+            <EditableImage src={s.image} alt={s.imageAlt} compact />
+          </div>
         </div>
       </section>
     )
@@ -257,7 +292,12 @@ export function SiteSection({
     )
 
   return (
-    <section id={s.id} className={`wm-section wm-${s.layout}`}>
+    <section
+      id={s.id}
+      className={`wm-section wm-${s.layout} ${
+        s.id === "challenges" ? "wm-challenges" : ""
+      }`}
+    >
       {heading}
       <div
         ref={s.layout === "support" ? carousel : undefined}
@@ -266,8 +306,7 @@ export function SiteSection({
         }`}
       >
         {s.cards.map((c, i) => {
-          const Icon =
-            s.layout === "support" ? Headphones : icons[i % icons.length]
+          const Icon = icons[i % icons.length]
 
           return (
             <article
@@ -276,9 +315,11 @@ export function SiteSection({
               }
               key={i}
             >
-              <span className="wm-icon">
-                <Icon size={23} />
-              </span>
+              {s.id !== "challenges" && s.layout !== "support" && (
+                <span className="wm-icon">
+                  <Icon size={23} />
+                </span>
+              )}
               <h3>{c.title}</h3>
               <p>{c.text}</p>
               {s.layout === "support" && (

@@ -28,28 +28,28 @@ const cta = () =>
   )
 const features: [string, string][] = [
   [
-    "Bản đồ kho 3D",
-    "Tái hiện kệ, tầng và ô hàng. Nhìn thấy vị trí, tìm đúng mặt hàng ngay trên bản đồ trực quan.",
+    "BẢN ĐỒ KHO 3D",
+    "Trực quan hóa và xây dựng không gian kho theo khu vực, kệ, tầng và vị trí lưu trữ thực tế.",
   ],
   [
-    "Định vị hàng hóa",
-    "Tìm tên hoặc mã sản phẩm để biết hàng đang ở đâu, thuộc lô nào và còn bao nhiêu.",
+    "ĐỊNH VỊ HÀNG HÓA",
+    "Tìm kiếm sản phẩm và xác định chính xác hàng hóa đang được lưu trữ ở đâu trên bản đồ.",
   ],
   [
-    "QR xác thực hai chiều",
-    "Đối chiếu mã vị trí và mã lô trước khi nhập, xuất hoặc xác nhận hàng tại kho.",
+    "QR XÁC THỰC",
+    "Kết hợp QR của vị trí/kệ và QR của sản phẩm/lô hàng để xác nhận đúng hàng, đúng vị trí và hạn chế sai sót.",
   ],
   [
-    "Quản lý HSD & FEFO",
-    "Theo dõi lô cận hạn và ưu tiên hàng hết hạn trước, giúp đội ngũ chủ động xử lý.",
+    "QUẢN LÝ HSD & FEFO",
+    "Theo dõi hạn sử dụng lô hàng, cảnh báo sản phẩm gần hết hạn và hỗ trợ ưu tiên xuất kho theo nguyên tắc FEFO.",
   ],
   [
-    "Theo dõi luân chuyển",
-    "Nắm rõ hàng đang đi đường, kho gửi, kho nhận và kết quả đối soát số lượng.",
+    "THEO DÕI LUÂN CHUYỂN",
+    "Theo dõi hàng hóa trong trạng thái In-Transit, vị trí di chuyển và hỗ trợ đối soát khi hàng được chuyển giữa các kho.",
   ],
   [
-    "Quản lý người dùng & phân quyền",
-    "Chủ doanh nghiệp, quản lý, nhân viên kho và bán hàng có không gian công việc riêng.",
+    "QUẢN LÝ NGƯỜI DÙNG & PHÂN QUYỀN",
+    "Phân quyền truy cập theo vai trò, hỗ trợ quản lý người dùng và kiểm soát hoạt động trong hệ thống.",
   ],
 ]
 function industryPage(kind: "mom" | "cosmetics"): SitePage {
@@ -187,25 +187,25 @@ const home: SitePage = {
     section(
       "challenges",
       "cards",
-      "THẤU HIỂU CÔNG VIỆC CỦA BẠN",
+      "Thách thức trong quản lý kho",
       "Bạn có đang gặp khó khăn khi quản lý kho hàng?",
-      "Một mặt hàng ở sai vị trí có thể khiến cả quy trình chậm lại.",
+      "Việc quản lý và tìm kiếm hàng hóa trở nên khó khăn hơn khi quy mô kho ngày càng mở rộng.",
       [
         [
-          "Kho khó sắp xếp, dễ thất lạc",
-          "Vị trí lưu trữ không rõ ràng, hàng hóa dễ bị bỏ quên hoặc xếp nhầm chỗ.",
+          "KHÓ XÁC ĐỊNH VỊ TRÍ",
+          "Mất thời gian xác định chính xác vị trí lưu trữ của hàng hóa trong kho.",
         ],
         [
-          "Mất thời gian tìm hàng",
-          "Phụ thuộc trí nhớ của người quen kho, nhân viên mới khó bắt đầu.",
+          "PHỤ THUỘC VÀO KINH NGHIỆM",
+          "Việc tìm kiếm và xử lý hàng hóa phụ thuộc nhiều vào kinh nghiệm của nhân viên.",
         ],
         [
-          "Khó kiểm soát lô và hạn dùng",
-          "Dễ bỏ sót hàng cận hạn khi số lượng mã hàng ngày càng tăng.",
+          "KHÓ KIỂM SOÁT HSD & LÔ HÀNG",
+          "Khó theo dõi hạn sử dụng, phân biệt lô hàng và đảm bảo ưu tiên xuất hàng phù hợp.",
         ],
         [
-          "Khó đối soát nhiều cơ sở",
-          "Hàng đã xuất nhưng chưa nhận, tồn kho giữa các điểm thiếu thống nhất.",
+          "KHÓ KIỂM SOÁT NHIỀU KHO",
+          "Khó theo dõi vị trí, tồn kho và lịch sử luân chuyển hàng hóa giữa các kho.",
         ],
       ],
     ),
@@ -213,16 +213,25 @@ const home: SitePage = {
       "warehouse-solution",
       "features",
       "GIẢI PHÁP QUẢN LÝ KHO",
-      "WareMap — Giải pháp quản lý kho trực quan với công nghệ 3D",
-      "Biến vị trí trong kho thành thông tin rõ ràng để cả đội cùng làm việc.",
+      "WareMap – Giải pháp quản lý kho trực quan với công nghệ 3D",
+      "WareMap giúp doanh nghiệp dễ dàng theo dõi vị trí hàng hóa, quản lý không gian kho và nâng cao hiệu quả vận hành.",
       [
-        ["Định vị hàng hóa", "Tìm đúng sản phẩm theo Kệ – Tầng – Ô."],
-        ["Trực quan hóa 3D", "Dựng lại không gian kho theo cách bạn vận hành."],
         [
-          "Kiểm soát lô & hàng tồn",
-          "Chủ động theo dõi vị trí, số lượng và hạn dùng.",
+          "ĐỊNH VỊ HÀNG HÓA",
+          "Xác định chính xác vị trí hàng hóa trên bản đồ 3D, từ khu vực, kệ, tầng và ô lưu trữ.",
         ],
-        ["Theo dõi luân chuyển", "Nắm rõ hành trình hàng giữa các cơ sở."],
+        [
+          "TRỰC QUAN HÓA KHO",
+          "Mô phỏng không gian kho trên nền tảng 3D, giúp nhân viên dễ dàng quan sát và nắm bắt layout kho.",
+        ],
+        [
+          "KIỂM SOÁT HSD & LÔ HÀNG",
+          "Quản lý thông tin lô hàng và hạn sử dụng, hỗ trợ theo dõi và ưu tiên xử lý hàng hóa phù hợp.",
+        ],
+        [
+          "THEO DÕI LUÂN CHUYỂN",
+          "Theo dõi vị trí và quá trình luân chuyển hàng hóa giữa các khu vực, kho và điểm lưu trữ.",
+        ],
       ],
     ),
     section(
@@ -230,7 +239,7 @@ const home: SitePage = {
       "features",
       "TÍNH NĂNG NỔI BẬT",
       "Công cụ quản lý kho được thiết kế cho vận hành thực tế",
-      "Từ thiết kế kho đến xác minh hàng hóa, mọi thao tác đều bắt đầu từ một vị trí rõ ràng.",
+      "",
       features,
     ),
     section(
@@ -238,7 +247,7 @@ const home: SitePage = {
       "pricing",
       "CHI PHÍ LINH HOẠT",
       "Lựa chọn gói dịch vụ phù hợp với nhu cầu quản lý kho",
-      "Bắt đầu với kho mẫu, lựa chọn theo số cơ sở và mở rộng khi cần.",
+      "WareMap cung cấp các gói dịch vụ linh hoạt, đáp ứng nhu cầu sử dụng từ cơ bản đến mở rộng theo quy mô kho hàng.",
       [
         ["Miễn phí", "Khám phá kho mẫu và bản đồ 3D cơ bản."],
         ["Một cơ sở", "Cho cửa hàng cần quản lý kho và phân quyền đội ngũ."],
@@ -248,21 +257,21 @@ const home: SitePage = {
     section(
       "support",
       "support",
-      "LUÔN ĐỒNG HÀNH",
-      "WareMap đồng hành cùng bạn trong quá trình sử dụng",
-      "Từng bước rõ ràng để cả đội làm quen với cách quản lý kho mới.",
+      "",
+      "WareMap luôn đồng hành cùng bạn trong suốt quá trình sử dụng",
+      "",
       [
         [
           "Hướng dẫn sử dụng",
-          "Khám phá cách tạo sơ đồ, định vị hàng hóa và quét QR.",
+          "Tài liệu hướng dẫn giúp đội ngũ nhanh chóng làm quen với hệ thống và các tính năng quản lý kho.",
         ],
         [
           "Hỗ trợ trực tuyến",
-          "Gửi yêu cầu để được tư vấn cách áp dụng vào kho thực tế.",
+          "Tiếp nhận và hỗ trợ các vấn đề phát sinh trong quá trình sử dụng WareMap.",
         ],
         [
           "Tư vấn & triển khai",
-          "Trao đổi về quy mô cơ sở, nhóm quyền và nhu cầu quản lý.",
+          "Hỗ trợ thiết lập dữ liệu, xây dựng bản đồ kho và đưa hệ thống vào vận hành phù hợp với nhu cầu doanh nghiệp.",
         ],
       ],
     ),
