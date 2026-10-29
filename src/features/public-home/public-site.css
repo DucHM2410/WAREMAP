@@ -122,7 +122,8 @@
 .wm-cta .wm-btn { flex-shrink:0; }
 .wm-footer { background:#10243E; color:#c4d2e4; padding:55px max(30px,calc((100vw - 1140px)/2)) 0; }
 .wm-footer-main { display:grid; grid-template-columns:1.7fr .8fr 1fr 1fr .8fr; gap:35px; padding-bottom:45px; }
-.wm-footer .brand-logo { background:white; border-radius:6px; }
+.wm-footer .brand-logo { background:#A9CFF8; border-radius:0; mix-blend-mode:screen; }
+.wm-footer .brand-logo img { filter:grayscale(1) invert(1); mix-blend-mode:multiply; }
 .wm-footer-brand p { font-size:12px; color:#a6b8ce; max-width:285px; margin-top:16px; line-height:1.95; }
 .wm-footer a { font-size:12px; color:#A9CFF8; }
 .wm-footer h3 { color:#fff; font-size:13px; margin-bottom:18px; }
