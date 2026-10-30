@@ -126,6 +126,7 @@ export function Modal({
     <dialog
       ref={dialog}
       className="modal"
+      aria-label={title}
       onCancel={close}
       onClick={(e) => {
         if (e.target === dialog.current) close()

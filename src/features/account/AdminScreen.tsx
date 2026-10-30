@@ -77,11 +77,12 @@ export default function Admin() {
       return {
         ...d,
         staff: [...d.staff, ...newStaff],
+        trialDemo: status === "Đã cấp" && request.kind === "Tăng hạn mức" && request.company === d.company ? false : d.trialDemo,
         allowance:
           status === "Đã cấp" &&
           request.company === d.company &&
           ["Cấp tài khoản", "Tăng hạn mức"].includes(request.kind)
-            ? Math.max(d.allowance, Math.ceil(desired / 5) * 5)
+            ? Math.max(d.allowance, (Math.max(d.locations, request.branches) === 1 ? 4 : 18) + Math.ceil(Math.max(0, desired - (Math.max(d.locations, request.branches) === 1 ? 4 : 18)) / 2) * 2)
             : d.allowance,
         locations:
           status === "Đã cấp" &&
@@ -231,7 +232,7 @@ export default function Admin() {
                 <tr>
                   <th>Doanh nghiệp</th>
                   <th>Gói / quy mô</th>
-                  <th>Tài khoản nhân viên</th>
+                  <th>Quản lý kho & nhân viên</th>
                   <th>Phí dự kiến</th>
                 </tr>
               </thead>

@@ -35,14 +35,16 @@ export function SiteSection({
   onRegister,
 
   onDemo,
+  onTrial,
 }: {
   section: ContentSection
 
   ctaLabel: string
 
-  onRegister: (plan?: "free" | "paid") => void
+  onRegister: (plan?: "free" | "single" | "chain") => void
 
   onDemo: () => void
+  onTrial: () => void
 }) {
   const [slide, setSlide] = useState(0)
 
@@ -109,7 +111,7 @@ export function SiteSection({
           {s.eyebrow && <span className="wm-eyebrow">{s.eyebrow}</span>}
           <h2>{s.title}</h2>
           {s.description && <p>{s.description}</p>}
-          <button className="wm-btn wm-cta-btn" onClick={() => onRegister()}>
+          <button className="wm-btn wm-cta-btn" onClick={onTrial}>
             {ctaLabel}
           </button>
         </div>
@@ -189,24 +191,24 @@ export function SiteSection({
           {s.cards.map((c, i) => (
             <article key={i} className={i === 1 ? "is-featured" : ""}>
               {i === 1 && <span className="wm-popular">DÀNH CHO CỬA HÀNG</span>}
-              <h3>{c.title}</h3>
-              <p>{c.text}</p>
+              <h3>{["Free Trial", "Đơn lẻ", "Chuỗi"][i] ?? c.title}</h3>
+              <p>{["Trải nghiệm vận hành một cơ sở trong 7 ngày.", "Dành cho cửa hàng có một cơ sở.", "Dành cho chuỗi có tối đa 5 cơ sở trong gói cơ bản."][i] ?? c.text}</p>
               <div className="wm-price">
                 {money([0, policy.single, policy.chain][i] ?? 0)}
-                <small>/ tháng</small>
+                <small>{i === 0 ? "/ 7 ngày" : "/ tháng"}</small>
               </div>
               <ul>
                 {(i === 0
                   ? [
-                      "Khám phá kho mẫu",
+                      "1 cơ sở · 1 Chủ doanh", "1 Quản lý kho + 3 Nhân viên",
 
-                      "Bản đồ kho 3D cơ bản",
+                      "3D Builder, QR Kệ & QR Lô",
 
-                      "Dữ liệu minh họa",
+                      "Nhập xuất, kiểm kê, lô hàng & FEFO",
                     ]
                   : i === 1
                     ? [
-                        "1 cơ sở · 5 tài khoản nhân viên",
+                        "1 cơ sở · 1 Chủ doanh", "1 Quản lý kho + 3 Nhân viên",
 
                         "Thiết kế kho 3D & QR vị trí",
 
@@ -215,7 +217,7 @@ export function SiteSection({
                         "Phân quyền theo vai trò",
                       ]
                     : [
-                        "Tối đa 5 cơ sở",
+                        "Tối đa 5 cơ sở · 1 Chủ doanh", "3 Quản lý kho + 15 Nhân viên",
 
                         "Toàn bộ tính năng Một cơ sở",
 
@@ -236,18 +238,16 @@ export function SiteSection({
                 className={`wm-btn ${
                   i === 1 ? "wm-btn-primary" : "wm-btn-outline"
                 }`}
-                onClick={() => onRegister(i === 0 ? "free" : "paid")}
+                onClick={() => onRegister(i === 0 ? "free" : i === 1 ? "single" : "chain")}
               >
-                Đăng ký dùng thử
+                {i === 0 ? "Đăng ký dùng thử" : "Đăng ký gói này"}
                 <ArrowRight size={16} />
               </button>
             </article>
           ))}
         </div>
         <p className="wm-pricing-note">
-          Mở rộng cơ sở: {money(policy.branchBlock)}/tháng cho mỗi block 5 cơ
-          sở. Quyền lợi được xác nhận khi cấp gói. Bản hiện tại là môi trường
-          demo.
+          Mở rộng cơ sở: {money(policy.branchBlock)}/tháng cho mỗi block 2 cơ sở, chỉ gói Chuỗi. Thêm 2 tài khoản: {money(policy.accountBlock)} một lần; Chủ doanh phân quyền Quản lý kho hoặc Nhân viên. Bản demo không thu phí.
         </p>
       </section>
     )

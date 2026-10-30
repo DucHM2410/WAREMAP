@@ -1,6 +1,8 @@
 import { lazy, Suspense, Component, type ReactNode } from "react"
 import { Provider, useApp } from "./store"
 import { Shell } from "./Shell"
+import { canAccessScreen, publicScreens } from "./access"
+import { GuestWorkspace, TrialInfo } from "../features/auth/GuestExperience"
 import { Button, Empty } from "./ui"
 import { IndustryProvider } from "../shared/context/IndustryContext"
 import { SiteContentProvider } from "../features/site-content/SiteContentContext"
@@ -20,6 +22,7 @@ const Inventory = lazy(() => import("../features/inventory/InventoryScreen"))
 const Batches = lazy(() => import("../features/batches/BatchesScreen"))
 const Transit = lazy(() => import("../features/in-transit/InTransitScreen"))
 const Alerts = lazy(() => import("../features/fefo-alerts/FefoAlertsScreen"))
+const Putaway = lazy(() => import("../features/putaway/PutawayScreen"))
 const Scanner = lazy(() => import("../features/scanner/MobileScannerScreen"))
 const Reports = lazy(() => import("../features/roi/RoiDashboardScreen"))
 const Account = lazy(() => import("../features/account/AccountRbacScreen"))
@@ -49,9 +52,21 @@ class Boundary extends Component<{ children: ReactNode }, { error: boolean }> {
   }
 }
 function Routes() {
-  const { screen, role, go } = useApp()
+  const { screen, role, accessMode, go, industryConfirmed, logout } = useApp()
+  if (accessMode === "authenticated" && role !== "platform" && !industryConfirmed && !publicScreens.includes(screen)) {
+    return role === "owner" ? (
+      <Suspense fallback={<div className="empty">Đang mở thiết lập…</div>}><IndustryPickerPage /></Suspense>
+    ) : (
+      <div className="empty">
+        <h1>Chờ Chủ doanh thiết lập phân hệ</h1>
+        <p>Chủ doanh cần chọn Mẹ &amp; Bé hoặc Mỹ phẩm trước khi các tài khoản cùng sử dụng doanh nghiệp.</p>
+        <Button onClick={logout}>Đăng xuất / Đổi tài khoản</Button>
+      </div>
+    )
+  }
   const views = {
     home: <Home />,
+    "trial-info": <TrialInfo />,
     login: <Login />,
     request: <Request />,
     "industry-picker": <IndustryPickerPage />,
@@ -63,20 +78,14 @@ function Routes() {
     mobile: <Transit />,
     onboarding: <Alerts />,
     scanner: <Scanner />,
+    putaway: <Putaway />,
     roi: <Reports />,
     account: <Account />,
     settings: <Settings />,
     admin: <Admin />,
     "website-editor": <WebsiteEditor />,
   }
-  const denied =
-    (screen === "website-editor" && !["owner", "platform"].includes(role)) ||
-    (screen === "admin" && role !== "platform") ||
-    (screen === "account" && role !== "owner") ||
-    (screen === "builder" && !["owner", "manager"].includes(role)) ||
-    (["roi", "settings"].includes(screen) &&
-      !["owner", "manager"].includes(role)) ||
-    (screen === "mobile" && role === "sales")
+  const denied = !canAccessScreen(accessMode, role, screen)
   const content = (
     <Boundary key={screen}>
       <Suspense
@@ -93,7 +102,7 @@ function Routes() {
               <Button onClick={() => go("dashboard")}>Về Tổng quan</Button>
             }
           >
-            Bạn có thể đổi vai trò trong phần trải nghiệm bản demo.
+            Đăng nhập bằng tài khoản được cấp quyền để sử dụng chức năng này.
           </Empty>
         ) : (
           views[screen]
@@ -101,10 +110,10 @@ function Routes() {
       </Suspense>
     </Boundary>
   )
-  return ["home", "login", "request", "industry-picker"].includes(screen) ? (
+  return publicScreens.includes(screen) || screen === "industry-picker" ? (
     content
   ) : (
-    <Shell>{content}</Shell>
+    accessMode === "authenticated" ? <Shell>{content}</Shell> : <GuestWorkspace>{content}</GuestWorkspace>
   )
 }
 export default function App() {

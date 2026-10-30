@@ -4,7 +4,7 @@ import {
   type IndustryConfig,
 } from "../shared/config/industries"
 
-export type Screen = "home" | "login" | "request" | "industry-picker" | "dashboard" | "builder" | "warehouse" | "mobile" | "onboarding" | "batches" | "inventory" | "roi" | "scanner" | "account" | "settings" | "admin" | "website-editor"
+export type Screen = "putaway" | "trial-info" | "home" | "login" | "request" | "industry-picker" | "dashboard" | "builder" | "warehouse" | "mobile" | "onboarding" | "batches" | "inventory" | "roi" | "scanner" | "account" | "settings" | "admin" | "website-editor"
 export type Role = "owner" | "manager" | "warehouse" | "sales" | "platform"
 export const roleNames: Record<Role, string> = {
   owner: "Chủ doanh nghiệp",
@@ -19,13 +19,13 @@ export const branches = [
   "Chi nhánh Thủ Đức",
 ]
 export const policy = {
-  single: 99000,
-  chain: 299000,
-  branchBlock: 150000,
-  accountBlock: 60000,
+  single: 149000,
+  chain: 399000,
+  branchBlock: 199000,
+  accountBlock: 99000,
   includedBranches: 5,
-  includedStaff: 5,
-  blockSize: 5,
+  includedStaff: 4,
+  blockSize: 2,
 }
 export function quote(locations: number, staff: number) {
   locations = Math.max(
@@ -39,13 +39,13 @@ export function quote(locations: number, staff: number) {
       Math.max(0, locations - policy.includedBranches) / policy.blockSize,
     ) * policy.branchBlock
   const staffExtra =
-    Math.ceil(Math.max(0, staff - policy.includedStaff) / policy.blockSize) *
+    Math.ceil(Math.max(0, staff - (locations === 1 ? 4 : 18)) / policy.blockSize) *
     policy.accountBlock
   return {
     base,
     branchExtra,
     staffExtra,
-    total: base + branchExtra + staffExtra,
+    total: base + branchExtra,
   }
 }
 export const money = (n: number) =>
@@ -68,6 +68,12 @@ export const expiryLabel = (date: string) => {
       ? "Hết hạn hôm nay"
       : `Còn ${d} ngày`
 }
+export interface ProductPackage {
+  widthCm: number
+  depthCm: number
+  heightCm: number
+  shape: "box" | "bottle" | "jar" | "tube"
+}
 export interface Product {
   id: string
   name: string
@@ -80,6 +86,8 @@ export interface Product {
   rack: string
   level: number
   bin: number
+  package3d?: ProductPackage
+  storage3d?: {layers: number; stackable: boolean; unitsPerContainer?: number; containerPackage?: ProductPackage}
 }
 export const locationLabel = (p: Pick<Product, "rack" | "level" | "bin">) =>
   `Kệ ${p.rack} · Tầng ${p.level} · Ô ${String(p.bin).padStart(2, "0")}`
@@ -252,9 +260,21 @@ export interface Activity {
   detail: string
   time: string
 }
+export interface InboundCarton {
+  id: string
+  code: string
+  product: Product
+  status: "pending" | "stored"
+  createdAt: string
+  storedAt?: string
+  placement?: {rack: string; level: number; bin: number}
+}
 export interface DemoData {
+  inboundCartons?: InboundCarton[]
   version: number
   industry: Industry
+  trialDemo?: boolean
+  industryConfirmed?: boolean
   products: Product[]
   racks: Record<string, Rack[]>
   transfers: Transfer[]
@@ -332,7 +352,7 @@ export function seed(config: IndustryConfig): DemoData {
     ],
     requests: [],
     activities: [],
-    allowance: 5,
+    allowance: 18,
     locations: 3,
     company: "An Nhiên Retail",
     settings: { expiryDays: 30, notifications: true, pos: false, zalo: false },

@@ -1,4 +1,5 @@
 import {
+  LockKeyhole,
   AlertCircle,
   ArrowLeft,
   Baby,
@@ -113,8 +114,9 @@ export function Shell({ children }: { children: ReactNode }) {
     go,
     branch,
     setBranch,
+    accessibleBranches,
     role,
-    setRole,
+    logout,
     search,
     setSearch,
     storageError,
@@ -129,7 +131,7 @@ export function Shell({ children }: { children: ReactNode }) {
     (n) => !n.roles || n.roles.includes(role),
   )
   const current = allNavigation.find((n) => n.screen === screen) || {
-    label: screen === "admin" ? "Quản trị WareMap" : screen === "website-editor" ? "Chỉnh sửa trang chủ" : "Thiết lập sơ đồ kho",
+    label: screen === "putaway" ? "Quét & nhập hàng lên kệ" : screen === "admin" ? "Quản trị WareMap" : screen === "website-editor" ? "Chỉnh sửa trang chủ" : "Thiết lập sơ đồ kho",
     group: screen === "admin" ? "Nội bộ" : "Xem thêm",
   }
   const isActive = (target: Screen) =>
@@ -180,14 +182,10 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
         </div>
         {role !== "platform" && (
-          <button
-            type="button"
+          <div
             className="industry-pill"
-            onClick={() => {
-              go("industry-picker")
-              setOpen(false)
-            }}
-            aria-label={`Ngành hàng đang chọn: ${config.label}. Đổi ngành hàng`}
+            aria-label={`Phân hệ doanh nghiệp: ${config.label}. Đã khóa`}
+            title="Phân hệ khóa trong phiên demo. Đăng xuất rồi đăng nhập lại Chủ doanh để chọn lại"
           >
             <span className="industry-pill__icon">
               <IndustryIcon size={16} />
@@ -196,8 +194,8 @@ export function Shell({ children }: { children: ReactNode }) {
               <small>Ngành hàng</small>
               <strong>{config.shortLabel}</strong>
             </span>
-            <ChevronDown size={14} />
-          </button>
+            <LockKeyhole size={14} />
+          </div>
         )}
         <nav>
           {role === "platform" ? (
@@ -249,24 +247,22 @@ export function Shell({ children }: { children: ReactNode }) {
         </nav>
         {["owner", "platform"].includes(role) && <button className={`nav-item website-editor-link ${screen === "website-editor" ? "active" : ""}`} aria-current={screen === "website-editor" ? "page" : undefined} onClick={() => { go("website-editor"); setOpen(false) }}><PanelsTopLeft size={18}/><span>Chỉnh sửa trang chủ<small>Nội dung · hình ảnh · ngành hàng</small></span></button>}
         <div className="sidebar-footer">
+          {data.trialDemo && role !== "platform" && (
+            <section className="trial-plan-card" aria-label="Quyền lợi Free Trial">
+              <strong>Free Trial · 0đ / 7 ngày</strong>
+              <span>1 cơ sở · Tổng cộng 5 tài khoản</span>
+              <ul>
+                <li>1 Chủ doanh</li>
+                <li>1 Quản lý kho</li>
+                <li>3 Nhân viên</li>
+              </ul>
+            </section>
+          )}
           <div className="demo-label">
             <span />
-            Bản dùng thử
+            Tài khoản demo đã đăng nhập
           </div>
-          <label className="role-picker">
-            Đổi vai trò demo
-            <select
-              aria-label="Trải nghiệm vai trò"
-              value={role}
-              onChange={(e) => setRole(e.target.value as typeof role)}
-            >
-              {Object.entries(roleNames).map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Button variant="secondary" onClick={logout}>Đăng xuất / Đổi tài khoản</Button>
           <details className="role-permissions"><summary>Quyền của {roleNames[role]}</summary><p>{roleDescription(role)}</p><small>Phạm vi: {role === "owner" || role === "platform" ? "Tất cả cơ sở" : branches[0]}</small></details>
           <button className="back-home" onClick={() => go("home")}>
             <ArrowLeft size={15} />
@@ -291,7 +287,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <Menu />
           </button>
           <div className="breadcrumb"><strong>{current.label}</strong></div>
-          {role !== "platform" && <button className="header-industry-pill" onClick={() => go("industry-picker")} aria-label="Đổi ngành hàng"><IndustryIcon size={17} />{config.shortLabel}<ChevronDown size={14} /></button>}
+          {role !== "platform" && <span className="header-industry-pill" title="Phân hệ đã được Chủ doanh xác nhận"><IndustryIcon size={17} />{config.shortLabel}<LockKeyhole size={14} /></span>}
           {role !== "platform" && (
             <>
               <div className="global-search">
@@ -312,10 +308,10 @@ export function Shell({ children }: { children: ReactNode }) {
                   value={branch}
                   onChange={(e) => setBranch(e.target.value)}
                 >
-                  {role === "owner" && (
+                  {accessibleBranches.length > 1 && (
                     <option value="all">Tất cả cơ sở</option>
                   )}
-                  {(role === "owner" ? branches : [branches[0]]).map((b) => (
+                  {accessibleBranches.map((b) => (
                     <option key={b}>{b}</option>
                   ))}
                 </select>
@@ -333,7 +329,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <div className="demo-strip">
           <span>
             <span className="status-dot" />
-            Dữ liệu minh họa · Thay đổi lưu trên trình duyệt này
+            {data.trialDemo ? "Free Trial demo · 0đ/7 ngày · 1 cơ sở · 1 Chủ doanh + 1 Quản lý kho + 3 Nhân viên · Không đếm hạn thật" : "Dữ liệu minh họa · Thay đổi lưu trên trình duyệt này"}
           </span>
           <Badge>{roleNames[role]}</Badge>
         </div>
