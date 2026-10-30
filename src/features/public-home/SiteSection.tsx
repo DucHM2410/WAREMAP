@@ -1,31 +1,40 @@
 import {
+  ArrowDown,
   ArrowRight,
   ArrowUpRight,
+  Box,
   Boxes,
-  Check,
   ChevronDown,
+  Clock,
   KeyRound,
   Layers,
+  LayoutGrid,
   Map,
   MapPin,
   PackageSearch,
+  QrCode,
   ScanLine,
   Search,
   ShieldCheck,
   Truck,
+  Users,
 } from "lucide-react"
 
-import { useEffect, useRef, useState } from "react"
-
-import { money, policy } from "../../app/model"
+import { Fragment, useEffect, useRef, useState } from "react"
 
 import type { ContentSection } from "../site-content/types"
+
+import { PricingSection } from "./PricingSection"
 
 import { EditableImage } from "./SiteImage"
 
 const icons = [MapPin, PackageSearch, Layers, ShieldCheck, Truck, ScanLine]
 
 const solutionIcons = [Search, Map, KeyRound, Boxes]
+
+const flowIcons = [Clock, MapPin, Box, Search]
+
+const valueIcons = [Search, LayoutGrid, QrCode, Users]
 
 export function SiteSection({
   section: s,
@@ -35,6 +44,7 @@ export function SiteSection({
   onRegister,
 
   onDemo,
+
   onTrial,
 }: {
   section: ContentSection
@@ -44,6 +54,7 @@ export function SiteSection({
   onRegister: (plan?: "free" | "paid") => void
 
   onDemo: () => void
+
   onTrial: () => void
 }) {
   const [slide, setSlide] = useState(0)
@@ -88,12 +99,14 @@ export function SiteSection({
 
   if (!s.visible) return null
 
+  const isIndustryNeeds = s.id === "industry-needs"
+
   const heading = (
     <div className="wm-section-head">
       {s.eyebrow && (
         <span
           className={`wm-eyebrow ${
-            s.id === "challenges" ? "wm-eyebrow-boxed" : ""
+            s.id === "challenges" || isIndustryNeeds ? "wm-eyebrow-boxed" : ""
           }`}
         >
           {s.eyebrow}
@@ -107,14 +120,11 @@ export function SiteSection({
   if (s.layout === "cta")
     return (
       <section id={s.id} className="wm-section wm-cta">
-        <div>
-          <span className="wm-eyebrow">{s.eyebrow}</span>
-          <h2>{s.title}</h2>
-          <p>{s.description}</p>
-        </div>
+        {s.eyebrow && <span className="wm-eyebrow">{s.eyebrow}</span>}
+        <h2>{s.title}</h2>
+        <p>{s.description}</p>
         <button className="wm-btn wm-btn-white" onClick={onTrial}>
-          {ctaLabel}
-          <ArrowRight size={18} />
+          Bắt đầu dùng thử 7 ngày
         </button>
       </section>
     )
@@ -186,74 +196,202 @@ export function SiteSection({
 
   if (s.layout === "pricing")
     return (
-      <section id={s.id} className="wm-section wm-pricing">
-        {heading}
-        <div className="wm-pricing-grid">
-          {s.cards.map((c, i) => (
-            <article key={i} className={i === 1 ? "is-featured" : ""}>
-              {i === 1 && <span className="wm-popular">DÀNH CHO CỬA HÀNG</span>}
-              <h3>{c.title}</h3>
-              <p>{c.text}</p>
-              <div className="wm-price">
-                {money([0, policy.single, policy.chain][i] ?? 0)}
-                <small>/ tháng</small>
-              </div>
-              <ul>
-                {(i === 0
-                  ? [
-                      "Khám phá kho mẫu",
+      <PricingSection section={s} onRegister={onRegister} onTrial={onTrial} />
+    )
 
-                      "Bản đồ kho 3D cơ bản",
+  if (s.id === "what-is-waremap")
+    return (
+      <section id={s.id} className="wm-section wm-intro">
+        <div className="wm-intro-copy">
+          {s.eyebrow && <span className="wm-pill">{s.eyebrow}</span>}
+          <h2>{s.title}</h2>
+          {s.description
 
-                      "Dữ liệu minh họa",
-                    ]
-                  : i === 1
-                    ? [
-                        "1 cơ sở · 5 tài khoản nhân viên",
+            .split(/\n\s*\n/)
 
-                        "Thiết kế kho 3D & QR vị trí",
+            .map((paragraph) => paragraph.trim())
 
-                        "Theo dõi lô, hạn dùng & FEFO",
+            .filter(Boolean)
 
-                        "Phân quyền theo vai trò",
-                      ]
-                    : [
-                        "Tối đa 5 cơ sở",
-
-                        "Toàn bộ tính năng Một cơ sở",
-
-                        "Theo dõi hàng đi đường",
-
-                        "Đối soát chuyển kho",
-                      ]
-                )
-
-                  .map((item) => (
-                    <li key={item}>
-                      <Check size={16} />
-                      {item}
-                    </li>
-                  ))}
-              </ul>
-              <button
-                className={`wm-btn ${
-                  i === 1 ? "wm-btn-primary" : "wm-btn-outline"
-                }`}
-                onClick={() => i === 0 ? onTrial() : onRegister("paid")}
-              >
-                Đăng ký dùng thử
-                <ArrowRight size={16} />
-              </button>
-            </article>
-          ))}
+            .map((paragraph, i) => (
+              <p key={i}>{paragraph}</p>
+            ))}
         </div>
-        <p className="wm-pricing-note">
-          Mở rộng cơ sở: {money(policy.branchBlock)}/tháng cho mỗi block 5 cơ
-          sở. Quyền lợi được xác nhận khi cấp gói. Bản hiện tại là môi trường
-          demo.
-        </p>
+        <div className="wm-intro-visual">
+          <EditableImage src={s.image} alt={s.imageAlt} compact />
+        </div>
       </section>
     )
+
+  if (s.id === "solution-problems")
+    return (
+      <section id={s.id} className="wm-section wm-problems">
+        <div className="wm-problems-main">
+          <div className="wm-problems-copy">
+            {s.eyebrow && <span className="wm-pill">{s.eyebrow}</span>}
+            <h2>{s.title}</h2>
+            {s.description
+
+              .split(/\n\s*\n/)
+
+              .map((paragraph) => paragraph.trim())
+
+              .filter(Boolean)
+
+              .map((paragraph, i) => (
+                <p key={i}>{paragraph}</p>
+              ))}
+          </div>
+          <div className="wm-problems-visual">
+            <EditableImage src={s.image} alt={s.imageAlt} compact />
+          </div>
+        </div>
+        <div className="wm-problems-flow">
+          {s.cards.map((c, i) => {
+            const Icon = flowIcons[i % flowIcons.length]
+
+            return (
+              <Fragment key={i}>
+                {i > 0 && (
+                  <span className="wm-flow-arrow" aria-hidden="true">
+                    <ArrowDown size={18} />
+                  </span>
+                )}
+                <article
+                  className={
+                    i === s.cards.length - 1 ? "is-highlight" : undefined
+                  }
+                >
+                  <span className="wm-problems-icon">
+                    <Icon size={22} />
+                  </span>
+                  <div>
+                    <h3>{c.title}</h3>
+                    <p>{c.text}</p>
+                  </div>
+                </article>
+              </Fragment>
+            )
+          })}
+        </div>
+      </section>
+    )
+
+  if (s.id === "solution-value")
+    return (
+      <section id={s.id} className="wm-section wm-value">
+        <div className="wm-value-box">
+          <div className="wm-value-head">
+            {s.eyebrow && <span className="wm-eyebrow">{s.eyebrow}</span>}
+            <h2>{s.title}</h2>
+            {s.description
+
+              .split(/\n\s*\n/)
+
+              .map((paragraph) => paragraph.trim())
+
+              .filter(Boolean)
+
+              .map((paragraph, i) => (
+                <p key={i}>{paragraph}</p>
+              ))}
+          </div>
+          <div className="wm-value-grid">
+            {s.cards.map((c, i) => {
+              const Icon = valueIcons[i % valueIcons.length]
+
+              return (
+                <article key={i}>
+                  <span className="wm-value-icon">
+                    <Icon size={24} />
+                  </span>
+                  <h3>{c.title}</h3>
+                  <p>{c.text}</p>
+                </article>
+              )
+            })}
+          </div>
+          <div className="wm-value-image">
+            <EditableImage src={s.image} alt={s.imageAlt} compact />
+          </div>
+        </div>
+      </section>
+    )
+
+  if (s.id === "industry-solution") {
+    const paragraphs = s.description
+      .split(/\n\s*\n/)
+      .map((paragraph) => paragraph.trim())
+      .filter(Boolean)
+
+    return (
+      <section id={s.id} className="wm-section wm-industry-solution">
+        <div className="wm-industry-solution-box">
+          {s.eyebrow && <span className="wm-eyebrow">{s.eyebrow}</span>}
+          <div className="wm-industry-solution-grid">
+            <div className="wm-industry-solution-visual">
+              <EditableImage src={s.image} alt={s.imageAlt} compact />
+            </div>
+            <div className="wm-industry-solution-copy">
+              <h2>{s.title}</h2>
+              {paragraphs.map((paragraph, i) => (
+                <p key={i}>{paragraph}</p>
+              ))}
+              <div className="wm-industry-solution-actions">
+                <button className="wm-btn wm-btn-primary" onClick={onTrial}>
+                  {ctaLabel}
+                  <ArrowRight size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (s.id === "industry-features") {
+    const paragraphs = s.description
+      .split(/\n\s*\n/)
+      .map((paragraph) => paragraph.trim())
+      .filter(Boolean)
+
+    const featureIcons = [MapPin, ShieldCheck, Clock, Truck]
+
+    return (
+      <section id={s.id} className="wm-section wm-industry-features">
+        <div className="wm-industry-features-body">
+          <div className="wm-industry-features-copy">
+            {s.eyebrow && <span className="wm-eyebrow">{s.eyebrow}</span>}
+            <h2>{s.title}</h2>
+            {paragraphs.map((paragraph, i) => (
+              <p key={i}>{paragraph}</p>
+            ))}
+            <div className="wm-industry-features-grid">
+              {s.cards.map((c, i) => {
+                const Icon = featureIcons[i % featureIcons.length]
+
+                return (
+                  <article key={i}>
+                    <div className="wm-industry-features-card-head">
+                      <span className="wm-icon">
+                        <Icon size={20} />
+                      </span>
+                      <h3>{c.title}</h3>
+                    </div>
+                    <p>{c.text}</p>
+                  </article>
+                )
+              })}
+            </div>
+          </div>
+          <div className="wm-industry-features-visual">
+            <EditableImage src={s.image} alt={s.imageAlt} compact />
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   if (s.layout === "split" || s.layout === "features")
     return (
@@ -293,12 +431,29 @@ export function SiteSection({
       </section>
     )
 
+  if (s.id === "industry-value")
+    return (
+      <section id={s.id} className="wm-section wm-industry-value">
+        <div className="wm-industry-value-box">
+          {heading}
+          <div className="wm-card-grid">
+            {s.cards.map((c, i) => (
+              <article key={i}>
+                <h3>{c.title}</h3>
+                <p>{c.text}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+
   return (
     <section
       id={s.id}
       className={`wm-section wm-${s.layout} ${
         s.id === "challenges" ? "wm-challenges" : ""
-      }`}
+      } ${isIndustryNeeds ? "wm-industry-needs" : ""}`}
     >
       {heading}
       <div
@@ -317,11 +472,13 @@ export function SiteSection({
               }
               key={i}
             >
-              {s.id !== "challenges" && s.layout !== "support" && (
-                <span className="wm-icon">
-                  <Icon size={23} />
-                </span>
-              )}
+              {!isIndustryNeeds &&
+                s.id !== "challenges" &&
+                s.layout !== "support" && (
+                  <span className="wm-icon">
+                    <Icon size={23} />
+                  </span>
+                )}
               <h3>{c.title}</h3>
               <p>{c.text}</p>
               {s.layout === "support" && (

@@ -12,12 +12,19 @@ import {
   Upload,
   X,
 } from "lucide-react"
+
 import { useEffect, useRef, useState, type ChangeEvent } from "react"
+
 import { useApp } from "../../app/store"
+
 import { Button, Modal, PageTitle } from "../../app/ui"
+
 import { PublicSite } from "../public-home/PublicHomeScreen"
+
 import { useSiteContent } from "./SiteContentContext"
+
 import { DEFAULT_SITE_CONTENT } from "./defaultContent"
+
 import {
   PAGE_LABELS,
   validateContent,
@@ -25,37 +32,55 @@ import {
   type PublicPage,
   type SiteContent,
 } from "./types"
+
 import "./editor.css"
 
 function ImageField({
   value,
+
   alt,
+
   onChange,
+
   onAlt,
+
   onError,
 }: {
   value: string
+
   alt: string
+
   onChange: (value: string) => void
+
   onAlt: (value: string) => void
+
   onError: (message: string) => void
 }) {
   const upload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+
     event.target.value = ""
+
     if (!file) return
+
     if (
       !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
       file.size > 400000
     ) {
       onError("Chọn ảnh JPG, PNG hoặc WebP tối đa 400 KB, hoặc dùng URL HTTPS.")
+
       return
     }
+
     const reader = new FileReader()
+
     reader.onerror = () => onError("Không đọc được ảnh. Vui lòng thử lại.")
+
     reader.onload = () => onChange(String(reader.result))
+
     reader.readAsDataURL(file)
   }
+
   return (
     <fieldset className="cms-image-field">
       <legend>
@@ -102,19 +127,31 @@ function ImageField({
 
 export default function HomepageEditorScreen() {
   const { role, guardNavigation, notify } = useApp()
+
   const { content, readDraft, saveDraft, apply } = useSiteContent()
+
   const [draft, setDraft] = useState<SiteContent>(() =>
     structuredClone(content),
   )
+
   const [baseline, setBaseline] = useState(() => JSON.stringify(content))
+
   const [page, setPage] = useState<PublicPage>("home")
+
   const [selected, setSelected] = useState("hero")
+
   const [preview, setPreview] = useState(false)
+
   const [error, setError] = useState("")
+
   const [message, setMessage] = useState("")
+
   const [confirmReset, setConfirmReset] = useState(false)
+
   const jsonInput = useRef<HTMLInputElement>(null)
+
   const dirty = JSON.stringify(draft) !== baseline
+
   useEffect(() => {
     guardNavigation(
       dirty
@@ -124,60 +161,84 @@ export default function HomepageEditorScreen() {
             )
         : null,
     )
+
     const beforeUnload = (event: BeforeUnloadEvent) => {
       if (dirty) event.preventDefault()
     }
+
     window.addEventListener("beforeunload", beforeUnload)
+
     return () => {
       guardNavigation(null)
+
       window.removeEventListener("beforeunload", beforeUnload)
     }
   }, [dirty, guardNavigation])
+
   if (!["owner", "platform"].includes(role))
     return <p>Bạn không có quyền chỉnh sửa website.</p>
+
   const current = draft.pages[page]
+
   const section = current.sections.find((s) => s.id === selected)
+
   const edit = (fn: (copy: SiteContent) => void) => {
     setDraft((prev) => {
       const copy = structuredClone(prev)
+
       fn(copy)
+
       return copy
     })
+
     setMessage("")
+
     setError("")
   }
+
   const setPageField = (
     key: "title" | "description" | "eyebrow" | "image" | "imageAlt",
+
     value: string,
   ) =>
     edit((copy) => {
       copy.pages[page][key] = value
     })
+
   const setSectionField = (
     key: "title" | "description" | "eyebrow" | "image" | "imageAlt",
+
     value: string,
   ) =>
     edit((copy) => {
       const s = copy.pages[page].sections.find((s) => s.id === selected)
+
       if (s) s[key] = value
     })
+
   const save = (publish: boolean) => {
     if (!validateContent(draft)) {
       setError(
         "Kiểm tra URL ảnh: chỉ chấp nhận HTTPS hoặc ảnh đã tải lên. Nội dung cần đúng cấu trúc.",
       )
+
       return
     }
+
     try {
       if (publish) apply(draft)
       else saveDraft(draft)
+
       setBaseline(JSON.stringify(draft))
+
       setError("")
+
       setMessage(
         publish
           ? "Đã áp dụng nội dung trên trình duyệt này. Website của người khác chưa thay đổi."
           : "Đã lưu nháp trên trình duyệt này.",
       )
+
       notify(publish ? "Đã áp dụng nội dung cục bộ." : "Đã lưu bản nháp.")
     } catch {
       setError(
@@ -185,42 +246,63 @@ export default function HomepageEditorScreen() {
       )
     }
   }
+
   const exportContent = () => {
     if (!validateContent(draft)) {
       setError("Nội dung chưa hợp lệ để xuất. Hãy kiểm tra URL ảnh.")
+
       return
     }
+
     const url = URL.createObjectURL(
       new Blob([JSON.stringify(draft, null, 2)], { type: "application/json" }),
     )
+
     const a = document.createElement("a")
+
     a.href = url
+
     a.download = "waremap-website-content.json"
+
     a.click()
+
     URL.revokeObjectURL(url)
+
     setMessage(
       "Đã xuất JSON. Có thể nhập lại trên máy khác hoặc bàn giao cho người triển khai website.",
     )
   }
+
   const importContent = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+
     event.target.value = ""
+
     if (!file) return
+
     if (file.size > 3500000) {
       setError("File JSON phải nhỏ hơn 3.5 MB.")
+
       return
     }
+
     try {
       const data: unknown = JSON.parse(await file.text())
+
       if (!validateContent(data)) throw new Error("invalid")
+
       if (
         dirty &&
         !window.confirm("Thay nội dung chưa lưu bằng file JSON này?")
       )
         return
+
       setDraft(data)
+
       setSelected("hero")
+
       setError("")
+
       setMessage(
         "Đã nhập nội dung vào bản chỉnh sửa. Xem trước rồi áp dụng khi sẵn sàng.",
       )
@@ -230,6 +312,7 @@ export default function HomepageEditorScreen() {
       )
     }
   }
+
   return (
     <>
       <PageTitle
@@ -267,7 +350,9 @@ export default function HomepageEditorScreen() {
               window.confirm("Thay nội dung đang sửa bằng bản nháp đã lưu?")
             ) {
               setDraft(structuredClone(readDraft()))
+
               setSelected("hero")
+
               setMessage("Đã tải bản nháp.")
             }
           }}
@@ -320,6 +405,7 @@ export default function HomepageEditorScreen() {
             className={page === id ? "active" : ""}
             onClick={() => {
               setPage(id as PublicPage)
+
               setSelected("hero")
             }}
           >
@@ -441,11 +527,13 @@ export default function HomepageEditorScreen() {
                             onClick={() =>
                               edit((c) => {
                                 const items = c.pages[page].sections
+
                                 const at = items.findIndex(
                                   (s) => s.id === selected,
                                 )
                                 ;[items[at], items[at + delta]] = [
                                   items[at + delta],
+
                                   items[at],
                                 ]
                               })
@@ -464,7 +552,9 @@ export default function HomepageEditorScreen() {
                 </div>
                 {([
                   ["eyebrow", "Nhãn phía trên tiêu đề"],
+
                   ["title", "Tiêu đề"],
+
                   ["description", "Mô tả"],
                 ] as const).map(([key, label]) => (
                   <label className="field" key={key}>
@@ -527,7 +617,9 @@ export default function HomepageEditorScreen() {
                             onClick={() =>
                               edit((c) => {
                                 c.pages[page].sections
+
                                   .find((s) => s.id === selected)!
+
                                   .cards.splice(i, 1)
                               })
                             }
@@ -570,9 +662,12 @@ export default function HomepageEditorScreen() {
                         onClick={() =>
                           edit((c) => {
                             c.pages[page].sections
+
                               .find((s) => s.id === selected)!
+
                               .cards.push({
                                 title: "Nội dung mới",
+
                                 text: "Mô tả nội dung tại đây.",
                               })
                           })
@@ -584,8 +679,8 @@ export default function HomepageEditorScreen() {
                     )}
                     {section.layout === "pricing" && (
                       <p className="tiny muted">
-                        Mức giá lấy từ cấu hình gói dịch vụ hiện tại để thống
-                        nhất với trang đăng ký.
+                        Giá và quyền lợi các gói được hiển thị theo thiết kế
+                        bảng giá.
                       </p>
                     )}
                   </div>
@@ -611,7 +706,9 @@ export default function HomepageEditorScreen() {
             <Button
               onClick={() => {
                 setDraft(structuredClone(DEFAULT_SITE_CONTENT))
+
                 setSelected("hero")
+
                 setConfirmReset(false)
               }}
             >

@@ -54,6 +54,22 @@ const pageHashes: Record<PublicPage, string> = {
   cosmetics: "my-pham",
 }
 
+const accentPhrase = "bản đồ 3D"
+
+function renderTitle(title: string) {
+  const index = title.indexOf(accentPhrase)
+
+  if (index === -1) return title
+
+  return (
+    <>
+      {title.slice(0, index)}
+      <span className="wm-title-accent">{accentPhrase}</span>
+      {title.slice(index + accentPhrase.length)}
+    </>
+  )
+}
+
 export function PublicSite({
   content,
 
@@ -66,6 +82,7 @@ export function PublicSite({
   onLogin = () => {},
 
   onDemo = () => {},
+
   onTrial = () => {},
 }: {
   content: SiteContent
@@ -79,6 +96,7 @@ export function PublicSite({
   onLogin?: () => void
 
   onDemo?: () => void
+
   onTrial?: () => void
 }) {
   const [page, setPage] = useState<PublicPage>(initialPage)
@@ -135,6 +153,8 @@ export function PublicSite({
   }
 
   const current = content.pages[page]
+
+  const industryHero = page === "mom" || page === "cosmetics"
 
   return (
     <div className={`wm-site ${embedded ? "wm-site-embedded" : ""}`}>
@@ -220,38 +240,55 @@ export function PublicSite({
         <section
           className={`wm-section wm-hero ${
             page === "home" ? "wm-hero-home" : "wm-hero-subpage"
-          }`}
+          } ${industryHero ? "wm-hero-industry" : ""}`}
         >
           <div className="wm-hero-copy">
-            <span className="wm-pill">
-              <i />
-              {current.eyebrow}
-            </span>
-            <h1>{current.title}</h1>
-            <p>{current.description}</p>
+            {industryHero ? (
+              <span className="wm-eyebrow">{current.eyebrow}</span>
+            ) : (
+              <span className="wm-pill">
+                <i />
+                {current.eyebrow}
+              </span>
+            )}
+            <h1>{renderTitle(current.title)}</h1>
+            {industryHero ? (
+              current.description
+
+                .split(/\n\s*\n/)
+
+                .map((paragraph) => paragraph.trim())
+
+                .filter(Boolean)
+
+                .map((paragraph, i) => <p key={i}>{paragraph}</p>)
+            ) : (
+              <p>{current.description}</p>
+            )}
             <div className="wm-hero-actions">
-              <button
-                className="wm-btn wm-btn-primary"
-                onClick={onTrial}
-              >
+              <button className="wm-btn wm-btn-primary" onClick={onTrial}>
                 {content.ctaLabel}
                 <ArrowRight size={18} />
               </button>
-              <button className="wm-btn wm-btn-outline" onClick={onDemo}>
-                Khám phá kho 3D
-                <ArrowUpRight size={17} />
-              </button>
+              {!industryHero && (
+                <button className="wm-btn wm-btn-outline" onClick={onDemo}>
+                  Khám phá kho 3D
+                  <ArrowUpRight size={17} />
+                </button>
+              )}
             </div>
-            <div className="wm-hero-assurance">
-              <span>
-                <Check size={15} />
-                Không cần cài đặt
-              </span>
-              <span>
-                <Check size={15} />
-                Kho mẫu chỉ xem · Có giới hạn
-              </span>
-            </div>
+            {!industryHero && (
+              <div className="wm-hero-assurance">
+                <span>
+                  <Check size={15} />
+                  Không cần cài đặt
+                </span>
+                <span>
+                  <Check size={15} />
+                  Kho mẫu chỉ xem · Có giới hạn
+                </span>
+              </div>
+            )}
           </div>
           <div className="wm-hero-art">
             <EditableImage src={current.image} alt={current.imageAlt} />
@@ -262,23 +299,24 @@ export function PublicSite({
             className="wm-metrics wm-section"
             aria-label="Mục tiêu giá trị giải pháp"
           >
-            <div>
-              <b>01</b>
-              <span>Bản đồ kho trực quan</span>
+            <div className="wm-metrics-box">
+              <div>
+                <b>100%</b>
+                <span>Định vị chính xác</span>
+              </div>
+              <div>
+                <b>Giảm 50%</b>
+                <span>Thời gian tìm hàng</span>
+              </div>
+              <div>
+                <b>Tăng 30%</b>
+                <span>Hiệu suất vận hành</span>
+              </div>
+              <div>
+                <b>Hạn chế 99%</b>
+                <span>Nhầm lẫn hàng hóa</span>
+              </div>
             </div>
-            <div>
-              <b>3D</b>
-              <span>Định vị Kệ – Tầng – Ô</span>
-            </div>
-            <div>
-              <b>FEFO</b>
-              <span>Ưu tiên theo hạn dùng</span>
-            </div>
-            <div>
-              <b>QR</b>
-              <span>Xác minh vị trí và lô</span>
-            </div>
-            <p>Giá trị giải pháp · Không phải số liệu hiệu quả đã đo lường</p>
           </section>
         )}
         {current.sections.map((s) => (
