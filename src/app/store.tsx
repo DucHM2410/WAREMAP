@@ -21,12 +21,14 @@ import {
 import { useIndustry } from "../shared/context/IndustryContext"
 import { canAccessScreen, type AccessMode } from "./access"
 import { guestData } from "./guestData"
+import { withShelfSamples } from "./shelfSamples"
 import { beginIndustryDemoSession, confirmBusinessIndustry } from "./industryPolicy"
 import { INDUSTRIES, type Industry } from "../shared/config/industries"
 import { warehouseScope } from "./warehouseScope"
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "../shared/config/demoRoles"
 const key = "waremap-demo-v3"
 export interface ScanTask {
+  locationCode?: string
   productKey?: string
   transferId?: string
   mode: "lookup" | "dispatch" | "receive"
@@ -73,9 +75,10 @@ export function Provider({ children }: { children: ReactNode }) {
       const saved = raw ? JSON.parse(raw) : null
       if (saved?.version === 3 && saved.allowance === 5) saved.allowance = saved.locations === 1 ? 4 : 18
       if (saved?.version === 3) {
-        return saved.industryConfirmed || saved.industry === config.id
+        const restored = saved.industryConfirmed || saved.industry === config.id
           ? (saved as DemoData)
           : withIndustrySamples(saved, config)
+        return withShelfSamples(restored, INDUSTRIES[restored.industry] || config)
       }
       return seed(config)
     } catch {

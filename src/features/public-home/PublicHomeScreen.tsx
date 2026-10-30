@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUpRight, Check } from "lucide-react"
+import { ArrowRight, ArrowUpRight, Check, Pause, Play } from "lucide-react"
 
 import { useEffect, useState } from "react"
 
@@ -15,6 +15,9 @@ import { EditableImage } from "./SiteImage"
 import { SiteSection } from "./SiteSection"
 
 import "./public-site.css"
+import { withSitePhotos } from "./sitePhotos"
+import { useSiteMotion } from "./useSiteMotion"
+import "./site-motion.css"
 
 export function MiniMap({ highlight = "A2" }: { highlight?: string }) {
   return (
@@ -83,6 +86,8 @@ export function PublicSite({
   onTrial?: () => void
 }) {
   const [page, setPage] = useState<PublicPage>(initialPage)
+  const [motionPaused, setMotionPaused] = useState(false)
+  const siteRef = useSiteMotion(page, motionPaused, embedded)
 
   useEffect(() => {
     setPage(initialPage)
@@ -131,12 +136,12 @@ export function PublicSite({
     })
   }
 
-  const current = content.pages[page]
+  const current = withSitePhotos(content.pages[page], page)
 
   const industryHero = page === "mom" || page === "cosmetics"
 
   return (
-    <div className={`wm-site ${embedded ? "wm-site-embedded" : ""}`}>
+    <div ref={siteRef} className={`wm-site wm-photo-site ${embedded ? "wm-site-embedded" : ""}`} data-motion={motionPaused || embedded ? "paused" : "on"}>
       <PublicHeader
         page={page}
         navigate={navigate}
@@ -200,7 +205,13 @@ export function PublicSite({
             )}
           </div>
           <div className="wm-hero-art">
-            <EditableImage src={current.image} alt={current.imageAlt} />
+            <EditableImage src={current.image} alt={current.imageAlt} priority />
+            {!embedded && (
+              <button className="wm-motion-toggle" onClick={() => setMotionPaused(!motionPaused)} aria-pressed={motionPaused}>
+                {motionPaused ? <Play size={12} /> : <Pause size={12} />}
+                {motionPaused ? "Bật hiệu ứng" : "Tắt hiệu ứng"}
+              </button>
+            )}
           </div>
         </section>
         {page !== "home" && (

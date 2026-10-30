@@ -8,11 +8,14 @@ import { QrPreview } from "./QrPreview"
 import { ScanInput } from "./ScanInput"
 import { assessPutaway, completePutaway, parseLocation, type PutawayRequest } from "./putaway"
 import "./putaway.css"
+import { SlotContents } from "../builder/SlotContents"
 
 export default function PutawayScreen() {
-  const {data,update,role,accessibleBranches,branch,go,setBranch,setSelected,setScanTask,notify,log}=useApp()
+  const {data,update,role,accessibleBranches,branch,go,setBranch,setSelected,setScanTask,scanTask,notify,log}=useApp()
+  const initialLocation = scanTask.locationCode && parseLocation(scanTask.locationCode,data,branches)
+  const initialCode = initialLocation && accessibleBranches.includes(initialLocation.branch) ? scanTask.locationCode! : ""
   const [create,setCreate]=useState(false),[label,setLabel]=useState<InboundCarton|null>(null)
-  const [locationInput,setLocationInput]=useState(""),[locationCode,setLocationCode]=useState(""),[cartonInput,setCartonInput]=useState(""),[cartonCode,setCartonCode]=useState("")
+  const [locationInput,setLocationInput]=useState(initialCode),[locationCode,setLocationCode]=useState(initialCode),[cartonInput,setCartonInput]=useState(""),[cartonCode,setCartonCode]=useState("")
   const [error,setError]=useState(""),[stacking,setStacking]=useState(false),[layers,setLayers]=useState(2),[confirmedPackaging,setConfirmedPackaging]=useState(false),[unmeasuredAck,setUnmeasuredAck]=useState(false),[placed,setPlaced]=useState(false),[done,setDone]=useState(false)
   const [helperBranch,setHelperBranch]=useState(accessibleBranches.includes(branch)?branch:accessibleBranches[0]),[helperRack,setHelperRack]=useState(data.racks[accessibleBranches.includes(branch)?branch:accessibleBranches[0]]?.[0]?.id||""),[helperLevel,setHelperLevel]=useState(1),[helperBin,setHelperBin]=useState(1)
   const committing=useRef(false)
@@ -20,6 +23,8 @@ export default function PutawayScreen() {
   const pending=(data.inboundCartons||[]).filter(c=>accessibleBranches.includes(c.product.branch)&&c.status==='pending')
   const carton=(data.inboundCartons||[]).find(c=>c.code===cartonCode)
   const location=parseLocation(locationCode,data,branches)
+  const locationRack=location?data.racks[location.branch]?.find(r=>r.id===location.rack):undefined
+  const slotProducts=location?data.products.filter(p=>p.branch===location.branch&&p.rack===location.rack&&p.level===location.level&&p.bin===location.bin&&p.qty>0):[]
   const request:PutawayRequest={locationCode,cartonCode,role,allowedBranches:accessibleBranches,branchNames:branches,stacking,layers,confirmedPackaging,unmeasuredAck,separatedAck,today:today()}
   const result=carton&&location?assessPutaway(data,request):null
   const helper=data.racks[helperBranch]?.find(r=>r.id===helperRack)
@@ -31,6 +36,7 @@ export default function PutawayScreen() {
     <div className="putaway-layout"><div className="stack">
       <nav className="putaway-progress" aria-label="Tiến trình nhập hàng"><span className={location?'complete':'active'}>1 · Vị trí</span><span className={carton?'complete':location?'active':''}>2 · Thùng hàng</span><span className={done?'complete':carton?'active':''}>3 · Xác nhận</span></nav>
       {!done?<>
+        {location&&locationRack&&<><p className="tiny muted">{result?.product?"Bố trí dự kiến sau nhập · Chưa cộng tồn kho":"Hàng hiện có tại ô nhận"}</p><SlotContents rack={locationRack} products={result?.product?[...slotProducts.filter(p=>productKey(p)!==productKey(result.product!)),result.product]:slotProducts}/></>}
         <Panel title="1. Quét QR vị trí kệ · tầng · ô">
           {location?<div className="putaway-confirmed"><strong>{location.branch} · {locationLabel(location)}</strong><Button variant="ghost" onClick={reset}>Đổi vị trí</Button></div>:<ScanInput label="QR vị trí nhận hàng" value={locationInput} onChange={setLocationInput} onSubmit={()=>{const target=parseLocation(locationInput,data,branches);if(!target||!accessibleBranches.includes(target.branch)){setError("QR vị trí chưa hợp lệ hoặc ngoài phạm vi được cấp quyền.");return}setBranch(target.branch);setLocationCode(locationInput.trim());setError("")}}/>}
           <details className="putaway-helper"><summary>Lấy nhãn QR vị trí / thử bằng mã mẫu</summary><p className="tiny muted">Nhãn phải chỉ rõ cơ sở, kệ, tầng và ô, không chỉ tên kệ.</p><div className="form-grid"><label className="field">Cơ sở trên nhãn<select value={helperBranch} onChange={e=>{setHelperBranch(e.target.value);setHelperRack(data.racks[e.target.value]?.[0]?.id||"");setHelperLevel(1);setHelperBin(1)}}>{accessibleBranches.map(b=><option key={b}>{b}</option>)}</select></label><label className="field">Kệ trên nhãn<select value={helperRack} onChange={e=>{setHelperRack(e.target.value);setHelperLevel(1);setHelperBin(1)}}>{(data.racks[helperBranch]||[]).map(r=><option value={r.id} key={r.id}>{r.name}</option>)}</select></label><label className="field">Tầng trên nhãn<select value={helperLevel} onChange={e=>setHelperLevel(Number(e.target.value))}>{Array.from({length:helper?.levels||0},(_,i)=><option value={i+1} key={i}>{i+1}</option>)}</select></label><label className="field">Ô trên nhãn<select value={helperBin} onChange={e=>setHelperBin(Number(e.target.value))}>{Array.from({length:helper?.bins||0},(_,i)=><option value={i+1} key={i}>{i+1}</option>)}</select></label></div>{helper&&<><QrPreview code={helperCode} label={`${helperBranch} · ${locationLabel({rack:helperRack,level:helperLevel,bin:helperBin})}`}/><Button variant="secondary" onClick={()=>{reset();setLocationInput(helperCode)}}>Điền mã vị trí mẫu</Button></>}</details>

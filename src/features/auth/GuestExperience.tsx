@@ -120,7 +120,7 @@ export function GuestWorkspace({ children }: { children: ReactNode }) {
               : "Khám phá kho 3D · Chỉ xem"}
           </strong>
           <p>
-            1 kho mẫu · tối đa 3 mã hàng mẫu. Không lưu / sửa sơ đồ, nhập xuất,
+            1 kho mẫu · tối đa 16 mã hàng mẫu. Không lưu / sửa sơ đồ, nhập xuất,
             quét QR hoặc quản trị.
           </p>
         </div>

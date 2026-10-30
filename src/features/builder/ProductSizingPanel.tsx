@@ -5,13 +5,13 @@ import { productKey } from "../../app/catalog"
 import { Button } from "../../app/ui"
 import { fitsCompartment, packageFor, PACKAGE_SHAPES, validPackage } from "./productSizing"
 
-export function ProductSizingPanel({ product, rack }: {product: Product; rack: Rack}) {
+export function ProductSizingPanel({ product, rack, readOnly=false }: {product: Product; rack: Rack;readOnly?:boolean}) {
   const { accessMode, role, update, notify } = useApp()
   const profile = packageFor(product)
   const [draft,setDraft] = useState(profile.value)
   const [error,setError] = useState("")
   useEffect(() => { setDraft(packageFor(product).value); setError("") }, [product.id,product.batch,product.branch,product.package3d])
-  const canEdit = accessMode === "authenticated" && ["owner","manager","warehouse"].includes(role)
+  const canEdit = !readOnly && accessMode === "authenticated" && ["owner","manager","warehouse"].includes(role)
   return <section className="product-sizing" aria-label="Kích thước bao bì sản phẩm">
     <strong>Kích thước một đơn vị bao bì</strong>
     <p className="tiny">{profile.value.widthCm} × {profile.value.depthCm} × {profile.value.heightCm} cm · {PACKAGE_SHAPES[profile.value.shape]}</p>

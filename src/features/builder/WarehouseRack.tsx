@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
-import { TransformControls } from "@react-three/drei"
+import { TransformControls, useCursor } from "@react-three/drei"
+import { unitFromIntersections } from "./productPicking"
+import { slotProductPosition, slotLayout } from "./slotLayout"
 
 import { CanvasTexture, Group, Plane, Vector3 } from "three"
 
 import { fitToFloor } from "./rackLibrary"
 import { ProductGlyph } from "./ProductGlyph"
 import type { ProductDisplay } from "./productSizing"
+import { storagePackageFor } from "./productSizing"
 
 import { type Product, type Rack, daysLeft } from "../../app/model"
 
@@ -53,6 +56,8 @@ export function WarehouseRack({
   color,
   contents,
   selectedKey,
+  selectedUnitIndex=0,
+  wholeLot=false,
   onSelect,
   onProductSelect,
   transform,
@@ -62,15 +67,18 @@ export function WarehouseRack({
   draggable,
   onDragging,
   displayMode = "readable",
+  inspecting = true,
 }: {
   rack: Rack
   active: boolean
   color: string
   contents: Product[]
   selectedKey?: string
+  selectedUnitIndex?:number
+  wholeLot?:boolean
 
   onSelect: () => void
-  onProductSelect: (product: Product) => void
+  onProductSelect: (product: Product, unitIndex?:number) => void
 
   transform?: "translate" | "rotate"
 
@@ -81,9 +89,12 @@ export function WarehouseRack({
 
   displayMode?: ProductDisplay
   draggable?: boolean
+  inspecting?: boolean
   onDragging?: (dragging: boolean) => void
 }) {
   const group = useRef<Group>(null!)
+  const [hoveredProduct, setHoveredProduct] = useState("")
+  useCursor(inspecting && !!hoveredProduct)
 
   const manipulating = useRef(false)
 
@@ -177,7 +188,10 @@ export function WarehouseRack({
       }}
       onClick={(e) => {
         e.stopPropagation()
-        if (!manipulating.current) onSelect()
+        if (manipulating.current) return
+        const hit = inspecting ? unitFromIntersections(e.intersections, contents) : undefined
+        if (hit) onProductSelect(hit.product,hit.index)
+        else onSelect()
       }}
     >
       {[-1, 1].flatMap((x) =>
@@ -265,9 +279,13 @@ export function WarehouseRack({
               item.qty > 0 && item.level === p.level && item.bin === p.bin,
           )
 
-          const index = siblings.indexOf(p)
-
           const binWidth = rack.width / rack.bins
+          const allocation = slotLayout(rack,siblings)
+          const position = slotProductPosition(p,rack,siblings,displayMode)
+          const entry=position.entry
+          const regionWidth = allocation.fits && !allocation.uncertain
+            ? (allocation.entries.find(entry=>entry.key===productKey(p))?.reservedCm || binWidth*100/siblings.length)/100*.94
+            : binWidth*.8/siblings.length
 
           const selected = selectedKey === productKey(p)
 
@@ -277,15 +295,15 @@ export function WarehouseRack({
               : daysLeft(p.expiry) <= expiryDays
                 ? "#e6a338"
                 : "#71ac97"
-            : color
+            : ({ bottle: "#78b6bb", jar: "#b29acb", tube: "#d9a588", box: "#bda77f" }[storagePackageFor(p).value.shape])
 
           return <group key={productKey(p)} position={[
-            -rack.width / 2 + (p.bin - .5) * binWidth + (index - (siblings.length - 1) / 2) * binWidth * .8 / siblings.length,
-            (p.level - 1) * shelf, 0,
-          ]} onClick={event => { event.stopPropagation(); if (!manipulating.current) onProductSelect(p) }}>
-            <ProductGlyph product={p} rack={rack} mode={displayMode} siblings={siblings.length} color={fill} selected={selected}/>
-            {/* A whole-slot hit target keeps tiny packages selectable at warehouse scale. */}
-            <mesh position={[0,shelf * .45,0]}><boxGeometry args={[binWidth * .8 / siblings.length,shelf * .85,rack.depth * .8]}/><meshBasicMaterial transparent opacity={0} depthWrite={false}/></mesh>
+            -rack.width / 2 + (p.bin - .5) * binWidth + position.x,
+            (p.level - 1) * shelf+position.y, position.z,
+          ]} userData={{warehouseProductKey:productKey(p)}}>
+            <ProductGlyph product={p} rack={rack} mode={displayMode} siblings={siblings} color={fill} selected={selected} selectedUnitIndex={selectedUnitIndex} wholeLot={wholeLot} interactive={inspecting}
+              onSelect={index=>{if(!manipulating.current)onProductSelect(p,index)}} onHover={index=>setHoveredProduct(index===null?"":`${productKey(p)}|${index}`)}/>
+            {siblings.length > 1 && <mesh raycast={()=>null} position={[0,.032,0]} rotation={[-Math.PI/2,0,0]}><planeGeometry args={[regionWidth,entry?entry.depthUsedCm/100:rack.depth*.82]}/><meshBasicMaterial color={selected&&wholeLot?"#f4b24d":fill} transparent opacity={.18} depthWrite={false}/></mesh>}
           </group>
         })}
       <RackLabel text={rack.name} height={rack.height} width={rack.width} />

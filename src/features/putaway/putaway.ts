@@ -1,6 +1,7 @@
 import type { DemoData, Product, Role, InboundCarton } from "../../app/model"
 import { WAREHOUSE_PERMISSIONS } from "../../app/warehousePermissions"
 import { storagePackageFor, storageUnits, validPackage } from "../builder/productSizing"
+import { slotLayout } from "../builder/slotLayout"
 
 export type PutawayRequest = {
   locationCode: string
@@ -41,7 +42,7 @@ export function assessPutaway(data: DemoData, request: PutawayRequest) {
   if(same&&same.qty>0&&(same.rack!==location.rack||same.level!==location.level||same.bin!==location.bin))return fail("Lô này đang ở vị trí khác. Nhập bổ sung vào cùng vị trí hoặc chuyển lô trước; demo chưa tách một lô ra nhiều vị trí.")
   if(!Number.isInteger(request.layers)||request.layers<1||request.layers>5)return fail("Chọn từ 1 đến 5 lớp xếp.")
   if(request.stacking&&!request.confirmedPackaging)return fail("Cần xác nhận bao bì cho phép xếp chồng và giới hạn lớp theo hướng dẫn đóng gói.")
-  const product:Product={...p,...location,qty:(same?.qty||0)+p.qty,storage3d:{...p.storage3d,layers:request.stacking?request.layers:1,stackable:request.stacking}}
+  const product:Product={...p,...location,package3d:p.package3d||same?.package3d,qty:(same?.qty||0)+p.qty,storage3d:{...same?.storage3d,...p.storage3d,placement:same?.storage3d?.placement||p.storage3d?.placement,layers:request.stacking?request.layers:same?.storage3d?.layers||1,stackable:request.stacking||!!same?.storage3d?.stackable}}
   if(request.stacking&&request.layers>storageUnits(product))return fail("Số lớp không được lớn hơn số đơn vị lưu trữ hoặc số thùng tại ô.")
   const rack=data.racks[location.branch].find(r=>r.id===location.rack)!
   const occupants=data.products.filter(item=>item.branch===location.branch&&item.rack===location.rack&&item.level===location.level&&item.bin===location.bin&&item.qty>0&&key(item)!==key(p))
@@ -49,16 +50,7 @@ export function assessPutaway(data: DemoData, request: PutawayRequest) {
   const items=[...occupants,product]
   const uncertain=items.some(item=>storagePackageFor(item).estimated)
   if(request.stacking&&uncertain)return fail("Để xếp chồng cần nhập kích thước bao bì thực tế cho tất cả hàng trong ô.")
-  {
-    // Conservative dedicated strips prevent different lots from occupying the same space.
-    const widthCm=rack.width/rack.bins*100/items.length,depthCm=rack.depth*100,heightCm=rack.height/rack.levels*100-5.5
-    for(const item of items){
-      if(storagePackageFor(item).estimated)continue
-      const size=storagePackageFor(item).value,layers=item.storage3d?.stackable?item.storage3d.layers:1
-      const capacity=Math.floor((widthCm+1e-8)/size.widthCm)*Math.floor((depthCm+1e-8)/size.depthCm)*layers
-      if(size.heightCm*layers>heightCm+1e-8||storageUnits(item)>capacity)return fail("Ô chưa đủ chỗ theo cách chia vùng bảo thủ và số lớp đã chọn. Chọn ô khác, giảm số hàng trong thùng hoặc đổi cấu hình kệ.")
-    }
-  }
+  if(!slotLayout(rack,items).fits)return fail("Ô chưa đủ chỗ theo cách chia vùng bảo thủ và số lớp đã chọn. Chọn ô khác, giảm số hàng trong thùng hoặc đổi cấu hình kệ.")
   if(uncertain&&!request.unmeasuredAck)return fail("Ô có hàng chưa đo kích thước. Xác nhận đã kiểm tra chỗ trống thực tế; hệ thống chưa xác nhận sức chứa.")
   return {error:"",product,carton,capacityNote:uncertain?"Đã xác nhận kiểm tra chỗ trống bằng thực tế; chưa tính sức chứa.":"Ước tính theo kích thước, chia vùng riêng cho từng lô; không xác nhận tải trọng kệ."}
 }

@@ -14,6 +14,12 @@ import { RACK_TEMPLATES, createRack, fitToFloor } from "./rackLibrary"
 import { CanvasPlacement, type PlacementProjector } from "./CanvasPlacement"
 import { WarehouseLocations } from "./WarehouseLocations"
 import { RackInspector } from "./RackInspector"
+import { SlotContents } from "./SlotContents"
+import { ProductPlacementEditor } from "./ProductPlacementEditor"
+import { UnitSelectionPanel } from "./UnitSelectionPanel"
+import { productUnits } from "./productUnits"
+import { ProductLocator, type LocateRequest } from "./ProductLocator"
+import { searchWarehouseProducts } from "./warehouseSearch"
 import { WAREHOUSE_PERMISSIONS } from "../../app/warehousePermissions"
 import { ProductSizingPanel } from "./ProductSizingPanel"
 import type { ProductDisplay } from "./productSizing"
@@ -94,8 +100,13 @@ export default function Warehouse() {
   const [allTemplates,setAllTemplates] = useState(false)
   const [tool, setTool] = useState<"select" | "move" | "rotate">("select")
   const [selectedBatch, setSelectedBatch] = useState("")
+  const [selectedUnit,setSelectedUnit]=useState(0)
+  const [wholeLot,setWholeLot]=useState(false)
   const [displayMode,setDisplayMode] = useState<ProductDisplay>("readable")
   const [focusedRack,setFocusedRack] = useState<string | null>(null)
+  const [locateRequest, setLocateRequest] = useState<LocateRequest | null>(null)
+  const locateSequence = useRef(0)
+  const mapStage = useRef<HTMLDivElement>(null)
   const [showQR, setShowQR] = useState(false)
   const [draggingTemplate, setDraggingTemplate] = useState("")
   const placement = useRef<PlacementProjector | null>(null)
@@ -130,13 +141,36 @@ export default function Warehouse() {
   )
   const activeId = editing ? chosen : product?.rack || chosen
   const rack = racks.find((r) => r.id === activeId)
+  const displayedUnits=product&&rack?productUnits(product,rack,displayMode,data.products.filter(p=>p.branch===warehouse&&p.rack===product.rack&&p.level===product.level&&p.bin===product.bin&&p.qty>0)):[]
+  const unitIndex=displayedUnits.some(unit=>unit.index===selectedUnit)?selectedUnit:displayedUnits[0]?.index||0
   useEffect(() => {
     setFocusedRack(current => current === activeId && view === "3d" ? current : null)
   }, [warehouse, activeId, view])
-  const chooseProduct = (p: Product) => {
+  const chooseProduct = (p: Product, index=0) => {
     if (editing) { setChosen(p.rack); return }
-    setChosen(p.rack); setSelected(p.id); setSelectedBatch(p.batch)
+    locateProduct(p,index)
   }
+  const locateProduct = (p: Product, index=0, lot=false) => {
+    const destination = data.racks[p.branch]?.find(item => item.id === p.rack)
+    if (!destination || p.level < 1 || p.level > destination.levels || p.bin < 1 || p.bin > destination.bins) {
+      notify("Vị trí lưu trữ chưa có trên sơ đồ kho. Cần cập nhật vị trí trước khi định vị.")
+      return
+    }
+    setScanTask({ mode: "lookup", productKey: productKey(p) })
+    setBranch(p.branch)
+    setSelected(p.id)
+    setSelectedBatch(p.batch)
+    setSelectedUnit(index)
+    setWholeLot(lot)
+    setChosen(p.rack)
+    setView("3d")
+    setFocusedRack(p.rack)
+    setLocateRequest({ id: ++locateSequence.current, product: p,unitIndex:lot?undefined:index })
+    requestAnimationFrame(() => mapStage.current?.scrollIntoView({ block: "start", behavior: "auto" }))
+  }
+  useEffect(() => {
+    if (locateRequest && locateRequest.product.branch !== warehouse) setLocateRequest(null)
+  }, [warehouse])
   const dirty = editing && JSON.stringify(draft) !== JSON.stringify(persisted)
   useEffect(() => {
     guardNavigation(
@@ -196,11 +230,7 @@ export default function Warehouse() {
     add(templateId, position ?? {x: (event.clientX - rect.left) / rect.width * 16 - 8, z: (event.clientY - rect.top) / rect.height * 14 - 6})
     setDraggingTemplate("")
   }
-  const matches = visibleProducts.filter((p) =>
-    `${p.name} ${p.id} ${p.batch} ${p.rack} ${locationLabel(p)}`
-      .toLocaleLowerCase("vi")
-      .includes(search.toLocaleLowerCase("vi")),
-  )
+  const matches = searchWarehouseProducts(visibleProducts, search)
   const rackColor = (id: string) => {
     if (layer === "Hạn dùng") {
       const items = data.products.filter(
@@ -328,27 +358,28 @@ export default function Warehouse() {
       />
       {!editing && accessMode === "authenticated" && WAREHOUSE_PERMISSIONS[role].putaway && <div className="putaway-shortcut"><div><strong>Có hàng mới cần lên kệ?</strong><p>Quét vị trí → mã thùng → xác nhận. Tồn kho và bản đồ cập nhật cùng nhau.</p></div><Button onClick={()=>go("putaway")}>Quét & nhập hàng lên kệ</Button></div>}
       {!editing && (
-        <div className="toolbar">
+        <div className="toolbar" onKeyDown={event => {
+          if (event.key === "Enter" && (event.target as HTMLElement).tagName === "INPUT" && search.trim() && matches.length) {
+            event.preventDefault()
+            locateProduct(matches[0])
+          }
+        }}>
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm sản phẩm, mã lô hoặc vị trí…" />
           <select aria-label="Lớp thông tin" style={{ width: "auto" }} value={layer} onChange={(e) => setLayer(e.target.value)}>
             <option>Vị trí hàng</option><option>Hạn dùng</option>
           </select>
-          <select aria-label="Cách hiển thị sản phẩm 3D" value={displayMode} onChange={e => setDisplayMode(e.target.value as ProductDisplay)}><option value="readable">Bao bì dễ chọn (phóng đại)</option><option value="actual">Kích thước bao bì thực</option></select>
+          <select aria-label="Cách hiển thị sản phẩm 3D" value={displayMode} onChange={e => setDisplayMode(e.target.value as ProductDisplay)}><option value="readable">Dễ chọn · Theo vùng hàng</option><option value="actual">Kích thước bao bì thực</option></select>
         </div>
       )}
-      {!editing && <p className="tiny muted product-scale-note">{displayMode === "readable" ? "Bao bì được phóng đại theo ô để dễ chọn, không phản ánh tỷ lệ thật." : "Tỷ lệ theo kích thước bao bì đã nhập; sản phẩm chưa đo dùng số tham khảo. Chọn Xem gần kệ để xem hàng nhỏ."} Mỗi nhóm hình đại diện một lô, minh họa tối đa 3 lớp; không vẽ toàn bộ số lượng tồn.</p>}
-      {!editing && search && (
-        <div className="panel" style={{ marginBottom: 18 }}>
-          {matches.length ? matches.slice(0, 6).map((p) => (
+      {!editing && <p className="tiny muted product-scale-note">{displayMode === "readable" ? "Chế độ chọn vùng hàng: minh họa các nhóm bao bì theo bố trí trong ô." : "Tỷ lệ theo kích thước bao bì đã nhập; sản phẩm chưa đo dùng số tham khảo. Chọn Xem gần kệ để xem hàng nhỏ."} Mỗi vùng đại diện một mã/lô; vẽ tối đa 12 bao bì theo vị trí và lớp xếp, không hiển thị toàn bộ tồn kho.</p>}
+      {!editing && search.trim() && (
+        <div className="panel warehouse-search-results" aria-label="Kết quả tìm sản phẩm">
+          <p className="tiny muted" role="status">{matches.length} kết quả · Chọn một lô để đến đúng vị trí trên bản đồ</p>
+          {matches.length ? matches.map((p) => (
               <button
-                key={`${p.id}-${p.branch}`}
+                key={productKey(p)}
                 className="list-choice"
-                onClick={() => {
-                  setSelectedBatch(p.batch)
-                  setSelected(p.id)
-                  setBranch(p.branch)
-                  setChosen(p.rack)
-                }}
+                onClick={() => locateProduct(p)}
               >
                 <MapPin size={18} color="#087e8b" />
                 <div>
@@ -356,7 +387,7 @@ export default function Warehouse() {
                     {p.name} · {p.variant}
                   </strong>
                   <p>
-                    {p.branch} · {locationLabel(p)}
+                    {p.id} · Lô {p.batch} · {p.qty} sản phẩm<br />{p.branch} · {locationLabel(p)} · Định vị trong 3D →
                   </p>
                 </div>
               </button>
@@ -382,7 +413,8 @@ export default function Warehouse() {
           <small>Kéo mẫu vào kho · Hoặc bấm để thêm, dùng được trên điện thoại</small>
           <Button variant="ghost" onClick={() => setHelp(true)}>Dùng mẫu kho có sẵn</Button>
         </aside>}
-        <div className="builder-stage">
+        <div className="builder-stage" ref={mapStage} style={{scrollMarginTop:90}}>
+          {!editing && locateRequest && <div className="warehouse-located" role="status"><div><strong>Đã định vị: {locateRequest.product.name}</strong><p>{locationLabel(locateRequest.product)} · Lô {locateRequest.product.batch} · {warehouse}</p></div><Button variant="ghost" onClick={() => locateProduct(locateRequest.product,unitIndex,wholeLot)}>Định vị lại</Button><Button variant="ghost" onClick={()=>setLocateRequest({...locateRequest,id:++locateSequence.current,scope:"slot",cancelled:false})}>Xem toàn ô</Button><Button variant="ghost" onClick={() => {setLocateRequest(null);setFocusedRack(null);controls.current?.reset();setCameraKey(k=>k+1)}}>Xem toàn kho</Button></div>}
           <div className={`map-canvas ${draggingTemplate ? "is-drop-target" : ""}`} onDragOver={event => { if (editing && event.dataTransfer.types.includes("application/waremap-rack")) { event.preventDefault(); event.dataTransfer.dropEffect = "copy" } }} onDrop={dropTemplate}>
             {draggingTemplate && <div className="rack-drop-hint">Thả để đặt {draggingTemplate} tại đây</div>}
             {editing && <div className="builder-modebar" role="toolbar" aria-label="Công cụ bố trí">
@@ -444,12 +476,15 @@ export default function Warehouse() {
                         key={r.id}
                         rack={r}
                         displayMode={displayMode}
+                        inspecting={!editing}
                         contents={data.products.filter(
                           (p) => p.branch === warehouse && p.rack === r.id,
                         )}
                         active={r.id === activeId}
                         color={rackColor(r.id)}
                         selectedKey={!editing && product ? productKey(product) : undefined}
+                        selectedUnitIndex={unitIndex}
+                        wholeLot={wholeLot}
                         onProductSelect={chooseProduct}
                         expiryLayer={!editing && layer === "Hạn dùng"}
                         expiryDays={data.settings.expiryDays}
@@ -463,13 +498,7 @@ export default function Warehouse() {
                         onSelect={() => {
                           setChosen(r.id)
                           setSelectedBatch("")
-                          if (!editing)
-                            setSelected(
-                              data.products.find(
-                                (p) =>
-                                  p.branch === warehouse && p.rack === r.id,
-                              )?.id || "",
-                            )
+                          if (!editing) {setLocateRequest(null);setSelected("")}
                         }}
                       />
                     ))}
@@ -481,12 +510,15 @@ export default function Warehouse() {
                       minDistance={4}
                       maxDistance={25}
                       maxPolarAngle={Math.PI / 2.05}
+                      onStart={() => setLocateRequest(current=>current?{...current,cancelled:true}:null)}
                     />
+                    {!editing && locateRequest && locateRequest.product.branch === warehouse && racks.find(r => r.id === locateRequest.product.rack) && <ProductLocator key={`${locateRequest.id}-${displayMode}`} request={locateRequest} rack={racks.find(r => r.id === locateRequest.product.rack)!} controls={controls} mode={displayMode} siblings={data.products.filter(p=>p.branch===warehouse&&p.rack===locateRequest.product.rack&&p.level===locateRequest.product.level&&p.bin===locateRequest.product.bin&&p.qty>0)}/>}
                   </Canvas>
                 </Suspense>
               </SceneBoundary>
             )}
             <span className="map-help">
+              {!editing && locateRequest && <span className="product-location-pin">Kệ {locateRequest.product.rack} · Tầng {locateRequest.product.level} · Ô {locateRequest.product.bin}</span>}
               {editing && view === "plan"
                 ? "Kéo kệ để bố trí · Hoặc nhập vị trí trong bảng chi tiết"
                 : editing && tool === "move" ? "Kéo trực tiếp kệ để di chuyển · Nền trống để xoay · Kệ: lưới 50 cm · Khay nhỏ: 10 cm"
@@ -497,7 +529,7 @@ export default function Warehouse() {
             <div className={`map-controls ${editing ? "builder-view-controls" : ""}`}>
               <Button
                 variant={view === "plan" ? "primary" : "ghost"}
-                onClick={() => setView("plan")}
+                onClick={() => { setLocateRequest(null); setView("plan") }}
               >
                 Từ trên xuống
               </Button>
@@ -511,6 +543,7 @@ export default function Warehouse() {
               <Button variant="ghost" disabled={!rack || view !== "3d"} onClick={() => {
                 if (!rack || !controls.current) return
                 if (focusedRack) {
+                  setLocateRequest(null)
                   setFocusedRack(null)
                   controls.current?.reset()
                   setCameraKey(key => key + 1)
@@ -528,6 +561,7 @@ export default function Warehouse() {
                 variant="ghost"
                 aria-label="Về góc nhìn ban đầu"
                 onClick={() => {
+                  setLocateRequest(null)
                   controls.current?.reset()
                   setFocusedRack(null)
                   setCameraKey((k) => k + 1)
@@ -641,6 +675,7 @@ export default function Warehouse() {
                 variant="ghost"
                 aria-label="Đóng chi tiết kệ"
                 onClick={() => {
+                  setLocateRequest(null)
                   setChosen("")
                   if (!editing) setSelected("")
                 }}
@@ -677,7 +712,8 @@ export default function Warehouse() {
                 <>
                   {product ? (
                     <>
-                      <Badge tone="info">Vị trí sản phẩm đang chọn</Badge>
+                      <Badge tone="info">{wholeLot?"Cả mã/lô đang chọn":`Bao bì #${unitIndex+1} đang chọn`}</Badge>
+                      <UnitSelectionPanel units={displayedUnits} index={unitIndex} wholeLot={wholeLot} onUnit={index=>locateProduct(product,index)} onLot={()=>locateProduct(product,unitIndex,true)}/>
                       <h3>{product.name}</h3>
                       <p className="tiny">{product.variant} · {product.id}</p>
                       {product.storage3d?.unitsPerContainer && <p className="callout">Lưu nguyên thùng: {product.storage3d.unitsPerContainer} đơn vị/thùng · hiện chiếm {Math.ceil(product.qty/product.storage3d.unitsPerContainer)} thùng. Hình 3D dùng số đo nguyên thùng.</p>}
@@ -696,11 +732,13 @@ export default function Warehouse() {
                           <dd>{product.batch}</dd>
                         </div>
                         <div>
-                          <dt>Số lượng</dt>
+                          <dt>Tổng tồn của lô</dt>
                           <dd>{product.qty}</dd>
                         </div>
                       </dl>
-                      <ProductSizingPanel key={productKey(product)} product={product} rack={rack}/>
+                      <ProductSizingPanel key={productKey(product)} product={product} rack={rack} readOnly={!wholeLot}/>
+                      {wholeLot&&<ProductPlacementEditor key={`${productKey(product)}-${JSON.stringify(product.storage3d)}`} product={product} rack={rack} products={data.products.filter(p=>p.branch===warehouse&&p.rack===product.rack&&p.level===product.level&&p.bin===product.bin&&p.qty>0)}/>}
+                      <SlotContents rack={rack} products={data.products.filter(p=>p.branch===warehouse&&p.rack===product.rack&&p.level===product.level&&p.bin===product.bin&&p.qty>0)} selected={product} onSelect={chooseProduct} onAdd={accessMode === "authenticated" && WAREHOUSE_PERMISSIONS[role].putaway ? ()=>{setScanTask({mode:"receive",locationCode:positionCode(product)});go("putaway")} : undefined}/>
                       <Button disabled={accessMode !== "authenticated"} onClick={() => { setScanTask({ mode: "lookup", productKey: productKey(product) }); go("scanner") }}>Quét QR xác minh sản phẩm</Button>
                       <Button disabled={accessMode !== "authenticated"} variant="secondary" onClick={() => setShowQR(true)}><QrCode size={16} />Nhãn QR vị trí & lô</Button>
                       <Button disabled={accessMode !== "authenticated"} variant="secondary" onClick={() => go("batches")}>
@@ -709,10 +747,12 @@ export default function Warehouse() {
                     </>
                   ) : (
                     <p className="tiny">
-                      Kệ chưa có mặt hàng. Mở Sản phẩm & tồn kho để gán vị trí.
+                      {data.products.some(p => p.branch === warehouse && p.rack === rack.id && p.qty > 0)
+                        ? "Chọn kiện hàng trong 3D hoặc chọn một sản phẩm trong danh sách bên dưới để xem vị trí và thông tin lô."
+                        : "Kệ chưa có mặt hàng. Mở Sản phẩm & tồn kho để gán vị trí."}
                     </p>
                   )}
-                  <details>
+                  <details open={!product || undefined}>
                     <summary>Hàng tại kệ này</summary>
                     <div className="stack">
                       {data.products

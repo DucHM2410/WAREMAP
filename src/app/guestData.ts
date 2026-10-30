@@ -5,11 +5,7 @@ export function guestData(sample: DemoData, branch: string): DemoData {
   const racks = sample.racks[branch] || []
   return {
     ...sample,
-    products: sample.products.slice(0, 3).map((product, index) => ({
-      ...product,
-      branch,
-      rack: racks[index % Math.max(1, racks.length)]?.id ?? product.rack,
-    })),
+    products: sample.products.filter(product => product.branch === branch).slice(0, 16),
     racks: { [branch]: racks },
     inboundCartons: [],
     requests: [],
