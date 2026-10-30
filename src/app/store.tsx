@@ -36,6 +36,7 @@ interface State {
   update: (fn: (data: DemoData) => DemoData) => void
   screen: Screen
   go: (screen: Screen) => void
+  goBack: () => void
   branch: string
   accessibleBranches: string[]
   setBranch: (branch: string) => void
@@ -60,6 +61,7 @@ interface State {
   setScanTask: (task: ScanTask) => void
   guardNavigation: (guard: (() => boolean) | null) => void
   requestedPlan: "free" | "single" | "chain"
+  requestFromExperience: boolean
   setRequestedPlan: (plan: "free" | "single" | "chain") => void
 }
 const Context = createContext<State | null>(null)
@@ -98,6 +100,7 @@ export function Provider({ children }: { children: ReactNode }) {
     ? "all" : accessibleBranches.includes(branch) ? branch : accessibleBranches[0]
   const [scanTask, setScanTask] = useState<ScanTask>({ mode: "lookup" })
   const [requestedPlan, setRequestedPlan] = useState<"free" | "single" | "chain">("single")
+  const [requestFromExperience, setRequestFromExperience] = useState(false)
   const guard = useRef<(() => boolean) | null>(null)
   const guardNavigation = (fn: (() => boolean) | null) => {
     guard.current = fn
@@ -145,6 +148,7 @@ export function Provider({ children }: { children: ReactNode }) {
     const timer = setTimeout(() => setToast(""), 4200)
     return () => clearTimeout(timer)
   }, [toast])
+  const navigationHistory = useRef<{ screen: Screen; requestFromExperience: boolean }[]>([])
   const go = (next: Screen) => {
     if (!mayLeave()) return
     if (!canAccessScreen(accessMode, role, next)) {
@@ -156,7 +160,19 @@ export function Provider({ children }: { children: ReactNode }) {
       setToast("Phân hệ đã khóa trong phiên demo này. Đăng xuất rồi đăng nhập lại Chủ doanh để chọn lại.")
       return
     }
+    if (next !== screen) navigationHistory.current.push({ screen, requestFromExperience })
+    if (next === "request") setRequestFromExperience(screen === "trial-info")
     setScreen(next)
+    setSearch("")
+    window.scrollTo({ top: 0 })
+  }
+  const goBack = () => {
+    if (!mayLeave()) return
+    const previous = navigationHistory.current.pop()
+    if (previous && canAccessScreen(accessMode, role, previous.screen)) {
+      setRequestFromExperience(previous.requestFromExperience)
+      setScreen(previous.screen)
+    } else setScreen("home")
     setSearch("")
     window.scrollTo({ top: 0 })
   }
@@ -190,6 +206,7 @@ export function Provider({ children }: { children: ReactNode }) {
   }
   const startTrialDemo = () => {
     if (!mayLeave()) return
+    navigationHistory.current.push({ screen, requestFromExperience })
     confirmedRef.current = false
     setData(d => ({ ...beginIndustryDemoSession(d, "owner"), trialDemo: true, locations: 1, allowance: 4 }))
     setAccessMode("authenticated")
@@ -212,6 +229,7 @@ export function Provider({ children }: { children: ReactNode }) {
   const authenticate = (email: string, password: string) => {
     const account = DEMO_ACCOUNTS.find(a => a.email === email.trim().toLowerCase())
     if (!account || password !== DEMO_PASSWORD || !mayLeave()) return false
+    navigationHistory.current.push({ screen, requestFromExperience })
     if (account.role === "owner") {
       confirmedRef.current = false
       setData(d => beginIndustryDemoSession(d, account.role))
@@ -250,6 +268,7 @@ export function Provider({ children }: { children: ReactNode }) {
         submitRequest: (request) => setData(d => ({ ...d, requests: [request, ...d.requests] })),
         screen,
         go,
+        goBack,
         branch: scopedBranch,
         accessibleBranches,
         setBranch: changeBranch,
@@ -275,6 +294,7 @@ export function Provider({ children }: { children: ReactNode }) {
         setScanTask,
         guardNavigation,
         requestedPlan,
+        requestFromExperience,
         setRequestedPlan,
       }}
     >
