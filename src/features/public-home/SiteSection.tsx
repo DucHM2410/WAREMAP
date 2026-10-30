@@ -51,7 +51,7 @@ export function SiteSection({
 
   ctaLabel: string
 
-  onRegister: (plan?: "free" | "paid") => void
+  onRegister: (plan?: "free" | "single" | "chain") => void
 
   onDemo: () => void
 
@@ -120,12 +120,14 @@ export function SiteSection({
   if (s.layout === "cta")
     return (
       <section id={s.id} className="wm-section wm-cta">
-        {s.eyebrow && <span className="wm-eyebrow">{s.eyebrow}</span>}
-        <h2>{s.title}</h2>
-        <p>{s.description}</p>
-        <button className="wm-btn wm-btn-white" onClick={onTrial}>
-          Bắt đầu dùng thử 7 ngày
-        </button>
+        <div className="wm-cta-panel">
+          {s.eyebrow && <span className="wm-eyebrow">{s.eyebrow}</span>}
+          <h2>{s.title}</h2>
+          {s.description && <p>{s.description}</p>}
+          <button className="wm-btn wm-cta-btn" onClick={onTrial}>
+            {ctaLabel}
+          </button>
+        </div>
       </section>
     )
 

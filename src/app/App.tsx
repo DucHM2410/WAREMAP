@@ -22,6 +22,7 @@ const Inventory = lazy(() => import("../features/inventory/InventoryScreen"))
 const Batches = lazy(() => import("../features/batches/BatchesScreen"))
 const Transit = lazy(() => import("../features/in-transit/InTransitScreen"))
 const Alerts = lazy(() => import("../features/fefo-alerts/FefoAlertsScreen"))
+const Putaway = lazy(() => import("../features/putaway/PutawayScreen"))
 const Scanner = lazy(() => import("../features/scanner/MobileScannerScreen"))
 const Reports = lazy(() => import("../features/roi/RoiDashboardScreen"))
 const Account = lazy(() => import("../features/account/AccountRbacScreen"))
@@ -51,7 +52,18 @@ class Boundary extends Component<{ children: ReactNode }, { error: boolean }> {
   }
 }
 function Routes() {
-  const { screen, role, accessMode, go } = useApp()
+  const { screen, role, accessMode, go, industryConfirmed, logout } = useApp()
+  if (accessMode === "authenticated" && role !== "platform" && !industryConfirmed && !publicScreens.includes(screen)) {
+    return role === "owner" ? (
+      <Suspense fallback={<div className="empty">Đang mở thiết lập…</div>}><IndustryPickerPage /></Suspense>
+    ) : (
+      <div className="empty">
+        <h1>Chờ Chủ doanh thiết lập phân hệ</h1>
+        <p>Chủ doanh cần chọn Mẹ &amp; Bé hoặc Mỹ phẩm trước khi các tài khoản cùng sử dụng doanh nghiệp.</p>
+        <Button onClick={logout}>Đăng xuất / Đổi tài khoản</Button>
+      </div>
+    )
+  }
   const views = {
     home: <Home />,
     "trial-info": <TrialInfo />,
@@ -66,6 +78,7 @@ function Routes() {
     mobile: <Transit />,
     onboarding: <Alerts />,
     scanner: <Scanner />,
+    putaway: <Putaway />,
     roi: <Reports />,
     account: <Account />,
     settings: <Settings />,

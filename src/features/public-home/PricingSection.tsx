@@ -2,7 +2,7 @@ import { Building2, Check, Users } from "lucide-react"
 
 import { useState } from "react"
 
-import { money } from "../../app/model"
+import { money, policy } from "../../app/model"
 
 import type { ContentSection } from "../site-content/types"
 
@@ -33,10 +33,10 @@ const chainFeatures = [
   "Mở rộng bằng Block cơ sở",
 ]
 
-const SINGLE_PRICE = 149000
-const CHAIN_PRICE = 399000
-const BRANCH_BLOCK_PRICE = 199000
-const ACCOUNT_BLOCK_PRICE = 99000
+const SINGLE_PRICE = policy.single
+const CHAIN_PRICE = policy.chain
+const BRANCH_BLOCK_PRICE = policy.branchBlock
+const ACCOUNT_BLOCK_PRICE = policy.accountBlock
 
 function PlanFeatures({ items }: { items: string[] }) {
   return (
@@ -57,7 +57,7 @@ export function PricingSection({
   onTrial,
 }: {
   section: ContentSection
-  onRegister: (plan?: "free" | "paid") => void
+  onRegister: (plan?: "free" | "single" | "chain") => void
   onTrial: () => void
 }) {
   const [plan, setPlan] = useState<"single" | "chain">("chain")
@@ -140,7 +140,7 @@ export function PricingSection({
           <button
             type="button"
             className="wm-btn wm-btn-dark"
-            onClick={() => onRegister("paid")}
+            onClick={() => onRegister("single")}
           >
             Chọn gói Đơn lẻ
           </button>
@@ -171,7 +171,7 @@ export function PricingSection({
         <button
           type="button"
           className="wm-btn wm-btn-white"
-          onClick={() => onRegister("paid")}
+          onClick={() => onRegister("chain")}
         >
           Chọn gói Chuỗi
         </button>

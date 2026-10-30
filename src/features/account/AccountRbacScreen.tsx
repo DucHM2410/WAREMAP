@@ -79,7 +79,7 @@ export default function Accounts() {
         <Panel>
           <div className="panel-body row between">
             <div>
-              <p className="tiny">Tài khoản nhân viên đã cấp</p>
+              <p className="tiny">Quản lý kho & nhân viên đã cấp</p>
               <div className="metric-value">
                 <strong>{data.staff.length}</strong>
                 <span className="muted">/ {data.allowance}</span>
@@ -93,9 +93,8 @@ export default function Accounts() {
           <div className="panel-body">
             <h3>Cấp thêm theo nhu cầu</h3>
             <p className="tiny" style={{ marginTop: 8 }}>
-              5 tài khoản nhân viên ban đầu dùng chung cho doanh nghiệp. Mỗi
-              block thêm 5 tài khoản:{" "}
-              <strong>{money(policy.accountBlock)}/tháng</strong>.
+              Đơn lẻ: 1 Quản lý kho + 3 Nhân viên; Chuỗi: 3 Quản lý kho + 15 Nhân viên. Mỗi block thêm 2 tài khoản, Chủ doanh tự phân quyền:{" "}
+              <strong>{money(policy.accountBlock)} một lần</strong>.
             </p>
           </div>
         </Panel>
@@ -229,10 +228,18 @@ export default function Accounts() {
                 </div>
               ))}
             </div>
-            <div className="callout">
-              Vai trò được WareMap cấp theo yêu cầu đã duyệt. Muốn thay đổi vai
-              trò hoặc khóa tài khoản, gửi yêu cầu hỗ trợ trong Cài đặt.
-            </div>
+            <label className="field">Phân quyền tài khoản
+              <select value={detail.role} onChange={e => {
+                const next = e.target.value as Staff["role"]
+                update(d => ({ ...d, staff: d.staff.map(s => s.id === detail.id ? { ...s, role: next } : s) }))
+                notify("Đã cập nhật vai trò trong hồ sơ demo. Tài khoản đăng nhập minh họa vẫn giữ quyền cố định.")
+              }}>
+                <option value="manager">Quản lý kho</option>
+                <option value="warehouse">Nhân viên kho</option>
+                <option value="sales">Nhân viên bán hàng</option>
+              </select>
+            </label>
+            <div className="callout">Chủ doanh tự phân quyền Quản lý kho hoặc Nhân viên cho tài khoản được cấp. WareMap quản lý việc cấp phát; bản demo chỉ cập nhật hồ sơ minh họa.</div>
           </div>
         </Modal>
       )}
@@ -335,7 +342,7 @@ export default function Accounts() {
                 <>
                   <br />
                   <strong>Phí tăng thêm dự kiến: {money(extra)}/tháng</strong>{" "}
-                  theo block 5 tài khoản.
+                  theo block 2 tài khoản.
                 </>
               )}
             </div>

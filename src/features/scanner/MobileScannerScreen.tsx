@@ -283,6 +283,7 @@ export default function Scanner() {
   }
   return (
     <>
+      {["owner","manager","warehouse"].includes(role) && <div className="putaway-shortcut"><div><strong>Nhập thùng hàng mới?</strong><p>Dùng luồng quét vị trí và mã thùng để cộng tồn sau khi lên kệ.</p></div><Button onClick={()=>go("putaway")}>Quét nhập lên kệ</Button></div>}
       <PageTitle
         title="Quét & xác minh"
         description="Quét đúng vị trí, sau đó quét đúng lô hàng. Có thể nhập mã thủ công."

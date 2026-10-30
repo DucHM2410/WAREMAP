@@ -11,6 +11,7 @@ export function guestData(sample: DemoData, branch: string): DemoData {
       rack: racks[index % Math.max(1, racks.length)]?.id ?? product.rack,
     })),
     racks: { [branch]: racks },
+    inboundCartons: [],
     requests: [],
     activities: [],
     staff: [],
