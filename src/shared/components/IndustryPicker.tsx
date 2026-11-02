@@ -52,7 +52,7 @@ export function IndustryPicker({
         </div>
 
         {confirming && pending && (
-          <Modal title="Xác nhận phân hệ doanh nghiệp" close={() => setConfirming(false)}>
+          <Modal className="public-flow-dialog" title="Xác nhận phân hệ doanh nghiệp" close={() => setConfirming(false)}>
             <div className="industry-confirm">
               <p>Bạn đang chọn phân hệ</p>
               <strong className="industry-confirm__name">{INDUSTRIES[pending].label}</strong>

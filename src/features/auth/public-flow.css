@@ -96,3 +96,15 @@
 .guest-map-content{min-width:0}
 @media(max-width:680px){.guest-map-banner{padding:16px}.guest-map-banner .button{white-space:normal}}
 .guest-map-content.guest-workspace{min-height:0;background:transparent}
+.guest-industry-control{margin-bottom:16px;max-width:360px}
+.guest-industry-control label{display:grid;gap:6px;font-size:13px}
+
+/* Public pages keep the home brand palette regardless of the saved business industry. */
+.public-flow,
+.public-flow-dialog{
+  --industry-primary:var(--wm-blue,#0B57C7);
+  --industry-accent:var(--wm-bright,#1685F9);
+  --industry-soft:#EAF3FF;
+  --industry-tint:#F5F9FF;
+  --teal:var(--wm-blue,#0B57C7);
+}

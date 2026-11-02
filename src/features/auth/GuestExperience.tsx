@@ -82,21 +82,13 @@ export function TrialInfo() {
 }
 
 export function GuestWorkspace({ children }: { children: ReactNode }) {
-  const { go } = useApp()
   return (
     <PublicFlowLayout current="Khám phá kho 3D" experienceParent wide>
       <PublicFlowHeading
         eyebrow="Kho mẫu · Chỉ xem"
         title="Khám phá kho 3D"
-        description="Tìm sản phẩm, chọn kệ để xem hàng đang ở đâu. Kéo để xoay kho và cuộn để phóng to."
+        description="Kho mẫu chỉ xem. Chọn sản phẩm để biết hàng đang ở đâu."
       />
-      <aside className="guest-banner guest-map-banner" aria-label="Giới hạn trải nghiệm">
-        <div>
-          <strong>Bạn đang xem kho mẫu</strong>
-          <p>1 kho mẫu · tối đa 32 dòng hàng minh họa. Chỉ xem và tìm hàng; chưa thể sửa sơ đồ, nhập xuất hàng hoặc quét QR.</p>
-        </div>
-        <Button variant="secondary" onClick={() => go("trial-info")}>Xem thêm cách trải nghiệm</Button>
-      </aside>
       <div className="guest-map-content guest-workspace">{children}</div>
     </PublicFlowLayout>
   )

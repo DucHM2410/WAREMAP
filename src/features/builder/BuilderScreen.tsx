@@ -122,7 +122,9 @@ export default function Warehouse() {
   const { config: workspaceConfig } = useIndustry()
   const [demoIndustry,setDemoIndustry] = useState<Industry>(workspaceConfig.id)
   const isGuest = accessMode !== "authenticated"
-  const config = isGuest ? INDUSTRIES[demoIndustry] : workspaceConfig
+  const config = useMemo(() => isGuest
+    ? { ...INDUSTRIES[demoIndustry], primaryColor: "#0B57C7" }
+    : workspaceConfig, [isGuest, demoIndustry, workspaceConfig])
   const demo = useMemo(()=>isGuest ? guestData(seed(config),branches[0]) : null,[isGuest,config])
   const data = demo ?? workspaceData
   const visibleProducts = demo ? demo.products : workspaceProducts
@@ -482,8 +484,8 @@ export default function Warehouse() {
         </div>
         <p className="tiny muted" style={{marginTop:12}}>Đơn vị kích thước kệ là mét; bao bì là centimet. Kệ mới ban đầu trống. Không thể xóa tầng/ô đang có hàng; chuyển hàng trước khi thu nhỏ hoặc xóa kệ. Dùng mẫu kho có sẵn sẽ thay bố cục đang chỉnh. Thay đổi chỉ được lưu khi bấm Lưu sơ đồ.</p>
       </details>}
-      {!editing && <details className="warehouse-viewer-guide" style={{background:"white",border:"1px solid var(--line)",borderRadius:14,padding:"12px 18px",marginBottom:20}}>
-        <summary style={{color:"var(--industry-primary)",fontSize:14}}>Hướng dẫn sử dụng Kho 3D · Tìm hàng, xem lô và vị trí</summary>
+      {!editing && <details className="warehouse-viewer-guide" style={isGuest ? {marginBottom:12,fontSize:13} : {background:"white",border:"1px solid var(--line)",borderRadius:14,padding:"12px 18px",marginBottom:20}}>
+        <summary style={{color:"var(--industry-primary)",fontSize:14}}>{isGuest ? "Cách sử dụng" : "Hướng dẫn sử dụng Kho 3D · Tìm hàng, xem lô và vị trí"}</summary>
         <ol style={{display:"grid",gap:12,paddingLeft:22,fontSize:13,lineHeight:1.8,margin:"12px 0 16px"}}>
           <li><strong>Chọn kho cần xem.</strong> {isGuest?"Chọn mẫu Mẹ & Bé hoặc Mỹ phẩm để khám phá; đây là dữ liệu minh họa chỉ xem.":"Chọn cơ sở được phân quyền ở phía trên. Mỗi kho có sơ đồ và tồn kho riêng."}</li>
           <li><strong>Tìm và định vị đúng lô.</strong> Nhập tên sản phẩm, SKU, mã lô hoặc vị trí vào ô tìm kiếm. Chọn kết quả để camera đến ô chứa lô; đọc nhãn Kệ → Tầng → Ô và đối chiếu mã lô bên phải.</li>
@@ -500,10 +502,8 @@ export default function Warehouse() {
         {!isGuest && ["owner","manager"].includes(role) && <p className="tiny muted" style={{marginTop:10}}>Muốn thêm hoặc thay đổi kệ? Chọn Chỉnh sửa sơ đồ và xem hướng dẫn thiết kế ở màn hình đó.</p>}
         <p className="tiny muted" style={{marginTop:10}}>{isGuest?"Kho mẫu không cho sửa sơ đồ, nhập xuất hoặc lưu dữ liệu doanh nghiệp.":"Chỉ các thao tác được cấp quyền mới hiển thị. Có thể kéo mép trái bảng chi tiết để đổi chiều rộng, kéo thanh dưới để đổi chiều cao."}</p>
       </details>}
-      {isGuest && <section className="panel" style={{padding:18,marginBottom:20,borderTop:`4px solid ${config.primaryColor}`}}>
-        <style>{`.guest-workspace{--industry-primary:${config.primaryColor};--teal:${config.primaryColor};--industry-soft:${config.id==="cosmetics"?"#ECFEFF":"#FDF2F8"}}body .guest-workspace .button.primary{background:${config.primaryColor}}body .guest-workspace .button.ghost,body .guest-workspace .button.secondary{color:${config.primaryColor}}`}</style>
-        <label>Khám phá kho theo ngành hàng<select value={demoIndustry} onChange={event=>{setDemoIndustry(event.currentTarget.value as Industry);setChosen("");setSelected("");setSelectedBatch("");setLocateRequest(null);setFocusedRack(null);handledLocation.current="";setSearch("")}}><option value="mom-baby">Mẹ &amp; Bé · sữa, bỉm, bình sữa và phụ kiện</option><option value="cosmetics">Mỹ phẩm · son, serum, kem dưỡng và hộp nhỏ</option></select></label>
-        <p className="tiny muted" style={{marginTop:10}}>Kho minh họa có nhiều loại kệ và nhiều lô cùng ô. Chọn bao bì để xem lô; không sửa dữ liệu kho của doanh nghiệp.</p>
+      {isGuest && <section className="guest-industry-control">
+        <label>Ngành hàng mẫu<select value={demoIndustry} onChange={event=>{setDemoIndustry(event.currentTarget.value as Industry);setChosen("");setSelected("");setSelectedBatch("");setLocateRequest(null);setFocusedRack(null);handledLocation.current="";setSearch("")}}><option value="mom-baby">Mẹ &amp; Bé</option><option value="cosmetics">Mỹ phẩm</option></select></label>
       </section>}
       <div className="toolbar" role="group" aria-label="Nhóm kệ theo hàng hóa">
         <Button variant={!groupByCategory ? "primary" : "secondary"} aria-pressed={!groupByCategory} onClick={()=>setGroupByCategory(false)}>Xem theo Kệ</Button>
@@ -527,7 +527,7 @@ export default function Warehouse() {
           <select aria-label="Cách hiển thị sản phẩm 3D" value={displayMode} onChange={e => setDisplayMode(e.target.value as ProductDisplay)}><option value="readable">Dễ chọn · Theo vùng hàng</option><option value="actual">Kích thước bao bì thực</option></select>
         </div>
       )}
-      {!editing && <p className="tiny muted product-scale-note">{displayMode === "readable" ? "Chế độ chọn vùng hàng: minh họa các nhóm bao bì theo bố trí trong ô." : "Tỷ lệ theo kích thước bao bì đã nhập; sản phẩm chưa đo dùng số tham khảo. Chọn Xem gần kệ để xem hàng nhỏ."} Mỗi vùng đại diện một mã/lô; vẽ tối đa 12 bao bì theo vị trí và lớp xếp, không hiển thị toàn bộ tồn kho.</p>}
+      {!editing && <p className="tiny muted product-scale-note">{isGuest ? "Hình 3D minh họa vị trí hàng, không thể hiện toàn bộ số lượng tồn." : <>{displayMode === "readable" ? "Chế độ chọn vùng hàng: minh họa các nhóm bao bì theo bố trí trong ô." : "Tỷ lệ theo kích thước bao bì đã nhập; sản phẩm chưa đo dùng số tham khảo. Chọn Xem gần kệ để xem hàng nhỏ."} Mỗi vùng đại diện một mã/lô; vẽ tối đa 12 bao bì theo vị trí và lớp xếp, không hiển thị toàn bộ tồn kho.</>}</p>}
       {!editing && search.trim() && (
         <div className="panel warehouse-search-results" aria-label="Kết quả tìm sản phẩm">
           <p className="tiny muted" role="status">{matches.length} kết quả · Chọn một lô để đến đúng vị trí trên bản đồ</p>

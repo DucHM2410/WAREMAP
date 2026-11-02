@@ -28,7 +28,8 @@ export function PublicHeader({
   onRegister,
   onLogin,
   page,
-}: ChromeProps & { page?: PublicPage }) {
+  account,
+}: ChromeProps & { page?: PublicPage; account?: { name: string; email: string; onLogout: () => void } }) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const navigate = (next: PublicPage, section?: string) => {
@@ -96,6 +97,10 @@ export function PublicHeader({
           <button onClick={() => navigate("home", "support")}>Hướng dẫn</button>
         </nav>
         <div className="wm-nav-actions">
+          {account ? <>
+            <span className="wm-account-identity"><strong>{account.name}</strong><small>{account.email}</small></span>
+            <button className="wm-btn wm-btn-outline" onClick={account.onLogout}>Đăng xuất</button>
+          </> : <>
           <button className="wm-login" onClick={onLogin}>
             Đăng nhập
           </button>
@@ -106,6 +111,7 @@ export function PublicHeader({
             Đăng ký
             <ArrowUpRight size={15} />
           </button>
+          </>}
         </div>
       </div>
     </header>

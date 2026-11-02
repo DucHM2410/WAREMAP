@@ -3,6 +3,7 @@ import type { ReactNode } from "react"
 import { ArrowLeft } from "lucide-react"
 
 import { useApp } from "../../app/store"
+import { DEMO_ACCOUNTS } from "../../shared/config/demoRoles"
 
 import {
   PublicHeader,
@@ -33,7 +34,8 @@ export function PublicFlowLayout({
 
   children: ReactNode
 }) {
-  const { go, startGuest, setRequestedPlan } = useApp()
+  const { go, startGuest, setRequestedPlan, accessMode, sessionSource, role, logout } = useApp()
+  const account = accessMode === "authenticated" && sessionSource === "login" ? DEMO_ACCOUNTS.find(item => item.role === role) : undefined
 
   const { content } = useSiteContent()
 
@@ -51,6 +53,7 @@ export function PublicFlowLayout({
   return (
     <div className="wm-site public-flow">
       <PublicHeader
+        account={account ? { name: account.label, email: account.email, onLogout: logout } : undefined}
         navigate={navigate}
         onRegister={onRegister}
         onLogin={() => go("login")}

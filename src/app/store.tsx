@@ -47,6 +47,7 @@ interface State {
   setBranch: (branch: string) => void
   role: Role
   accessMode: AccessMode
+  sessionSource: "login" | "demo" | null
   startTrialDemo: () => void
   startGuest: (mode: "explore" | "trial") => void
   authenticate: (email: string, password: string) => boolean
@@ -98,6 +99,7 @@ export function Provider({ children }: { children: ReactNode }) {
     [search, setSearch] = useState(""),
     [toast, setToast] = useState(""),
     [storageError, setStorageError] = useState(false)
+  const [sessionSource, setSessionSource] = useState<"login" | "demo" | null>(null)
   const [accessMode, setAccessMode] = useState<AccessMode>("explore")
   const sample = useMemo(() => seed(config), [config])
   const guestSample = useMemo(() => guestData(sample, branches[0]), [sample])
@@ -212,6 +214,7 @@ export function Provider({ children }: { children: ReactNode }) {
     navigationHistory.current.push({ screen, requestFromExperience })
     confirmedRef.current = false
     setData(d => ({ ...beginIndustryDemoSession(d, "owner"), trialDemo: true, locations: 1, allowance: 4 }))
+    setSessionSource("demo")
     setAccessMode("authenticated")
     setRole("owner")
     setBranch(branches[0])
@@ -222,6 +225,7 @@ export function Provider({ children }: { children: ReactNode }) {
   const startGuest = (mode: "explore" | "trial") => {
     if (!mayLeave()) return
     if (screen !== "warehouse") navigationHistory.current.push({ screen, requestFromExperience })
+    setSessionSource(null)
     setAccessMode(mode)
     setRole("sales")
     setBranch(branches[0])
@@ -238,12 +242,14 @@ export function Provider({ children }: { children: ReactNode }) {
       confirmedRef.current = false
       setData(d => beginIndustryDemoSession(d, account.role))
     }
+    setSessionSource("login")
     setAccessMode("authenticated")
     changeRole(account.role)
     return true
   }
   const logout = () => {
     if (!mayLeave()) return
+    setSessionSource(null)
     setAccessMode("explore")
     setRole("sales")
     setBranch(branches[0])
@@ -278,6 +284,7 @@ export function Provider({ children }: { children: ReactNode }) {
         setBranch: changeBranch,
         role,
         accessMode,
+        sessionSource,
         startGuest,
         startTrialDemo,
         authenticate,

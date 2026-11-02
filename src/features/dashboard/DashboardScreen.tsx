@@ -1,14 +1,12 @@
 import {
   AlertCircle,
   ArrowRight,
-  Baby,
   Building2,
   ChevronDown,
   Clock3,
   Layers,
   MapPin,
   Package,
-  Sparkles,
   Truck,
 } from "lucide-react"
 import { lazy, Suspense, useEffect } from "react"
@@ -58,7 +56,6 @@ export default function Dashboard() {
   const { data, visibleProducts, branch, setBranch, go, setSelected, setScanTask, update, role } =
     useApp()
   const { config } = useIndustry()
-  const IndustryIcon = config.icon === "Baby" ? Baby : Sparkles
 
   const alerts = visibleProducts
     .filter((p) => p.qty > 0 && daysLeft(p.expiry) <= data.settings.expiryDays)
@@ -124,21 +121,15 @@ export default function Dashboard() {
   return (
     <>
       <section className="today-hero">
-        <style>{`.today-map{grid-template-columns:minmax(0,3fr) minmax(220px,1fr)}.today-map .today-map__canvas{height:460px;min-height:460px}.today-role-context{display:inline-flex;padding:6px 10px;border-radius:20px;background:var(--industry-soft);color:var(--industry-primary);font-size:12px;margin-bottom:12px}@media(max-width:800px){.today-map{grid-template-columns:1fr}.today-map .today-map__canvas{height:330px;min-height:330px}}`}</style>
+        <style>{`.today-map{grid-template-columns:minmax(0,3fr) minmax(220px,1fr)}.today-map .today-map__canvas{height:460px;min-height:460px}@media(max-width:800px){.today-map{grid-template-columns:1fr}.today-map .today-map__canvas{height:330px;min-height:330px}}`}</style>
         <div className="today-hero__copy">
-          <span className="today-role-context">Chế độ xem: {{owner:"Chủ doanh nghiệp",manager:"Quản lý kho",warehouse:"Nhân viên kho",sales:"Nhân viên bán hàng",platform:"Admin hệ thống"}[role]}</span>
           <div className="today-hero__meta">
-            <span className="today-hero__industry">
-              <IndustryIcon size={14} />
-              {config.label}
-            </span>
+            <span className="eyebrow">Hôm nay bạn cần chú ý</span>
             <span>{todayLabel}</span>
           </div>
-          <span className="eyebrow">Hôm nay bạn cần chú ý</span>
           {critical ? (
             <>
               <h1>{critical.name}</h1>
-              <p>Kệ {critical.rack} chứa {critical.qty} sản phẩm {critical.name} {daysLeft(critical.expiry) < 0 ? "đã hết hạn" : "sắp hết hạn"}. Cần kiểm tra.</p>
               <p className="today-hero__line">
                 <AlertCircle size={18} />
                 <strong>{expiryLabel(critical.expiry)}</strong>
@@ -214,17 +205,6 @@ export default function Dashboard() {
             </>
           )}
         </div>
-        <aside className="today-hero__aside">
-          <span className="today-hero__aside-label">
-            Danh mục của ngành {config.shortLabel}
-          </span>
-          <div className="today-hero__chips">
-            {config.sampleCategories.map((category) => (
-              <span key={category}>{category}</span>
-            ))}
-          </div>
-          <p>{config.heroTagline}</p>
-        </aside>
       </section>
 
       <div className="today-kpis">
@@ -299,7 +279,6 @@ export default function Dashboard() {
           <aside className="today-map__side">
             <Badge tone="info">{mapBranch}</Badge>
             <strong>{mapRacks.length} kệ · {data.products.filter(product=>product.branch===mapBranch&&product.qty>0).length} lô đang lưu</strong>
-            <p className="tiny">Kệ DEMO-SHOW và hàng [Mẫu] phục vụ trình diễn, được lưu trong dữ liệu demo trên trình duyệt này.</p>
             <strong>
               {alertRacks.length
                 ? `${alertRacks.length} kệ cần chú ý`
@@ -309,14 +288,6 @@ export default function Dashboard() {
               {mapAlerts.length} lô cận hạn trong {data.settings.expiryDays}{" "}
               ngày tới.
             </p>
-            <span className="today-map__racks-caption">
-              Khu vực gợi ý
-            </span>
-            <div className="today-map__racks" aria-label="Khu vực gợi ý">
-              {config.sampleRacks.map((rack) => (
-                <span key={rack}>{rack}</span>
-              ))}
-            </div>
             {critical ? (
               <Button
                 variant="secondary"

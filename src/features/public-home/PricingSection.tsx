@@ -145,37 +145,19 @@ export function PricingSection({
             Chọn gói Đơn lẻ
           </button>
         </article>
-      </div>
-
-      <article className="wm-pricing-chain">
-        <div className="wm-pricing-chain-head">
+        <article className="wm-pricing-card wm-pricing-card--chain">
           <h3>{chainInfo?.title || "Gói Chuỗi"}</h3>
-          <span>Dành cho doanh nghiệp nhiều cơ sở</span>
-        </div>
-        <div className="wm-pricing-chain-price">
-          {money(CHAIN_PRICE)}
-          <small>/tháng</small>
-        </div>
-        <p>
-          {chainInfo?.text ||
-            "Toàn bộ tính năng gói Đơn lẻ, hỗ trợ tối đa 5 cơ sở và có thể mở rộng."}
-        </p>
-        <ul className="wm-pricing-chain-features">
-          {chainFeatures.map((item) => (
-            <li key={item}>
-              <Check size={15} strokeWidth={2.4} />
-              {item}
-            </li>
-          ))}
-        </ul>
-        <button
-          type="button"
-          className="wm-btn wm-btn-white"
-          onClick={() => onRegister("chain")}
-        >
-          Chọn gói Chuỗi
-        </button>
-      </article>
+          <p>{chainInfo?.text || "Toàn bộ tính năng gói Đơn lẻ, hỗ trợ tối đa 5 cơ sở và có thể mở rộng."}</p>
+          <div className="wm-pricing-price">
+            {money(CHAIN_PRICE)}<small>/tháng</small>
+          </div>
+          <div className="wm-pricing-card-divider" />
+          <PlanFeatures items={chainFeatures} />
+          <button type="button" className="wm-btn wm-btn-outline" onClick={() => onRegister("chain")}>
+            Chọn gói Chuỗi
+          </button>
+        </article>
+      </div>
 
       <div className="wm-pricing-expand">
         <div className="wm-pricing-expand-head">
