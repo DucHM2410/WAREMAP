@@ -14,7 +14,13 @@ import {
 import { lazy, Suspense } from "react"
 import { useApp } from "../../app/store"
 import { Badge, Button, LinkButton, Panel } from "../../app/ui"
-import { branches, daysLeft, expiryLabel, locationLabel } from "../../app/model"
+import {
+  branches,
+  daysLeft,
+  expiryLabel,
+  locationLabel,
+  transferDisplayId,
+} from "../../app/model"
 import { useIndustry } from "../../shared/context/IndustryContext"
 
 const MiniWarehouse3D = lazy(() =>
@@ -126,7 +132,7 @@ export default function Dashboard() {
             </>
           ) : nextTransfer && role !== "sales" ? (
             <>
-              <h1>Phiếu {nextTransfer.id} đang chờ xử lý</h1>
+              <h1>Phiếu {transferDisplayId(nextTransfer)} đang chờ xử lý</h1>
               <p className="today-hero__line">
                 <Truck size={18} />
                 <strong>{nextTransfer.status}</strong>

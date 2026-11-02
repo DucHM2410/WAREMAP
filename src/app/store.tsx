@@ -10,6 +10,7 @@ import {
 import {
   seed,
   withIndustrySamples,
+  ensureTransferSamples,
   industryProducts,
   type DemoData,
   type AccessRequest,
@@ -78,7 +79,8 @@ export function Provider({ children }: { children: ReactNode }) {
         const restored = saved.industryConfirmed || saved.industry === config.id
           ? (saved as DemoData)
           : withIndustrySamples(saved, config)
-        return withShelfSamples(restored, INDUSTRIES[restored.industry] || config)
+        const restoredConfig = INDUSTRIES[restored.industry] ?? config
+        return ensureTransferSamples(withShelfSamples(restored, restoredConfig), restoredConfig)
       }
       return seed(config)
     } catch {
