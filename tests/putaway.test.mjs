@@ -59,7 +59,7 @@ test("manual acknowledgement cannot bypass a known capacity or shelf-height conf
 test("different lots sharing a slot require separation and dedicated room for each",()=>{
   const {data,request,product}=fixture()
   data.products=[{...product,batch:"OTHER-LOT",rack:"A1",level:1,bin:1}]
-  assert.match(assessPutaway(data,request).error,/tách khay/)
+  assert.match(assessPutaway(data,request).error,/để hàng mới riêng/)
   assert.equal(assessPutaway(data,{...request,separatedAck:true}).error,"")
   delete data.products[0].package3d
   data.inboundCartons[0].product.package3d.widthCm=50
