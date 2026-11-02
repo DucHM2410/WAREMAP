@@ -59,7 +59,7 @@ test("manual acknowledgement cannot bypass a known capacity or shelf-height conf
 test("different lots sharing a slot require separation and dedicated room for each",()=>{
   const {data,request,product}=fixture()
   data.products=[{...product,batch:"OTHER-LOT",rack:"A1",level:1,bin:1}]
-  assert.match(assessPutaway(data,request).error,/tách khay/)
+  assert.match(assessPutaway(data,request).error,/để hàng mới riêng/)
   assert.equal(assessPutaway(data,{...request,separatedAck:true}).error,"")
   delete data.products[0].package3d
   data.inboundCartons[0].product.package3d.widthCm=50
@@ -89,4 +89,18 @@ test("unopened cartons use outer dimensions and carton count, not individual uni
   assert.equal(assessPutaway(data,request).error,"")
   data.inboundCartons[0].product.storage3d.containerPackage.widthCm=100
   assert.ok(assessPutaway(data,{...request,unmeasuredAck:true}).error)
+})
+
+test("QR putaway keeps an existing lot's measured packaging and manual 3D placement",()=>{
+  const {data,request,product}=fixture()
+  const storage={layers:2,stackable:true,placement:{xCm:10,zCm:10}}
+  data.products=[{...product,rack:"A1",level:1,bin:1,qty:5,storage3d:storage}]
+  delete data.inboundCartons[0].product.package3d
+  const stored=completePutaway(data,request)
+  assert.equal(stored.error,"")
+  assert.equal(stored.product.qty,15)
+  assert.deepEqual(stored.product.package3d,data.products[0].package3d)
+  assert.deepEqual(stored.product.storage3d,storage)
+  assert.equal(stored.data.inboundCartons[0].status,"stored")
+  assert.equal(completePutaway(stored.data,request).data,stored.data)
 })
