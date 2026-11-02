@@ -1215,22 +1215,48 @@ body .auth-story h1 { color:#FFFFFF; }
   color: var(--industry-primary);
   border-color: color-mix(in srgb, var(--industry-primary) 35%, white);
 }
+.sidebar-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-bottom: 8px;
+  background: white;
+}
+.sidebar-header .brand-button {
+  flex: 1;
+  justify-content: flex-start;
+  width: auto;
+  min-width: 0;
+}
+.sidebar-header .brand.brand-logo {
+  width: 150px;
+}
+.sidebar-header .sidebar-toggle {
+  width: 34px;
+  height: 34px;
+}
 .brand-mark { display: none; }
 
 @media (min-width: 701px) {
   .workspace.sidebar-collapsed .sidebar { padding: 18px 10px 14px; }
-  .workspace.sidebar-collapsed .brand-button { display: flex; align-items: center; justify-content: center; width: 100%; }
+  .workspace.sidebar-collapsed .sidebar-header { flex-direction: column; align-items: center; gap: 6px; }
+  .workspace.sidebar-collapsed .sidebar-header .brand-button { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 100%; }
   .workspace.sidebar-collapsed .brand-button .brand-logo { display: none; }
   .workspace.sidebar-collapsed .brand-mark {
     display: flex;
-    width: 42px;
-    height: 42px;
+    width: 32px;
+    height: 34px;
     overflow: hidden;
-    border: 1px solid #e2ecfa;
-    border-radius: 11px;
-    background: #f5f9ff;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
   }
-  .workspace.sidebar-collapsed .brand-mark img { width: auto; height: 54px; max-width: none; margin: -12px 0 0 -13px; flex: 0 0 auto; }
+  .workspace.sidebar-collapsed .brand-mark img { width: auto; height: 48px; max-width: none; margin: -6px 0 0 -10px; flex: 0 0 auto; }
+  .workspace.sidebar-collapsed .sidebar-header .sidebar-toggle { width: 30px; height: 30px; padding: 5px; }
   .workspace.sidebar-collapsed .workspace-name { justify-content: center; align-items: center; margin-top: 16px; padding: 10px 0; }
   .workspace.sidebar-collapsed .workspace-name > div { display: none; }
   .workspace.sidebar-collapsed .company-symbol { width: auto; }
@@ -1256,7 +1282,10 @@ body .auth-story h1 { color:#FFFFFF; }
   .workspace.sidebar-collapsed .back-home { justify-content: center; padding-top: 10px; }
 }
 
-@media (max-width: 700px) { .sidebar-toggle { display: none; } }
+@media (max-width: 700px) {
+  .sidebar-toggle { display: none; }
+  .sidebar-header .mobile-close { position: absolute; right: 8px; top: 6px; }
+}
 @media (prefers-reduced-motion: reduce) { .workspace .sidebar, .workspace .workspace-main { transition: none; } }
 @media print { .workspace .workspace-main { margin-left: 0; } }
 /* Keep industry cues visible above the shared WareMap brand defaults. */

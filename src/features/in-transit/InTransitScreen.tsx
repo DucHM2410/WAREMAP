@@ -32,11 +32,13 @@ import { useState, type FormEvent } from "react"
 import { useApp } from "../../app/store"
 import {
   branches,
+  createTransferSlip,
   daysLeft,
   today,
   transferDisplayId,
   type Transfer,
   type TransferDetails,
+  transferLines,
 } from "../../app/model"
 import { Button, Empty, Modal } from "../../app/ui"
 import { productKey } from "../../app/catalog"
@@ -266,11 +268,15 @@ export default function Transfers() {
         : transfer.status === statusFilter)
     if (!matchesStatus) return false
     if (!normalizedQuery) return true
-    const product = data.products.find(
-      (item) =>
-        item.id === transfer.productId && item.batch === transfer.batch,
-    )
-    return `${transferDisplayId(transfer)} ${transfer.id} ${transfer.from} ${transfer.to} ${transfer.batch} ${product?.name ?? ""}`
+    const lineSearch = transferLines(transfer)
+      .map((line) => {
+        const product = data.products.find(
+          (item) => item.id === line.productId && item.batch === line.batch,
+        )
+        return `${line.batch} ${product?.name ?? ""} ${product?.id ?? line.productId}`
+      })
+      .join(" ")
+    return `${transferDisplayId(transfer)} ${transfer.id} ${transfer.from} ${transfer.to} ${lineSearch}`
       .toLocaleLowerCase("vi")
       .includes(normalizedQuery)
   })
@@ -294,12 +300,7 @@ export default function Transfers() {
   const selectedDisplayId = selected ? transferDisplayId(selected) : ""
   const selectedStage = selected ? stageOf(selected) : -1
   const selectedAttention = selected ? isAttention(selected) : false
-  const selectedProduct = selected
-    ? data.products.find(
-        (item) =>
-          item.id === selected.productId && item.batch === selected.batch,
-      )
-    : undefined
+  const selectedLines = selected ? transferLines(selected) : []
 
   const pageCount = Math.max(1, Math.ceil(filteredTransfers.length / PAGE_SIZE))
   const safePage = Math.min(page, pageCount)
@@ -535,42 +536,36 @@ export default function Transfers() {
       data.transfers.map((transfer) => transferDisplayId(transfer)),
     )
     let sequence = 1
-    const transfers = validLines.map(({ item, qty }) => {
-      let code = `${prefix}${String(sequence).padStart(3, "0")}`
-      while (usedCodes.has(code)) {
-        sequence += 1
-        code = `${prefix}${String(sequence).padStart(3, "0")}`
-      }
-      usedCodes.add(code)
+    let code = `${prefix}${String(sequence).padStart(3, "0")}`
+    while (usedCodes.has(code)) {
       sequence += 1
-      return {
-        id: code,
+      code = `${prefix}${String(sequence).padStart(3, "0")}`
+    }
+    const transfer = createTransferSlip({
+      id: code,
+      from: source,
+      to,
+      created,
+      history: [
+        `Đã tạo phiếu gồm ${validLines.length} mặt hàng · ${new Date().toLocaleTimeString("vi-VN")}`,
+      ],
+      details,
+      lines: validLines.map(({ item, qty }) => ({
+        id: productKey(item),
         productId: item.id,
         batch: item.batch,
-        from: source,
-        to,
         qty,
-        status: "Chuẩn bị" as const,
-        created,
-        history: [
-          `Đã tạo phiếu · ${new Date().toLocaleTimeString("vi-VN")}`,
-        ],
-        reserved: false,
-        details,
-      } satisfies Transfer
+      })),
     })
+    if (!transfer) return
     update((current) => ({
       ...current,
-      transfers: [...transfers, ...current.transfers],
+      transfers: [transfer, ...current.transfers],
     }))
-    transfers.forEach((transfer) =>
-      log(
-        "Đã tạo phiếu chuyển",
-        `${transferDisplayId(transfer)} · ${transfer.from} → ${to}`,
-      ),
+    log(
+      "Đã tạo phiếu chuyển",
+      `${transferDisplayId(transfer)} · ${validLines.length} mặt hàng · ${transfer.from} → ${to}`,
     )
-    const transfer = transfers[0]
-    if (!transfer) return
     setCreating(false)
     setError("")
     setStatusFilter("all")
@@ -580,11 +575,7 @@ export default function Transfers() {
     setToDate(today())
     setPage(1)
     setChosen(transfer.id)
-    notify(
-      transfers.length === 1
-        ? `Đã tạo phiếu ${transferDisplayId(transfer)}.`
-        : `Đã tạo ${transfers.length} phiếu chuyển cho các mặt hàng đã chọn.`,
-    )
+    notify(`Đã tạo một phiếu ${transferDisplayId(transfer)} cho ${validLines.length} mặt hàng.`)
   }
 
   const reconcileSelected = (event: FormEvent<HTMLFormElement>) => {
@@ -1017,7 +1008,9 @@ export default function Transfers() {
                                 {formatDate(transfer.created)}
                               </span>
                               <span className="trf-date-sub">
-                                {timeOf(transfer) || `Lô ${transfer.batch}`}
+                                {transferLines(transfer).length > 1
+                                  ? `${timeOf(transfer) ? `${timeOf(transfer)} · ` : ""}${transferLines(transfer).length} mặt hàng`
+                                  : timeOf(transfer) || `Lô ${transfer.batch}`}
                               </span>
                             </td>
                             <td>
@@ -1162,14 +1155,70 @@ export default function Transfers() {
                 </span>
               </div>
               <div className="trf-detail__body">
-                {selectedProduct && (
-                  <div className="trf-detail__productline">
-                    <PackageCheck size={13} />
-                    <span title={selectedProduct.name}>
-                      {selectedProduct.name} · Lô {selected.batch}
-                    </span>
-                  </div>
-                )}
+                <section className="trf-detail__items" aria-label="Mặt hàng trong phiếu">
+                  <strong className="trf-detail__items-title">
+                    Mặt hàng ({selectedLines.length})
+                  </strong>
+                  {selectedLines.map((line) => {
+                    const product = data.products.find(
+                      (item) =>
+                        item.id === line.productId &&
+                        item.batch === line.batch,
+                    )
+                    const sent = line.sent ?? selected.reserved
+                    return (
+                      <div className="trf-detail__item" key={line.id}>
+                        <div>
+                          <strong>{product?.name ?? line.productId}</strong>
+                          <small>
+                            Lô {line.batch} · SL {line.qty}
+                            {line.received !== undefined
+                              ? ` · Đã nhận ${line.received}/${line.qty}`
+                              : sent
+                                ? " · Đã gửi"
+                                : ""}
+                          </small>
+                        </div>
+                        {selected.status === "Chuẩn bị" &&
+                          canAct(selected.from) &&
+                          !sent && (
+                            <Button
+                              disabled={!!selectedIncident && !selectedIncident.resolved}
+                              onClick={() => {
+                                setScanTask({
+                                  transferId: selected.id,
+                                  transferLineId: line.id,
+                                  mode: "dispatch",
+                                })
+                                go("scanner")
+                              }}
+                            >
+                              <ScanLine size={14} />
+                              Quét gửi
+                            </Button>
+                          )}
+                        {selected.status === "Đang chuyển" &&
+                          canAct(selected.to) &&
+                          line.received === undefined && (
+                            <Button
+                              disabled={!!selectedIncident && !selectedIncident.resolved}
+                              onClick={() => {
+                                setScanTask({
+                                  transferId: selected.id,
+                                  transferLineId: line.id,
+                                  mode: "receive",
+                                })
+                                go("scanner")
+                              }}
+                            >
+                              <ScanLine size={14} />
+                              Quét nhận
+                            </Button>
+                          )}
+                      </div>
+                    )
+                  })}
+                </section>
                 <dl className="trf-detail__list">
                   <div>
                     <dt>Mã phiếu</dt>
@@ -1895,7 +1944,7 @@ export default function Transfers() {
                   </div>
                   <div className="trf-create-fefo">
                     <Info size={14} />
-                    Mỗi dòng hàng được tạo thành một phiếu riêng để hỗ trợ quét giao và nhận.
+                    Tất cả mặt hàng trong danh sách sẽ nằm trong cùng một phiếu; từng dòng được quét riêng khi giao và nhận.
                     Hàng chưa bị trừ khỏi tồn kho khi tạo phiếu.
                   </div>
                 </section>

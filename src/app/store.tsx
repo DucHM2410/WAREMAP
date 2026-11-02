@@ -34,6 +34,7 @@ export interface ScanTask {
   locationCode?: string
   productKey?: string
   transferId?: string
+  transferLineId?: string
   mode: "lookup" | "dispatch" | "receive"
 }
 interface State {

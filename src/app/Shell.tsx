@@ -219,23 +219,36 @@ export function Shell({ children }: { children: ReactNode }) {
         className={`sidebar ${open ? "is-open" : ""}`}
         aria-label="Thanh điều hướng"
       >
-        <button
-          className="brand-button"
-          onClick={() => go("home")}
-          title="WAREMAP · Về trang chủ"
-        >
-          <Brand />
-          <span className="brand-mark" aria-hidden="true">
-            <img src={waremapLogo} alt="" />
-          </span>
-        </button>
-        <button
-          className="mobile-close"
-          aria-label="Đóng menu"
-          onClick={() => setOpen(false)}
-        >
-          <X />
-        </button>
+        <div className="sidebar-header">
+          <button
+            className="brand-button"
+            onClick={() => go("home")}
+            title="WAREMAP · Về trang chủ"
+          >
+            <Brand />
+            <span className="brand-mark" aria-hidden="true">
+              <img src={waremapLogo} alt="" />
+            </span>
+          </button>
+          <button
+            type="button"
+            className="sidebar-toggle"
+            onClick={() => setCollapsed((value) => !value)}
+            aria-controls="app-sidebar"
+            aria-expanded={!rail}
+            aria-label={rail ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
+            title={rail ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
+          >
+            {rail ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />}
+          </button>
+          <button
+            className="mobile-close"
+            aria-label="Đóng menu"
+            onClick={() => setOpen(false)}
+          >
+            <X />
+          </button>
+        </div>
         <div className="workspace-name">
           <span className="company-symbol">
             <Building2 size={19} />
@@ -300,17 +313,6 @@ export function Shell({ children }: { children: ReactNode }) {
             onClick={() => setOpen(true)}
           >
             <Menu />
-          </button>
-          <button
-            type="button"
-            className="sidebar-toggle"
-            onClick={() => setCollapsed((value) => !value)}
-            aria-controls="app-sidebar"
-            aria-expanded={!rail}
-            aria-label={rail ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
-            title={rail ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
-          >
-            {rail ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />}
           </button>
           <div className="breadcrumb"><strong>{current.label}</strong></div>
 
