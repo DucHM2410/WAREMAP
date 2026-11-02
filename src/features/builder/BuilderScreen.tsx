@@ -4,6 +4,7 @@ import {
   Suspense,
   useEffect,
   useRef,
+  useMemo,
   useState,
   type ReactNode,
 } from "react"
@@ -30,6 +31,10 @@ import { productKey, ExpiryBadge } from "../../app/catalog"
 import { QRLabels } from "../../app/labels"
 import QRCode from "qrcode"
 import { useIndustry } from "../../shared/context/IndustryContext"
+import { INDUSTRIES, type Industry } from "../../shared/config/industries"
+import { guestData } from "../../app/guestData"
+import cosmeticsShelfPhoto from "../../assets/site-photos/cosmetics-shelves.jpg"
+import babyShelfPhoto from "../../assets/site-photos/baby-feeding.jpg"
 import { MousePointer2, Move, QrCode } from "lucide-react"
 import {
   ArrowLeft,
@@ -51,6 +56,7 @@ import {
   initialRacks,
   locationLabel,
   positionCode,
+  seed,
   type Rack,
   type Product,
 } from "../../app/model"
@@ -75,9 +81,20 @@ class SceneBoundary extends Component<{
     return this.state.failed ? this.props.fallback : this.props.children
   }
 }
+function RackPreview({template,color}:{template:typeof RACK_TEMPLATES[number];color:string}) {
+  const host=useRef<HTMLSpanElement>(null)
+  const [visible,setVisible]=useState(false)
+  useEffect(()=>{
+    if(!host.current)return
+    const observer=new IntersectionObserver(entries=>setVisible(entries[0]?.isIntersecting ?? false))
+    observer.observe(host.current)
+    return ()=>observer.disconnect()
+  },[])
+  return <span ref={host} style={{display:"block",height:130,width:"100%",pointerEvents:"none"}} aria-hidden="true">{visible&&<SceneBoundary fallback={<span>{template.name}</span>}><Canvas frameloop="demand" dpr={1} camera={{position:[2.7,2.4,3.5],fov:42}}><ambientLight intensity={1.5}/><directionalLight position={[3,5,4]} intensity={2}/><group position={[0,-template.height/2,0]}><WarehouseRack rack={{...template,id:`preview-${template.id}`,x:0,z:0,rotation:0}} active color={color} contents={[]} inspecting={false} onSelect={()=>{}} onProductSelect={()=>{}} onTransform={()=>{}} expiryLayer={false} expiryDays={30}/></group></Canvas></SceneBoundary>}</span>
+}
 export default function Warehouse() {
   const {
-    data,
+    data: workspaceData,
     update,
     screen,
     go,
@@ -86,7 +103,7 @@ export default function Warehouse() {
     accessibleBranches,
     selected,
     setSelected,
-    visibleProducts,
+    visibleProducts: workspaceProducts,
     search,
     setSearch,
     log,
@@ -97,7 +114,13 @@ export default function Warehouse() {
     setScanTask,
     scanTask,
   } = useApp()
-  const { config } = useIndustry()
+  const { config: workspaceConfig } = useIndustry()
+  const [demoIndustry,setDemoIndustry] = useState<Industry>(workspaceConfig.id)
+  const isGuest = accessMode !== "authenticated"
+  const config = isGuest ? INDUSTRIES[demoIndustry] : workspaceConfig
+  const demo = useMemo(()=>isGuest ? guestData(seed(config),branches[0]) : null,[isGuest,config])
+  const data = demo ?? workspaceData
+  const visibleProducts = demo ? demo.products : workspaceProducts
   const [groupByCategory, setGroupByCategory] = useState(false)
   const [rackLabels, setRackLabels] = useState<Record<string, { category: string; full: boolean }>>(() => {
     try { return JSON.parse(localStorage.getItem("waremap-rack-labels-v1") || "{}") || {} } catch { return {} }
@@ -183,6 +206,7 @@ export default function Warehouse() {
       return
     }
     setScanTask({ mode: "lookup", productKey: productKey(p) })
+    handledLocation.current=productKey(p)
     setBranch(p.branch)
     setSelected(p.id)
     setSelectedBatch(p.batch)
@@ -191,12 +215,21 @@ export default function Warehouse() {
     setChosen(p.rack)
     setView("3d")
     setFocusedRack(p.rack)
-    setLocateRequest({ id: ++locateSequence.current, product: p,unitIndex:lot?undefined:index })
+    setLocateRequest({ id: ++locateSequence.current, product: p,unitIndex:lot?undefined:index,scope:lot?"slot":undefined })
     requestAnimationFrame(() => mapStage.current?.scrollIntoView({ block: "start", behavior: "auto" }))
   }
   useEffect(() => {
     if (locateRequest && locateRequest.product.branch !== warehouse) setLocateRequest(null)
   }, [warehouse])
+  const handledLocation = useRef("")
+  useEffect(()=>{
+    if(editing || scanTask.mode!=="lookup" || !scanTask.productKey || handledLocation.current===scanTask.productKey)return
+    const target=data.products.find(p=>productKey(p)===scanTask.productKey && p.branch===warehouse)
+    if(!target)return
+    handledLocation.current=scanTask.productKey
+    locateProduct(target,0,true)
+    setLocateRequest(current=>current?{...current,scope:"slot"}:current)
+  },[editing,scanTask.productKey,warehouse,data.products])
   const dirty = editing && JSON.stringify(draft) !== JSON.stringify(persisted)
   useEffect(() => {
     guardNavigation(
@@ -385,6 +418,11 @@ export default function Warehouse() {
           ) : undefined
         }
       />
+      {isGuest && <section className="panel" style={{padding:18,marginBottom:20,borderTop:`4px solid ${config.primaryColor}`}}>
+        <style>{`.guest-workspace{--industry-primary:${config.primaryColor};--teal:${config.primaryColor};--industry-soft:${config.id==="cosmetics"?"#ECFEFF":"#FDF2F8"}}body .guest-workspace .button.primary{background:${config.primaryColor}}body .guest-workspace .button.ghost,body .guest-workspace .button.secondary{color:${config.primaryColor}}`}</style>
+        <label>Khám phá kho theo ngành hàng<select value={demoIndustry} onChange={event=>{setDemoIndustry(event.currentTarget.value as Industry);setChosen("");setSelected("");setSelectedBatch("");setLocateRequest(null);setFocusedRack(null);handledLocation.current="";setSearch("")}}><option value="mom-baby">Mẹ &amp; Bé · sữa, bỉm, bình sữa và phụ kiện</option><option value="cosmetics">Mỹ phẩm · son, serum, kem dưỡng và hộp nhỏ</option></select></label>
+        <p className="tiny muted" style={{marginTop:10}}>Kho minh họa có nhiều loại kệ và nhiều lô cùng ô. Chọn bao bì để xem lô; không sửa dữ liệu kho của doanh nghiệp.</p>
+      </section>}
       <div className="toolbar" role="group" aria-label="Nhóm kệ theo hàng hóa">
         <Button variant={!groupByCategory ? "primary" : "secondary"} aria-pressed={!groupByCategory} onClick={()=>setGroupByCategory(false)}>Xem theo Kệ</Button>
         <Button variant={groupByCategory ? "primary" : "secondary"} aria-pressed={groupByCategory} onClick={()=>setGroupByCategory(true)}>Xem theo Nhóm Hàng</Button>
@@ -397,7 +435,7 @@ export default function Warehouse() {
         <div className="toolbar" onKeyDown={event => {
           if (event.key === "Enter" && (event.target as HTMLElement).tagName === "INPUT" && search.trim() && matches.length) {
             event.preventDefault()
-            locateProduct(matches[0])
+            locateProduct(matches[0],0,true)
           }
         }}>
           <SearchInput value={search} onChange={setSearch} placeholder="Tìm sản phẩm, mã lô hoặc vị trí…" />
@@ -415,7 +453,7 @@ export default function Warehouse() {
               <button
                 key={productKey(p)}
                 className="list-choice"
-                onClick={() => locateProduct(p)}
+                onClick={() => locateProduct(p,0,true)}
               >
                 <MapPin size={18} color="#087e8b" />
                 <div>
@@ -437,6 +475,8 @@ export default function Warehouse() {
           <span className="eyebrow">THƯ VIỆN KỆ</span>
           <h2>Kho của bạn, cách bạn muốn.</h2>
           <p>Chọn một mẫu. Đặt vào kho. Hoàn tất.</p>
+          <img src={config.id==="cosmetics"?cosmeticsShelfPhoto:babyShelfPhoto} alt={config.id==="cosmetics"?"Sản phẩm mỹ phẩm thực tế trên kệ":"Sản phẩm và đồ dùng chăm sóc bé thực tế"} style={{width:"100%",height:100,objectFit:"cover",borderRadius:10}}/>
+          <small>Ảnh bối cảnh ngành hàng. Các mô hình bên dưới thể hiện hình dáng mẫu kệ, không phải ảnh hàng hóa của nhà cung cấp.</small>
           <Button onClick={() => add("shelf")}><Plus size={20} /> Thêm Kệ</Button>
           {rack && fullRack(rack) && <div role="status" style={{padding:12,border:"1px solid #f59e0b",borderRadius:12,background:"#fffbeb"}}>
             <strong>Kệ hiện tại đã đầy.</strong>
@@ -457,7 +497,7 @@ export default function Warehouse() {
             onDragStart={event => { event.dataTransfer.setData("application/waremap-rack", template.id); event.dataTransfer.effectAllowed = "copy"; setDraggingTemplate(template.name) }}
             onDragEnd={() => setDraggingTemplate("")}
             onClick={() => add(template.id)} aria-label={`Thêm ${template.name}`}>
-            <span className="rack-thumbnail" aria-hidden="true">{Array.from({length:template.levels}, (_, i) => <span key={i}>{Array.from({length:template.bins}, (_, j) => <i key={j}/>)}</span>)}</span>
+            <RackPreview template={template} color={config.primaryColor}/>
             <strong>{template.name}</strong><small>{template.width} × {template.depth} × {template.height} m · {template.levels} tầng · {template.bins} ô</small><small>{template.description}</small>
           </button>)}
           <small>Kéo mẫu vào kho · Hoặc bấm để thêm, dùng được trên điện thoại</small>
@@ -553,6 +593,12 @@ export default function Warehouse() {
                           if (!editing) {setLocateRequest(null);setSelected("")}
                         }}
                       />
+                      {!editing && locateRequest && locateRequest.product.rack===r.id && <group position={[r.x,0,r.z]} rotation={[0,r.rotation*Math.PI/180,0]}>
+                        <mesh position={[-r.width/2+(locateRequest.product.bin-.5)*r.width/r.bins,(locateRequest.product.level-.5)*r.height/r.levels,0]} raycast={()=>null}>
+                          <boxGeometry args={[r.width/r.bins*.96,r.height/r.levels*.9,r.depth*.96]}/><meshBasicMaterial color="#f59e0b" wireframe transparent opacity={.85} depthTest={false}/>
+                        </mesh>
+                        <Html position={[-r.width/2+(locateRequest.product.bin-.5)*r.width/r.bins,(locateRequest.product.level-1)*r.height/r.levels+.04,r.depth/2+.04]} center style={{pointerEvents:"none"}}><span style={{display:"block",background:"#fff7ed",border:"1px solid #f59e0b",color:"#7c2d12",padding:"6px 10px",borderRadius:8,fontSize:11,whiteSpace:"nowrap"}}>Lô {locateRequest.product.batch} · T{locateRequest.product.level} · Ô {locateRequest.product.bin}</span></Html>
+                      </group>}
                       </group>
                     ))}
                     <OrbitControls

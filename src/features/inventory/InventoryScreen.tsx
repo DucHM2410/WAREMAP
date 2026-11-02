@@ -35,6 +35,7 @@ export default function Inventory() {
     go,
     setSelected,
     setBranch,
+    setScanTask,
     log,
     notify,
   } = useApp()
@@ -76,7 +77,7 @@ export default function Inventory() {
       <PageTitle
         eyebrow="Mỗi mặt hàng, một vị trí rõ ràng"
         title="Sản phẩm & tồn kho"
-        description="Tra cứu hàng hóa, kiểm tra số lượng và xác định nơi đang lưu trữ."
+        description="Mỗi dòng là một lô hàng tại một cơ sở. Cùng mã sản phẩm có thể có nhiều lô, hạn dùng và vị trí khác nhau."
         action={
           canWrite ? (
             <div className="row"><Button onClick={() => go("putaway")}>Quét nhập lên kệ</Button><Button variant="secondary" onClick={() => openOperation("Nhập hàng")}>
@@ -271,13 +272,15 @@ export default function Inventory() {
             </details>}
             <Button
               onClick={() => {
+                setScanTask({mode:"lookup",productKey:productKey(actualDetail)})
                 setSelected(actualDetail.id)
                 setBranch(actualDetail.branch)
+                setSearch("")
                 go("warehouse")
               }}
             >
               <MapPin size={16} />
-              Xem vị trí trên bản đồ
+              Định vị lô {actualDetail.batch} trong kho 3D
             </Button>
             {canWrite && (
               <Button
