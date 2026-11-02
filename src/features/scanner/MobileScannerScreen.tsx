@@ -7,6 +7,7 @@ import {
   locationLabel,
   positionCode,
   transferDisplayId,
+  transferLines,
 } from "../../app/model"
 import { Badge, Button, PageTitle, Panel } from "../../app/ui"
 import { productKey } from "../../app/catalog"
@@ -43,14 +44,19 @@ export default function Scanner() {
     busy = useRef(false),
     submitRef = useRef<(code: string) => void>(() => {})
   const transfer = data.transfers.find((t) => t.id === scanTask.transferId)
+  const transferLine = transfer
+    ? transferLines(transfer).find(
+        (line) => line.id === scanTask.transferLineId,
+      ) ?? (transferLines(transfer).length === 1 ? transferLines(transfer)[0] : undefined)
+    : undefined
   const p =
     scanTask.mode === "lookup"
       ? visibleProducts.find((p) => productKey(p) === lookupKey)
       : data.products.find(
           (p) =>
-            p.id === transfer?.productId &&
+            p.id === transferLine?.productId &&
             p.branch === transfer?.from &&
-            p.batch === transfer?.batch,
+            p.batch === transferLine?.batch,
         )
   const targetBranch =
     scanTask.mode === "receive" && transfer
@@ -87,8 +93,8 @@ export default function Scanner() {
     setStep(0)
     setResult("")
     setDone(false)
-    setReceived(transfer?.qty || 1)
-  }, [scanTask.transferId, scanTask.mode, lookupKey, rackId, level, bin])
+    setReceived(transferLine?.qty ?? transfer?.qty ?? 1)
+  }, [scanTask.transferId, scanTask.transferLineId, scanTask.mode, lookupKey, rackId, level, bin])
   const verify = (code: string) => {
     if (!p || done) return
     const expected = step === 0 ? expectedLocation : expectedBatch
@@ -172,8 +178,9 @@ export default function Scanner() {
     if (scanTask.mode === "dispatch") {
       if (
         transfer.status !== "Chuẩn bị" ||
-        transfer.reserved ||
-        p.qty < transfer.qty ||
+        !transferLine ||
+        transferLine.sent ||
+        p.qty < transferLine.qty ||
         daysLeft(p.expiry) < 0
       ) {
         setGood(false)
@@ -184,36 +191,45 @@ export default function Scanner() {
         ...d,
         products: d.products.map((item) =>
           productKey(item) === productKey(p)
-            ? { ...item, qty: item.qty - transfer.qty }
+            ? { ...item, qty: item.qty - transferLine.qty }
             : item,
         ),
         transfers: d.transfers.map((t) =>
-          t.id === transfer.id
-            ? {
-                ...t,
-                status: "Đang chuyển",
-                reserved: true,
-                history: [
-                  ...t.history,
-                  `Đã xác minh vị trí & lô, gửi ${t.qty} sản phẩm`,
-                ],
-              }
-            : t,
+          t.id !== transfer.id
+            ? t
+            : (() => {
+                const lines = transferLines(t).map((line) =>
+                  line.id === transferLine.id ? { ...line, sent: true } : line,
+                )
+                const allSent = lines.every((line) => line.sent)
+                return {
+                  ...t,
+                  lines,
+                  status: allSent ? "Đang chuyển" as const : "Chuẩn bị" as const,
+                  reserved: allSent,
+                  history: [
+                    ...t.history,
+                    `Đã xác minh vị trí & lô ${transferLine.batch}, gửi ${transferLine.qty} sản phẩm`,
+                  ],
+                }
+              })(),
         ),
       }))
       log(
         "Đã gửi hàng",
-        `${transferDisplayId(transfer)} · ${transfer.qty} sản phẩm · ${transfer.from} → ${transfer.to}`,
+        `${transferDisplayId(transfer)} · ${p.name} · ${transferLine.qty} sản phẩm · ${transfer.from} → ${transfer.to}`,
       )
     } else {
       const targetRack = data.racks[targetBranch]?.find((r) => r.id === rackId)
       if (
         transfer.status !== "Đang chuyển" ||
         !transfer.reserved ||
+        !transferLine ||
+        transferLine.received !== undefined ||
         !targetRack ||
         !Number.isInteger(received) ||
         received < 0 ||
-        received > transfer.qty ||
+        received > transferLine.qty ||
         level < 1 ||
         level > targetRack.levels ||
         bin < 1 ||
@@ -262,23 +278,42 @@ export default function Scanner() {
                 },
               ],
           transfers: d.transfers.map((t) =>
-            t.id === transfer.id
-              ? {
-                  ...t,
-                  received,
-                  status: received === t.qty ? "Hoàn tất" : "Kiểm nhận",
-                  history: [
-                    ...t.history,
-                    `Đã xác minh, thực nhận ${received}/${t.qty} sản phẩm tại ${rackId}`,
-                  ],
-                }
-              : t,
+            t.id !== transfer.id
+              ? t
+              : (() => {
+                  const lines = transferLines(t).map((line) =>
+                    line.id === transferLine.id
+                      ? { ...line, received }
+                      : line,
+                  )
+                  const totalReceived = lines.reduce(
+                    (total, line) => total + (line.received ?? 0),
+                    0,
+                  )
+                  const allReceived = lines.every(
+                    (line) => line.received !== undefined,
+                  )
+                  return {
+                    ...t,
+                    lines,
+                    received: totalReceived,
+                    status: allReceived
+                      ? totalReceived === t.qty
+                        ? "Hoàn tất" as const
+                        : "Kiểm nhận" as const
+                      : "Đang chuyển" as const,
+                    history: [
+                      ...t.history,
+                      `Đã xác minh lô ${transferLine.batch}, thực nhận ${received}/${transferLine.qty} sản phẩm tại ${rackId}`,
+                    ],
+                  }
+                })(),
           ),
         }
       })
       log(
         "Đã kiểm nhận hàng",
-        `${transferDisplayId(transfer)} · ${received}/${transfer.qty} sản phẩm · ${transfer.to}`,
+        `${transferDisplayId(transfer)} · ${p.name} · ${received}/${transferLine.qty} sản phẩm · ${transfer.to}`,
       )
     }
     setDone(true)
@@ -467,12 +502,12 @@ export default function Scanner() {
                     <input
                       type="number"
                       min={0}
-                      max={transfer?.qty}
+                      max={transferLine?.qty}
                       value={received}
                       onChange={(e) => setReceived(Number(e.target.value))}
                     />
                     <small>
-                      Phiếu gửi {transfer?.qty}. Số thiếu sẽ được đưa vào đối
+                      Dòng hàng gửi {transferLine?.qty}. Số thiếu sẽ được đưa vào đối
                       soát.
                     </small>
                   </label>

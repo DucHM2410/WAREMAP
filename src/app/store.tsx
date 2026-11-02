@@ -31,6 +31,7 @@ const key = "waremap-demo-v3"
 export interface ScanTask {
   productKey?: string
   transferId?: string
+  transferLineId?: string
   mode: "lookup" | "dispatch" | "receive"
 }
 interface State {

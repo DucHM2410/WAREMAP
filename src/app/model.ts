@@ -220,6 +220,14 @@ export interface TransferDetails {
   trackingCode: string
   shippingNote: string
 }
+export interface TransferLine {
+  id: string
+  productId: string
+  batch: string
+  qty: number
+  sent?: boolean
+  received?: number
+}
 export interface Transfer {
   id: string
   productId: string
@@ -233,6 +241,39 @@ export interface Transfer {
   history: string[]
   reserved: boolean
   details?: TransferDetails
+  lines?: TransferLine[]
+}
+export function createTransferSlip(input: {
+  id: string
+  from: string
+  to: string
+  created: string
+  history: string[]
+  details: TransferDetails
+  lines: TransferLine[]
+}): Transfer | undefined {
+  const firstLine = input.lines[0]
+  if (!firstLine) return undefined
+  return {
+    ...input,
+    productId: firstLine.productId,
+    batch: firstLine.batch,
+    qty: input.lines.reduce((total, line) => total + line.qty, 0),
+    status: "Chuẩn bị",
+    reserved: false,
+  }
+}
+export function transferLines(transfer: Transfer): TransferLine[] {
+  return transfer.lines ?? [
+    {
+      id: `${transfer.productId}:${transfer.batch}`,
+      productId: transfer.productId,
+      batch: transfer.batch,
+      qty: transfer.qty,
+      sent: transfer.reserved,
+      received: transfer.received,
+    },
+  ]
 }
 // Display code for the transfer list. Internal ids stay stable so saved data,
 // scan tasks and history continue to point at the same transfer.
