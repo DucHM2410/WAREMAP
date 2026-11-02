@@ -18,7 +18,7 @@ import "./public-site.css"
 import { withSitePhotos } from "./sitePhotos"
 import { useSiteMotion } from "./useSiteMotion"
 import "./site-motion.css"
-import warehouseScreen from "../../assets/site-photos/waremap-warehouse-current.jpg"
+import { WarehouseShowcase } from "./WarehouseShowcase"
 
 export function MiniMap({ highlight = "A2" }: { highlight?: string }) {
   return (
@@ -206,12 +206,7 @@ export function PublicSite({
             )}
           </div>
           <div className="wm-hero-art">
-            <EditableImage src={page === "home" ? warehouseScreen : current.image} alt={page === "home" ? "Bản đồ kho 3D WareMap với kệ và vị trí sản phẩm" : current.imageAlt} priority />
-            {page === "home" && <aside className="wm-zalo-preview" aria-label="Minh họa cảnh báo Zalo">
-              <strong>Zalo Alert <small>Minh họa</small></strong>
-              <p>Lô sữa tại Kệ A2 sắp hết hạn.</p>
-              <span>Kiểm tra vị trí trên WareMap →</span>
-            </aside>}
+            {page === "home" || page === "solution" ? <WarehouseShowcase notification={page === "home"}/> : <EditableImage src={current.image} alt={current.imageAlt} priority />}
             {!embedded && (
               <button className="wm-motion-toggle" onClick={() => setMotionPaused(!motionPaused)} aria-pressed={motionPaused}>
                 {motionPaused ? <Play size={12} /> : <Pause size={12} />}

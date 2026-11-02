@@ -10,8 +10,8 @@ import { branches, money, quote, today } from "../../app/model"
 
 import { PublicFlowLayout, PublicFlowHeading } from "./PublicFlowLayout"
 
-import warehousePhoto from "../../assets/site-photos/inventory-tablet.jpg"
-import warehouseScreen from "../../assets/site-photos/waremap-warehouse-current.jpg"
+import { WarehouseShowcase } from "../public-home/WarehouseShowcase"
+
 
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "../../shared/config/demoRoles"
 
@@ -63,17 +63,10 @@ export default function Login() {
             về kho của bạn.
           </h1>
           <p className="auth-story-intro">Từ kệ hàng thực tế đến bản đồ kho 3D. Tìm đúng vị trí, kiểm tra lô và xác minh hàng bằng QR.</p>
-          <figure className="auth-real-visual">
-            <div className="auth-real-photo">
-              <img src={warehousePhoto} alt="Nhân viên sử dụng máy tính bảng và máy quét để kiểm tra hàng tại kệ kho" />
-              <span>Vận hành tại kho · Kiểm tra hàng ngay trên thiết bị</span>
-            </div>
-            <div className="auth-real-screen">
-              <header><i aria-hidden="true" />WareMap · Bản đồ kho 3D</header>
-              <img src={warehouseScreen} alt="Ảnh giao diện WareMap: các kệ kho 3D, sản phẩm và bảng chi tiết vị trí" />
-            </div>
-            <figcaption className="auth-real-caption">Ảnh vận hành minh họa kết hợp giao diện WareMap với dữ liệu mẫu.</figcaption>
-          </figure>
+          <div className="auth-real-visual">
+            <WarehouseShowcase notification={false}/>
+            <p className="auth-real-caption">Một lần tìm kiếm, một vị trí rõ ràng. Hình ảnh và kết quả dùng dữ liệu mẫu.</p>
+          </div>
           <div className="auth-real-workflow" aria-label="Quy trình quản lý trên WareMap"><span>01 · Tìm sản phẩm</span><span>02 · Định vị kệ / tầng / ô</span><span>03 · Xác minh QR</span></div>
         </div>
         <p className="tiny">WareMap System</p>
