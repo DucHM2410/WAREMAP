@@ -41,13 +41,13 @@ test("login preserves role restrictions", () => {
   assert.equal(canAccessScreen("authenticated", "owner", "admin"), false)
   assert.equal(canAccessScreen("authenticated", "platform", "admin"), true)
 })
-test("guest data has one warehouse, three sample rows, and no operational records", () => {
+test("guest data has one warehouse, bounded sample rows, and no operational records", () => {
   const sample = {
     racks: { A: [{ id: "A1" }], B: [{ id: "B1" }] },
-    products: Array.from({ length: 8 }, (_, i) => ({
+    products: Array.from({ length: 20 }, (_, i) => ({
       id: String(i),
-      branch: "B",
-      rack: "B1",
+      branch: i === 0 ? "B" : "A",
+      rack: i === 0 ? "B1" : "A1",
     })),
     requests: [{}],
     staff: [{}],
@@ -56,11 +56,11 @@ test("guest data has one warehouse, three sample rows, and no operational record
     locations: 2,
   }
   const result = guestData(sample, "A")
-  assert.equal(result.products.length, 3)
+  assert.equal(result.products.length, 16)
   assert.ok(result.products.every((p) => p.branch === "A" && p.rack === "A1"))
   assert.deepEqual(Object.keys(result.racks), ["A"])
   for (const key of ["requests", "staff", "activities", "transfers"])
     assert.deepEqual(result[key], [])
-  assert.equal(sample.products.length, 8)
+  assert.equal(sample.products.length, 20)
   assert.equal(sample.staff.length, 1)
 })

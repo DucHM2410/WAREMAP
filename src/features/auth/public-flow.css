@@ -95,3 +95,4 @@
 .guest-map-banner .button{flex-shrink:0}
 .guest-map-content{min-width:0}
 @media(max-width:680px){.guest-map-banner{padding:16px}.guest-map-banner .button{white-space:normal}}
+.guest-map-content.guest-workspace{min-height:0;background:transparent}

@@ -32,3 +32,41 @@
 .sidebar-account-popover>button { width:100%; display:flex; align-items:center; gap:12px; border:0; background:transparent; color:#334155; text-align:left; padding:12px 10px; border-radius:8px; font-size:13px; }
 .sidebar-account-popover>button:hover,.sidebar-account-popover>button:focus-visible { background:#f1f5fb; color:#2155cd; }
 .sidebar-account-popover>button svg { flex-shrink:0; }
+
+.workspace .sidebar .nav-item--fefo {
+  position: relative;
+}
+
+.workspace .sidebar .nav-item--fefo.has-alerts {
+  color: #42647a;
+}
+
+.workspace .sidebar .nav-item--fefo.has-alerts > svg {
+  color: #d89000;
+}
+
+.workspace .sidebar .nav-item--fefo.has-alerts:hover,
+.workspace .sidebar .nav-item--fefo.has-alerts.active {
+  color: #244b63;
+}
+
+.workspace .sidebar .nav-item--fefo.has-alerts.active {
+  background: #fff7e5;
+}
+
+.nav-item__fefo-count {
+  display: inline-flex;
+  width: 23px;
+  height: 23px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  margin-left: auto;
+  border: 1px solid #f1d08a;
+  border-radius: 50%;
+  background: #fff5dc;
+  color: #946200;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}

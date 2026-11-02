@@ -10,7 +10,8 @@ import { branches, money, quote, today } from "../../app/model"
 
 import { PublicFlowLayout, PublicFlowHeading } from "./PublicFlowLayout"
 
-import { MiniMap } from "../public-home/PublicHomeScreen"
+import { WarehouseShowcase } from "../public-home/WarehouseShowcase"
+
 
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "../../shared/config/demoRoles"
 
@@ -29,7 +30,27 @@ export default function Login() {
   }
 
   return (
-    <div className="auth-page">
+    <div className="auth-page auth-real-login">
+      <style>{`
+        body .auth-page.auth-real-login{--industry-primary:#0B57C7;--industry-accent:#1685F9;--industry-soft:#EAF3FF;--industry-tint:#F5F9FF;--teal:#0B57C7;--navy:#192C45}
+        body .auth-real-login .button.primary{background:#0B57C7;color:white}body .auth-real-login .button.primary:hover{background:#0846A6}
+        body .auth-real-login .button.ghost,body .auth-real-login .demo-account small{color:#0B57C7}body .auth-real-login .button.ghost:hover{background:#EAF3FF}
+        .auth-real-login .auth-story{justify-content:flex-start;gap:36px;padding:48px clamp(28px,4vw,64px);align-self:start;min-height:100vh}
+        .auth-real-login .auth-story h1{font-size:clamp(28px,3vw,42px);font-weight:650;max-width:520px;margin-bottom:16px}
+        .auth-real-login .auth-story .auth-story-intro{max-width:480px;font-size:14px;line-height:1.8}
+        .auth-real-visual{margin:28px 0 0;max-width:650px}
+        .auth-real-photo{position:relative;border-radius:18px;overflow:hidden;background:#243b57}
+        .auth-real-photo>img{width:100%;height:210px;object-fit:cover;object-position:center 43%;display:block}
+        .auth-real-photo>span{position:absolute;bottom:0;left:0;right:0;padding:30px 18px 14px;background:linear-gradient(transparent,#0f233de6);font-size:12px;color:#fff}
+        .auth-real-screen{position:relative;margin:-22px 0 0 28px;border:6px solid #ffffff;border-radius:14px;background:#fff;box-shadow:0 20px 45px #05172a55;overflow:hidden}
+        .auth-real-screen>header{display:flex;align-items:center;gap:7px;padding:9px 12px;color:#192c45;background:#f5f9ff;font-size:11px;font-weight:600}
+        .auth-real-screen>header i{width:7px;height:7px;border-radius:50%;background:#22c55e}
+        .auth-real-screen>img{display:block;width:100%;height:auto;aspect-ratio:1265/712;object-fit:contain;background:#edf3f5}
+        .auth-real-login .auth-story .auth-real-caption{font-size:11px;line-height:1.8;color:#bacde5;margin:16px 0 0;max-width:none}
+        .auth-real-workflow{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}.auth-real-workflow span{font-size:11px;padding:7px 10px;border:1px solid #ffffff26;border-radius:8px;color:#e2edff;background:#ffffff08}
+        @media(max-width:960px){.auth-real-login .auth-story{padding:30px 24px;gap:28px}.auth-real-photo>img{height:175px}.auth-real-screen{margin-left:12px}}
+        @media(max-width:700px){.auth-real-login .auth-story{display:none}}
+      `}</style>
       <section className="auth-story">
         <Brand />
         <div>
@@ -41,8 +62,12 @@ export default function Login() {
             <br />
             về kho của bạn.
           </h1>
-          <p>Cùng một sơ đồ, cả đội biết hàng ở đâu và việc gì cần xử lý.</p>
-          <MiniMap />
+          <p className="auth-story-intro">Từ kệ hàng thực tế đến bản đồ kho 3D. Tìm đúng vị trí, kiểm tra lô và xác minh hàng bằng QR.</p>
+          <div className="auth-real-visual">
+            <WarehouseShowcase notification={false}/>
+            <p className="auth-real-caption">Một lần tìm kiếm, một vị trí rõ ràng. Hình ảnh và kết quả dùng dữ liệu mẫu.</p>
+          </div>
+          <div className="auth-real-workflow" aria-label="Quy trình quản lý trên WareMap"><span>01 · Tìm sản phẩm</span><span>02 · Định vị kệ / tầng / ô</span><span>03 · Xác minh QR</span></div>
         </div>
         <p className="tiny">WareMap System</p>
       </section>

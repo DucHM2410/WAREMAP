@@ -93,11 +93,11 @@ export function GuestWorkspace({ children }: { children: ReactNode }) {
       <aside className="guest-banner guest-map-banner" aria-label="Giới hạn trải nghiệm">
         <div>
           <strong>Bạn đang xem kho mẫu</strong>
-          <p>1 kho mẫu · tối đa 3 mã hàng mẫu. Chỉ xem và tìm hàng; chưa thể sửa sơ đồ, nhập xuất hàng hoặc quét QR.</p>
+          <p>1 kho mẫu · tối đa 32 dòng hàng minh họa. Chỉ xem và tìm hàng; chưa thể sửa sơ đồ, nhập xuất hàng hoặc quét QR.</p>
         </div>
         <Button variant="secondary" onClick={() => go("trial-info")}>Xem thêm cách trải nghiệm</Button>
       </aside>
-      <div className="guest-map-content">{children}</div>
+      <div className="guest-map-content guest-workspace">{children}</div>
     </PublicFlowLayout>
   )
 }

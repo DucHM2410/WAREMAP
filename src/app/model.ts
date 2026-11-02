@@ -3,6 +3,7 @@ import {
   type Industry,
   type IndustryConfig,
 } from "../shared/config/industries"
+import { shelfSampleIds, shelfSamples } from "./shelfSamples"
 
 export type Screen = "putaway" | "trial-info" | "home" | "login" | "request" | "industry-picker" | "dashboard" | "builder" | "warehouse" | "mobile" | "onboarding" | "batches" | "inventory" | "roi" | "scanner" | "account" | "settings" | "admin" | "website-editor"
 export type Role = "owner" | "manager" | "warehouse" | "sales" | "platform"
@@ -92,7 +93,7 @@ export interface Product {
   level: number
   bin: number
   package3d?: ProductPackage
-  storage3d?: {layers: number; stackable: boolean; unitsPerContainer?: number; containerPackage?: ProductPackage}
+  storage3d?: {layers: number; stackable: boolean; unitsPerContainer?: number; containerPackage?: ProductPackage; placement?: {xCm:number; zCm:number; onTopOf?:string}}
 }
 export const locationLabel = (p: Pick<Product, "rack" | "level" | "bin">) =>
   `Kệ ${p.rack} · Tầng ${p.level} · Ô ${String(p.bin).padStart(2, "0")}`
@@ -109,6 +110,7 @@ const sampleTransferIds = new Set(
 )
 // Includes the mixed-industry rows seeded before demo data became industry-aware.
 export const sampleProductIds = new Set([
+  ...shelfSampleIds,
   "WM-001",
   "WM-002",
   "WM-003",
@@ -124,7 +126,7 @@ const sampleExpiryISO = (value: string) => {
   return `${year}-${month}-${day}`
 }
 export function industryProducts(config: IndustryConfig): Product[] {
-  return config.sampleSKUs.map((sku, index) => {
+  const basic = config.sampleSKUs.map((sku, index) => {
     const batch = config.sampleBatches[index % config.sampleBatches.length]
     return {
       id: sku.sku,
@@ -138,6 +140,7 @@ export function industryProducts(config: IndustryConfig): Product[] {
       ...sampleLocations[index % sampleLocations.length],
     }
   })
+  return [...basic, ...branches.flatMap(branch => shelfSamples(config, branch, initialRacks, basic))]
 }
 export interface Rack {
   id: string
@@ -353,6 +356,7 @@ export interface InboundCarton {
   placement?: {rack: string; level: number; bin: number}
 }
 export interface DemoData {
+  shelfSamplesVersion?: number
   inboundCartons?: InboundCarton[]
   version: number
   industry: Industry
@@ -397,6 +401,18 @@ export function withIndustrySamples(
     ],
   }
 }
+export function ensureIndustrySamples(
+  data: DemoData,
+  config: IndustryConfig,
+): DemoData {
+  const existingIds = new Set(data.products.map((product) => product.id))
+  const missing = industryProducts(config).filter(
+    (product) => !existingIds.has(product.id),
+  )
+  return missing.length
+    ? { ...data, products: [...data.products, ...missing] }
+    : data
+}
 export function ensureTransferSamples(
   data: DemoData,
   config: IndustryConfig,
@@ -424,6 +440,7 @@ export function seed(config: IndustryConfig): DemoData {
   const demoProducts = industryProducts(config)
   return {
     version: 3,
+      shelfSamplesVersion: 3,
     industry: config.id,
     products: demoProducts,
     racks: Object.fromEntries(

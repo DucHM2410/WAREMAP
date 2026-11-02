@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUpRight, Check } from "lucide-react"
+import { ArrowRight, ArrowUpRight, Check, Pause, Play } from "lucide-react"
 
 import { useEffect, useState } from "react"
 
@@ -15,6 +15,10 @@ import { EditableImage } from "./SiteImage"
 import { SiteSection } from "./SiteSection"
 
 import "./public-site.css"
+import { withSitePhotos } from "./sitePhotos"
+import { useSiteMotion } from "./useSiteMotion"
+import "./site-motion.css"
+import { WarehouseShowcase } from "./WarehouseShowcase"
 
 export function MiniMap({ highlight = "A2" }: { highlight?: string }) {
   return (
@@ -83,6 +87,8 @@ export function PublicSite({
   onTrial?: () => void
 }) {
   const [page, setPage] = useState<PublicPage>(initialPage)
+  const [motionPaused, setMotionPaused] = useState(false)
+  const siteRef = useSiteMotion(page, motionPaused, embedded)
 
   useEffect(() => {
     setPage(initialPage)
@@ -131,12 +137,12 @@ export function PublicSite({
     })
   }
 
-  const current = content.pages[page]
+  const current = withSitePhotos(content.pages[page], page)
 
   const industryHero = page === "mom" || page === "cosmetics"
 
   return (
-    <div className={`wm-site ${embedded ? "wm-site-embedded" : ""}`}>
+    <div ref={siteRef} className={`wm-site wm-photo-site ${embedded ? "wm-site-embedded" : ""}`} data-motion={motionPaused || embedded ? "paused" : "on"}>
       <PublicHeader
         page={page}
         navigate={navigate}
@@ -200,9 +206,32 @@ export function PublicSite({
             )}
           </div>
           <div className="wm-hero-art">
-            <EditableImage src={current.image} alt={current.imageAlt} />
+            {page === "home" || page === "solution" ? <WarehouseShowcase notification={page === "home"}/> : <EditableImage src={current.image} alt={current.imageAlt} priority />}
+            {!embedded && (
+              <button className="wm-motion-toggle" onClick={() => setMotionPaused(!motionPaused)} aria-pressed={motionPaused}>
+                {motionPaused ? <Play size={12} /> : <Pause size={12} />}
+                {motionPaused ? "Bật hiệu ứng" : "Tắt hiệu ứng"}
+              </button>
+            )}
           </div>
         </section>
+        {page === "home" && <>
+          <style>{`
+            .wm-site .wm-zalo-preview{position:absolute;right:16px;bottom:62px;max-width:260px;padding:18px;background:white;border:1px solid #dbeafe;border-radius:16px;box-shadow:0 16px 40px #192c4520;color:#192c45}
+            .wm-zalo-preview strong{color:#0876dd}.wm-zalo-preview small{font-weight:400;color:#64748b;margin-left:8px}.wm-zalo-preview p{font-size:14px;margin:8px 0}.wm-zalo-preview span{font-size:12px}
+            .wm-advisor-section{padding-block:56px}.wm-advisor-section h2{font-size:clamp(24px,3vw,36px);margin:12px 0}.wm-advisor-section>p{color:#64748b;max-width:760px;line-height:1.8}
+            .wm-value-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:28px}.wm-value-card{border:1px solid #e2e8f0;border-radius:18px;padding:28px;background:#fff}.wm-value-card p{font-size:14px;line-height:1.7;color:#64748b}.wm-value-card strong{display:block;font-size:22px;color:#0b57c7;margin:14px 0}.wm-value-card span{color:#64748b}.wm-advisor-note{font-size:12px;margin-top:20px}
+            @media(max-width:700px){.wm-value-grid{grid-template-columns:1fr}.wm-site .wm-zalo-preview{position:relative;right:auto;bottom:auto;max-width:none;margin:12px 0}.wm-advisor-section{padding-block:32px}}
+          `}</style>
+          <section className="wm-section wm-advisor-section" aria-labelledby="wm-value-title">
+            <span className="wm-eyebrow">TỪ VẤN ĐỀ ĐẾN QUY TRÌNH CỤ THỂ</span>
+            <h2 id="wm-value-title">Bài toán thực tế đã giải quyết</h2>
+            <div className="wm-value-grid">
+              {[{before:"Tìm hàng 5 phút",after:"Còn 30 giây",description:"Tìm mã hàng → định vị đúng kệ, tầng và ô trong 3D."},{before:"Đếm kho thủ công",after:"Đối soát QR 2 chiều, lệch 0%",description:"Quét vị trí và mã lô; ghi nhận chênh lệch để quản lý xử lý."},{before:"Thất lạc hàng đi đường",after:"Theo dõi In-transit minh bạch",description:"Theo dõi phiếu từ lúc tạo đến kiểm nhận, kèm lịch sử và người phụ trách."}].map(value=><article className="wm-value-card" key={value.before}><span>{value.before}</span><strong>→ {value.after}</strong><p>{value.description}</p></article>)}
+            </div>
+            <p className="wm-advisor-note">30 giây và lệch 0% là mục tiêu minh họa cho quy trình, chưa phải kết quả đo lường hoặc cam kết. Hiệu quả phụ thuộc dữ liệu vị trí, thiết bị và cách vận hành.</p>
+          </section>
+        </>}
         {page !== "home" && (
           <section
             className="wm-metrics wm-section"

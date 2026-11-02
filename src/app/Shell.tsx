@@ -22,7 +22,7 @@ import {
   X,
 } from "lucide-react"
 import { useEffect, useRef, useState, type ReactNode } from "react"
-import { roleNames, type Screen } from "./model"
+import { daysLeft, roleNames, type Screen } from "./model"
 import { useApp } from "./store"
 import { useIndustry } from "../shared/context/IndustryContext"
 import { Badge, Brand, Button, SearchInput } from "./ui"
@@ -135,6 +135,7 @@ export function Shell({ children }: { children: ReactNode }) {
     setSearch,
     storageError,
     data,
+    visibleProducts,
     setScanTask,
   } = useApp()
   const [open, setOpen] = useState(false)
@@ -152,6 +153,10 @@ export function Shell({ children }: { children: ReactNode }) {
   )
   const rail = collapsed && !isMobile
   const { config } = useIndustry()
+  const fefoAlertCount = visibleProducts.filter(
+    (product) =>
+      product.qty > 0 && daysLeft(product.expiry) <= data.settings.expiryDays,
+  ).length
   const operations = [...primaryNavigation, ...moreNavigation.filter(n => ["batches", "onboarding", "mobile"].includes(n.screen))].filter(n => canAccessScreen(accessMode, role, n.screen))
   const management = moreNavigation.filter(n => ["roi", "account", "settings"].includes(n.screen) && canAccessScreen(accessMode, role, n.screen))
   const accountNavigate = (next: Screen) => { accountPopover.current?.hidePopover(); setOpen(false); go(next) }
@@ -183,17 +188,27 @@ export function Shell({ children }: { children: ReactNode }) {
     return (
       <button
         key={n.screen}
-        className={`nav-item ${isActive(n.screen) ? "active" : ""}`}
+        className={`nav-item ${n.screen === "onboarding" ? `nav-item--fefo ${fefoAlertCount ? "has-alerts" : ""}` : ""} ${isActive(n.screen) ? "active" : ""}`}
         onClick={() => {
           if (n.screen === "scanner") setScanTask({ mode: "lookup" })
           go(n.screen)
           setOpen(false)
         }}
         aria-current={screen === n.screen ? "page" : undefined}
+        aria-label={
+          n.screen === "onboarding" && fefoAlertCount
+            ? `${n.label}, ${fefoAlertCount} lô cần chú ý`
+            : undefined
+        }
         title={n.label}
       >
         <Icon size={18} />
         <span>{n.label === "Nhân viên & RBAC" ? "Nhân viên" : n.label === "Báo cáo ROI" ? "Báo cáo" : n.label}</span>
+        {n.screen === "onboarding" && fefoAlertCount > 0 && (
+          <span className="nav-item__fefo-count" aria-hidden="true">
+            {fefoAlertCount}
+          </span>
+        )}
       </button>
     )
   }

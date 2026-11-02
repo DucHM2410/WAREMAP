@@ -11,6 +11,7 @@ import {
   seed,
   withIndustrySamples,
   ensureTransferSamples,
+  ensureIndustrySamples,
   industryProducts,
   type DemoData,
   type AccessRequest,
@@ -22,12 +23,15 @@ import {
 import { useIndustry } from "../shared/context/IndustryContext"
 import { canAccessScreen, type AccessMode } from "./access"
 import { guestData } from "./guestData"
+import { withShelfSamples } from "./shelfSamples"
+import { activityId } from "./activity"
 import { beginIndustryDemoSession, confirmBusinessIndustry } from "./industryPolicy"
 import { INDUSTRIES, type Industry } from "../shared/config/industries"
 import { warehouseScope } from "./warehouseScope"
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "../shared/config/demoRoles"
 const key = "waremap-demo-v3"
 export interface ScanTask {
+  locationCode?: string
   productKey?: string
   transferId?: string
   mode: "lookup" | "dispatch" | "receive"
@@ -74,14 +78,11 @@ export function Provider({ children }: { children: ReactNode }) {
       const saved = raw ? JSON.parse(raw) : null
       if (saved?.version === 3 && saved.allowance === 5) saved.allowance = saved.locations === 1 ? 4 : 18
       if (saved?.version === 3) {
-        const base =
-          saved.industryConfirmed || saved.industry === config.id
-            ? (saved as DemoData)
-            : withIndustrySamples(saved, config)
-        return ensureTransferSamples(
-          base,
-          INDUSTRIES[base.industry] ?? config,
-        )
+        const restored = saved.industryConfirmed || saved.industry === config.id
+          ? ensureIndustrySamples(saved as DemoData, INDUSTRIES[(saved as DemoData).industry] ?? config)
+          : withIndustrySamples(saved, config)
+        const restoredConfig = INDUSTRIES[restored.industry] ?? config
+        return ensureTransferSamples(withShelfSamples(restored, restoredConfig), restoredConfig)
       }
       return seed(config)
     } catch {
@@ -189,15 +190,11 @@ export function Provider({ children }: { children: ReactNode }) {
   })
   const log = (title: string, detail: string) => {
     if (accessMode !== "authenticated") return
+    const activity = { id: activityId(), title, detail, time: new Date().toISOString() }
     setData((d) => ({
       ...d,
       activities: [
-        {
-          id: crypto.randomUUID(),
-          title,
-          detail,
-          time: new Date().toISOString(),
-        },
+        activity,
         ...d.activities,
       ].slice(0, 40),
     }))

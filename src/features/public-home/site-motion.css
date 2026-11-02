@@ -1,0 +1,40 @@
+/* Photography-led public website. Effects use transforms and opacity only. */
+.wm-photo-site { --wm-photo-shadow:0 18px 45px #192c4510; }
+.wm-photo-site .wm-hero::before { background:radial-gradient(ellipse at 90% 20%,#e9f1fc,transparent 60%),linear-gradient(180deg,#f8faff,#fff); }
+.wm-photo-site .wm-hero { gap:64px; padding-top:76px; padding-bottom:88px; }
+.wm-photo-site .wm-hero-copy>p { color:#57677b; line-height:1.95; }
+.wm-photo-site .wm-hero-art { isolation:isolate; }
+.wm-photo-site .wm-hero-art:has(.wm-content-photo) { border-radius:24px 24px 64px 24px; box-shadow:var(--wm-photo-shadow); border:1px solid #e5ebf2; }
+.wm-photo-site .wm-content-photo { transition:transform 1.2s cubic-bezier(.2,.65,.3,1); }
+.wm-photo-site :is(.wm-intro-visual,.wm-problems-visual,.wm-industry-solution-visual,.wm-industry-features-visual,.wm-solution-visual,.wm-value-image):has(.wm-content-photo) { background:#f3f5f7; border:1px solid #e5ebf2; box-shadow:0 8px 28px #192c4508; }
+.wm-photo-site .wm-motion-toggle { position:absolute; bottom:16px; right:18px; z-index:3; display:flex; align-items:center; gap:6px; padding:7px 10px; min-height:32px; background:#fffffff2; border:1px solid #ffffff80; border-radius:30px; color:#334155; font-size:10px; font-weight:500; cursor:pointer; box-shadow:0 2px 10px #10243e12; }
+.wm-motion-toggle:focus-visible { outline:3px solid #1685f9; outline-offset:3px; }
+@media(prefers-reduced-motion:no-preference) {
+  .wm-photo-site[data-motion=on] .wm-entered>.wm-hero-copy,
+  .wm-photo-site[data-motion=on] .wm-entered>.wm-section-head,
+  .wm-photo-site[data-motion=on] .wm-entered>.wm-intro-copy,
+  .wm-photo-site[data-motion=on] .wm-entered>.wm-problems-main,
+  .wm-photo-site[data-motion=on] .wm-entered>.wm-card-grid,
+  .wm-photo-site[data-motion=on] .wm-entered>.wm-value-box,
+  .wm-photo-site[data-motion=on] .wm-entered>.wm-industry-solution-box,
+  .wm-photo-site[data-motion=on] .wm-entered>.wm-industry-features-body,
+  .wm-photo-site[data-motion=on] .wm-entered>.wm-solution-body,
+  .wm-photo-site[data-motion=on] .wm-entered>.wm-cta-panel { animation:wm-soft-enter .75s cubic-bezier(.2,.65,.3,1) both; }
+  .wm-photo-site[data-motion=on] .wm-entered>.wm-hero-art,
+  .wm-photo-site[data-motion=on] .wm-entered>.wm-intro-visual { animation:wm-soft-enter 1s cubic-bezier(.2,.65,.3,1) both; }
+  .wm-photo-site[data-motion=on] .wm-hero-art>.wm-content-photo { animation:wm-photo-breathe 16s ease-in-out infinite; }
+  .wm-photo-site[data-motion=on] .wm-card-grid>article { transition:translate .35s,box-shadow .35s,border-color .35s; }
+  @media(hover:hover) {
+    .wm-photo-site[data-motion=on] .wm-card-grid>article:hover { translate:0 -3px; box-shadow:0 12px 30px #192c4510; }
+    .wm-photo-site[data-motion=on] :is(.wm-intro-visual,.wm-industry-solution-visual):hover .wm-content-photo { transform:scale(1.025); }
+  }
+}
+@keyframes wm-soft-enter { from { opacity:.25; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+@keyframes wm-photo-breathe { 0%,100% { transform:scale(1.005); } 50% { transform:scale(1.035); } }
+.wm-photo-site[data-motion=paused] .wm-content-photo { transform:none; transition:none; }
+.wm-photo-site .wm-hero-art:has(.wm-content-capture) { border-radius:18px; background:#edf3f6; padding:18px 0; }
+.wm-photo-site .wm-hero-art>.wm-content-capture { aspect-ratio:auto; height:auto; object-fit:contain; animation:none!important; border-radius:0; }
+.wm-photo-site .wm-hero-art:has(.wm-content-capture) .wm-motion-toggle { position:relative; bottom:auto; right:auto; margin:14px 14px 0 auto; width:fit-content; }
+@media(max-width:850px) { .wm-photo-site .wm-hero { gap:32px; padding-top:48px; padding-bottom:60px; } }
+@media(max-width:600px) { .wm-photo-site .wm-hero { padding-top:36px; padding-bottom:48px; }.wm-photo-site .wm-hero-art:has(.wm-content-photo) { border-radius:18px 18px 38px 18px; }.wm-photo-site .wm-motion-toggle { bottom:12px; right:12px; }.wm-photo-site[data-motion=on] .wm-hero-art>.wm-content-photo { animation:none; } }
+@media(prefers-reduced-motion:reduce) { .wm-photo-site .wm-motion-toggle { display:none; }.wm-photo-site * { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }

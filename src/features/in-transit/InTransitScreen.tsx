@@ -54,11 +54,24 @@ const TRANSFER_CREATE_STEPS = [
 const FLOW_STEPS = [
   { label: "Tạo phiếu" },
   { label: "Nhặt hàng" },
+  { label: "Xác minh QR", sub: "Đúng hàng · đúng lô" },
   { label: "Đóng gói & Bàn giao" },
   { label: "In-Transit", sub: "Đang vận chuyển" },
   { label: "Kiểm nhận", sub: "Tại kho nhận" },
-  { label: "Put-away", sub: "Nhập hàng lên kệ" },
+  { label: "Đối soát & Hoàn tất", sub: "Nhập kệ qua luồng QR riêng" },
 ] as const
+
+type Incident = { kind: string; assignee: string; note: string; resolved: boolean }
+const INCIDENT_PREFIX = "WAREMAP_INCIDENT:"
+function latestIncident(transfer: Transfer): Incident | undefined {
+  for (const entry of [...transfer.history].reverse()) {
+    if (!entry.startsWith(INCIDENT_PREFIX)) continue
+    try {
+      const value = JSON.parse(entry.slice(INCIDENT_PREFIX.length))
+      if (typeof value.kind === "string" && typeof value.assignee === "string" && typeof value.note === "string" && typeof value.resolved === "boolean") return value
+    } catch { /* Keep older human-readable history usable. */ }
+  }
+}
 
 type StatusFilter = "all" | Transfer["status"] | "attention"
 type DraftLine = { key: number; itemKey: string; qty: string }
@@ -106,18 +119,18 @@ function stageOf(transfer: Transfer) {
     case "Chuẩn bị":
       return 1
     case "Đang chuyển":
-      return 3
-    case "Kiểm nhận":
       return 4
-    case "Hoàn tất":
+    case "Kiểm nhận":
       return 5
+    case "Hoàn tất":
+      return 6
     default:
       return 0
   }
 }
 
 function progressOf(transfer: Transfer) {
-  const count = transfer.status === "Hoàn tất" ? 6 : stageOf(transfer) + 1
+  const count = transfer.status === "Hoàn tất" ? 7 : stageOf(transfer) + 1
   const tone = isAttention(transfer)
     ? "attention"
     : transfer.status === "Chuẩn bị"
@@ -221,6 +234,8 @@ export default function Transfers() {
   const [creating, setCreating] = useState(false)
   const [reconciling, setReconciling] = useState(false)
   const [error, setError] = useState("")
+  const [incidentTarget, setIncidentTarget] = useState("")
+  const [incidentError, setIncidentError] = useState("")
   const [draftSource, setDraftSource] = useState(branches[0])
   const [draftDestination, setDraftDestination] = useState(branches[1])
   const [draftLines, setDraftLines] = useState<DraftLine[]>([])
@@ -319,6 +334,24 @@ export default function Transfers() {
   })()
 
   const canAct = (target: string) => role === "owner" || target === branch
+  const canReport = (transfer: Transfer) => ["owner","manager","warehouse"].includes(role) && (canAct(transfer.from) || canAct(transfer.to))
+  const incidentTransfer = data.transfers.find(transfer=>transfer.id===incidentTarget)
+  const selectedIncident = selected ? latestIncident(selected) : undefined
+  const incidentAssignees = data.staff.filter(member=>member.active && ["manager","warehouse"].includes(member.role) && (!incidentTransfer || member.branch===incidentTransfer.from || member.branch===incidentTransfer.to))
+  const saveIncident = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!incidentTransfer || !canReport(incidentTransfer)) return
+    const form = new FormData(event.currentTarget)
+    const kind = String(form.get("kind") || "")
+    const assignee = String(form.get("assignee") || "")
+    const note = String(form.get("note") || "").trim()
+    if (!["Thiếu hàng","Hàng hỏng","Sai lô","Xe hỏng"].includes(kind) || !assignee || !note) {setIncidentError("Chọn loại sự cố, người xử lý và mô tả cụ thể.");return}
+    const incident: Incident = {kind,assignee,note,resolved:false}
+    update(current=>({...current,transfers:current.transfers.map(transfer=>transfer.id===incidentTransfer.id?{...transfer,history:[...transfer.history,`${INCIDENT_PREFIX}${JSON.stringify(incident)}`,`Báo sự cố ${kind} · Người xử lý: ${assignee} · ${note}`]}:transfer)}))
+    log("Đã báo sự cố chuyển kho",`${transferDisplayId(incidentTransfer)} · ${kind} · ${assignee}`)
+    setIncidentTarget("");setIncidentError("")
+    notify("Đã ghi nhận sự cố. Không thay đổi tồn kho hoặc trạng thái giao nhận.")
+  }
 
   const kpiCards: {
     key: string
@@ -784,8 +817,9 @@ export default function Transfers() {
         ))}
       </section>
 
-      <section className="trf-flow" aria-label="Tiến trình chuyển kho">
-        <div className="trf-flow__steps">
+      <section className="trf-flow" aria-label="Tiến trình chuyển kho 7 bước" style={{border:"1px solid var(--industry-primary)",boxShadow:"0 8px 24px #192c4508"}}>
+        <h2 style={{fontSize:16,margin:"0 0 20px"}}>7 bước kiểm soát · {selectedDisplayId || "Chọn phiếu để theo dõi"}</h2>
+        <div className="trf-flow__steps" style={{gridTemplateColumns:"repeat(7,minmax(130px,1fr))",overflowX:"auto"}}>
           {FLOW_STEPS.map((step, index) => {
             const done = Boolean(selected) &&
               (selected!.status === "Hoàn tất" || index < selectedStage)
@@ -936,6 +970,7 @@ export default function Transfers() {
                         <th>Ngày tạo</th>
                         <th>Trạng thái</th>
                         <th>Tiến trình</th>
+                        <th>Người xử lý</th>
                         <th>Thao tác</th>
                       </tr>
                     </thead>
@@ -1003,7 +1038,7 @@ export default function Transfers() {
                                 className={`trf-progress trf-progress--${progress.tone}`}
                               >
                                 <span className="trf-progress__label">
-                                  {progress.count} / 6
+                                  {progress.count} / 7
                                 </span>
                                 <div
                                   className="trf-progress__track"
@@ -1012,12 +1047,13 @@ export default function Transfers() {
                                   <span
                                     className="trf-progress__bar"
                                     style={{
-                                      width: `${(progress.count / 6) * 100}%`,
+                                      width: `${(progress.count / 7) * 100}%`,
                                     }}
                                   />
                                 </div>
                               </div>
                             </td>
+                            <td><strong>{latestIncident(transfer)?.assignee || transfer.details?.responsible || "Chưa phân công"}</strong>{latestIncident(transfer) && <small style={{display:"block",color:latestIncident(transfer)?.resolved?"#15803d":"#b91c1c"}}>{latestIncident(transfer)?.resolved ? "Đã xử lý sự cố" : latestIncident(transfer)?.kind}</small>}</td>
                             <td>
                               <div className="trf-actions">
                                 <button
@@ -1315,16 +1351,29 @@ export default function Transfers() {
                 <details className="trf-history">
                   <summary>Lịch sử phiếu</summary>
                   <ul>
-                    {selected.history.map((entry, index) => (
+                    {selected.history.filter(entry=>!entry.startsWith(INCIDENT_PREFIX)).map((entry, index) => (
                       <li key={index}>{entry}</li>
                     ))}
                   </ul>
                 </details>
               </div>
               <div className="trf-detail__foot">
+                {selectedIncident && <div role="status" style={{flexBasis:"100%",padding:14,borderRadius:12,background:selectedIncident.resolved?"#f0fdf4":"#fef2f2",color:selectedIncident.resolved?"#166534":"#991b1b"}}>
+                  <strong>{selectedIncident.resolved ? "Sự cố đã xử lý" : `Đang xử lý: ${selectedIncident.kind}`}</strong><p>Người xử lý: {selectedIncident.assignee} · {selectedIncident.note}</p>
+                  {!selectedIncident.resolved && <p>Tạm dừng duyệt tại màn hình này. Xử lý sự cố trước khi tiếp tục xác minh giao nhận. Đây là theo dõi demo trên trình duyệt, chưa có khóa nghiệp vụ phía máy chủ.</p>}
+                  {!selectedIncident.resolved && ["owner","manager"].includes(role) && canReport(selected) && <form onSubmit={event=>{
+                    event.preventDefault()
+                    const resolution=String(new FormData(event.currentTarget).get("resolution")||"").trim()
+                    if(!resolution)return
+                    update(current=>({...current,transfers:current.transfers.map(transfer=>transfer.id===selected.id?{...transfer,history:[...transfer.history,`${INCIDENT_PREFIX}${JSON.stringify({...selectedIncident,resolved:true})}`,`Đã xử lý sự cố · ${selectedIncident.assignee} · ${resolution}`]}:transfer)}))
+                    notify("Đã ghi nhận xử lý; tiếp tục kiểm nhận QR để xác nhận số lượng thực tế.")
+                  }}><label>Kết quả xử lý<input name="resolution" required placeholder="Mô tả cách xử lý và kết quả kiểm tra"/></label><Button type="submit" variant="secondary">Xác nhận đã xử lý sự cố</Button></form>}
+                </div>}
+                {canReport(selected) && <Button variant="danger" onClick={()=>{setIncidentTarget(selected.id);setIncidentError("")}}>Báo Lệch / Sự Cố</Button>}
                 {selected.status === "Chuẩn bị" &&
                   canAct(selected.from) && (
                     <Button
+                      disabled={!!selectedIncident && !selectedIncident.resolved}
                       onClick={() => {
                         setScanTask({
                           transferId: selected.id,
@@ -1334,12 +1383,13 @@ export default function Transfers() {
                       }}
                     >
                       <ScanLine size={14} />
-                      Xác minh &amp; gửi hàng
+                      Duyệt · Xác minh &amp; gửi hàng
                     </Button>
                   )}
                 {selected.status === "Đang chuyển" &&
                   canAct(selected.to) && (
                     <Button
+                      disabled={!!selectedIncident && !selectedIncident.resolved}
                       onClick={() => {
                         setScanTask({
                           transferId: selected.id,
@@ -1356,12 +1406,12 @@ export default function Transfers() {
                   ["owner", "manager"].includes(role) &&
                   canAct(selected.to) &&
                   (selectedAttention ? (
-                    <Button onClick={() => setReconciling(true)}>
+                    <Button disabled={!!selectedIncident && !selectedIncident.resolved} onClick={() => setReconciling(true)}>
                       <ClipboardCheck size={14} />
                       Đối soát chênh lệch
                     </Button>
                   ) : (
-                    <Button onClick={completeSelected}>
+                    <Button disabled={!!selectedIncident && !selectedIncident.resolved} onClick={completeSelected}>
                       <PackageCheck size={14} />
                       Hoàn tất kiểm nhận
                     </Button>
@@ -1553,6 +1603,16 @@ export default function Transfers() {
         </Modal>
       )}
 
+      {incidentTransfer && <Modal title="Có vấn đề gì xảy ra?" close={()=>setIncidentTarget("")}>
+        <form className="stack" onSubmit={saveIncident}>
+          <p>Phiếu {transferDisplayId(incidentTransfer)} · Ghi nhận sự cố không tự sửa tồn kho.</p>
+          <label>Loại sự cố<select name="kind" required>{["Thiếu hàng","Hàng hỏng","Sai lô","Xe hỏng"].map(kind=><option key={kind}>{kind}</option>)}</select></label>
+          <label>Người xử lý<select name="assignee" required><option value="">Chọn người chịu trách nhiệm</option>{role==="owner"&&<option>Chủ doanh nghiệp</option>}{incidentAssignees.map(member=><option key={member.id} value={member.name}>{member.name} · {member.branch}</option>)}</select></label>
+          <label>Mô tả<input name="note" required placeholder="Ví dụ: thiếu 2 hộp, lô nhận khác phiếu…"/></label>
+          {incidentError && <p role="alert">{incidentError}</p>}
+          <Button type="submit" variant="danger">Gửi báo cáo sự cố</Button>
+        </form>
+      </Modal>}
       {creating && (
         <Modal
           title="Tạo phiếu chuyển kho"
@@ -1738,15 +1798,16 @@ export default function Transfers() {
                                 aria-label={`Sản phẩm dòng ${index + 1}`}
                                 value={itemKey}
                                 required
-                                onChange={(event) =>
+                                onChange={(event) => {
+                                  const value = event.currentTarget.value
                                   setDraftLines((current) =>
                                     current.map((line) =>
                                       line.key === key
-                                        ? { ...line, itemKey: event.target.value }
+                                        ? { ...line, itemKey: value }
                                         : line,
                                     ),
                                   )
-                                }
+                                }}
                               >
                                 {draftSourceProducts.map((item) => (
                                   <option
@@ -1793,15 +1854,16 @@ export default function Transfers() {
                                 step={1}
                                 value={qty}
                                 required
-                                onChange={(event) =>
+                                onChange={(event) => {
+                                  const value = event.currentTarget.value
                                   setDraftLines((current) =>
                                     current.map((line) =>
                                       line.key === key
-                                        ? { ...line, qty: event.target.value }
+                                        ? { ...line, qty: value }
                                         : line,
                                     ),
                                   )
-                                }
+                                }}
                               />
                             </td>
                             <td>
