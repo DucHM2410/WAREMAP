@@ -467,6 +467,39 @@ export default function Warehouse() {
           ) : undefined
         }
       />
+      {editing && <details className="warehouse-builder-guide" style={{background:"white",border:"1px solid var(--line)",borderRadius:14,padding:"12px 18px",marginBottom:20}}>
+        <summary style={{color:"var(--industry-primary)",fontSize:14}}>Hướng dẫn thiết kế kho 3D · Bắt đầu trong 5 bước</summary>
+        <ol style={{display:"grid",gap:16,paddingLeft:22,fontSize:13,lineHeight:1.8,margin:"12px 0 18px"}}>
+          <li><strong>Chọn đúng cơ sở.</strong> Mỗi cơ sở có sơ đồ riêng. Kiểm tra tên kho trước khi chỉnh sửa; Chủ doanh và Quản lý kho mới có quyền thiết kế trong phạm vi được cấp.</li>
+          <li><strong>Thêm kệ phù hợp.</strong> Bấm thẻ mẫu bên trái hoặc kéo mẫu vào nền kho. Kệ chia ô / khay phù hợp hàng nhỏ; kệ trung tải phù hợp thùng hàng. Trên điện thoại, bấm mẫu để thêm.</li>
+          <li><strong>Bố trí như kho thực tế.</strong> Chọn chế độ Di chuyển rồi kéo kệ. Để chừa lối đi, kiểm tra thêm ở góc Từ trên xuống. Thêm công cụ → Xoay kệ để đổi hướng. Hoàn tác nếu đặt nhầm.</li>
+          <li><strong>Đặt tên và chỉnh kệ.</strong> Bấm kệ, dùng bảng chi tiết bên phải để chọn kích thước, số tầng và số ô. Nhóm hàng giúp phân biệt khu sữa, bỉm hoặc mỹ phẩm; nhãn nhóm không tự chuyển hàng vào kệ.</li>
+          <li><strong>Kiểm tra rồi lưu.</strong> Bấm Xem trước 3D, sau đó Lưu sơ đồ. Xuất QR sau khi lưu; đưa hàng lên kệ bằng Quét &amp; nhập hàng → quét vị trí → mã thùng → xác nhận.</li>
+        </ol>
+        <div style={{background:"var(--industry-soft)",padding:14,borderRadius:10,fontSize:12,lineHeight:1.9}}>
+          <strong>Điều khiển góc nhìn</strong><p>Kéo chuột trái để xoay · Cuộn để zoom · Chuột phải hoặc Shift + kéo trái để dịch lên/xuống/trái/phải. Bấm Dịch góc nhìn để kéo bằng chuột trái. Điện thoại: một ngón xoay, hai ngón dịch / phóng to.</p>
+          <p>Toàn màn hình giúp nhìn rộng hơn; Esc hoặc Thu nhỏ để quay lại bảng thông số và lưu. Đặt lại góc nhìn khi bị lạc hướng.</p>
+        </div>
+        <p className="tiny muted" style={{marginTop:12}}>Đơn vị kích thước kệ là mét; bao bì là centimet. Kệ mới ban đầu trống. Không thể xóa tầng/ô đang có hàng; chuyển hàng trước khi thu nhỏ hoặc xóa kệ. Dùng mẫu kho có sẵn sẽ thay bố cục đang chỉnh. Thay đổi chỉ được lưu khi bấm Lưu sơ đồ.</p>
+      </details>}
+      {!editing && <details className="warehouse-viewer-guide" style={{background:"white",border:"1px solid var(--line)",borderRadius:14,padding:"12px 18px",marginBottom:20}}>
+        <summary style={{color:"var(--industry-primary)",fontSize:14}}>Hướng dẫn sử dụng Kho 3D · Tìm hàng, xem lô và vị trí</summary>
+        <ol style={{display:"grid",gap:12,paddingLeft:22,fontSize:13,lineHeight:1.8,margin:"12px 0 16px"}}>
+          <li><strong>Chọn kho cần xem.</strong> {isGuest?"Chọn mẫu Mẹ & Bé hoặc Mỹ phẩm để khám phá; đây là dữ liệu minh họa chỉ xem.":"Chọn cơ sở được phân quyền ở phía trên. Mỗi kho có sơ đồ và tồn kho riêng."}</li>
+          <li><strong>Tìm và định vị đúng lô.</strong> Nhập tên sản phẩm, SKU, mã lô hoặc vị trí vào ô tìm kiếm. Chọn kết quả để camera đến ô chứa lô; đọc nhãn Kệ → Tầng → Ô và đối chiếu mã lô bên phải.</li>
+          <li><strong>Chọn hàng trong 3D.</strong> Bấm một bao bì để xem lô hàng của nó. Cùng mã sản phẩm có thể có nhiều lô, hạn dùng và vị trí khác nhau. Các hình bao bì chỉ minh họa, không biểu diễn toàn bộ số lượng tồn hoặc từng sản phẩm có serial.</li>
+          <li><strong>Đọc bảng thông tin.</strong> Xem hạn dùng, mã lô và tổng tồn. Mở Hàng cùng ô &amp; chỗ trống để phân biệt nhiều lô trong một ô. Đến ô chứa lô này / Xem toàn ô giúp kiểm tra bố trí; Xem toàn kho đưa bạn về tổng thể.</li>
+        </ol>
+        <div style={{background:"var(--industry-soft)",padding:14,borderRadius:10,fontSize:12,lineHeight:1.9}}>
+          <strong>Điều khiển và đọc bản đồ</strong>
+          <p>Kéo chuột trái để xoay · Cuộn để zoom · Kéo chuột phải hoặc Shift + kéo trái để dịch góc nhìn. Dịch góc nhìn cho phép kéo bằng chuột trái. Trên điện thoại: một ngón xoay, hai ngón dịch / phóng to.</p>
+          <p>Dùng Toàn màn hình khi cần nhìn rộng; Esc hoặc Thu nhỏ để quay lại. Từ trên xuống để xem lối đi; 3D để xem các tầng. Nút mũi tên vòng tròn đặt lại góc nhìn.</p>
+          <p>Màu vàng trên bao bì là phần đang chọn. Xem theo Nhóm Hàng dùng màu để phân nhóm kệ; chọn lớp Hạn dùng để xem cảnh báo, và kiểm tra ngày cụ thể tại bảng chi tiết.</p>
+        </div>
+        {!isGuest && WAREHOUSE_PERMISSIONS[role].putaway && <p style={{marginTop:12,fontSize:12,lineHeight:1.8}}><strong>Có hàng mới:</strong> Quét &amp; nhập hàng lên kệ → quét QR vị trí → quét / nhập mã thùng → kiểm tra lô, số lượng và chỗ trống → xác nhận. Bấm vào hình 3D không tự nhập hàng hoặc thay đổi tồn kho.</p>}
+        {!isGuest && ["owner","manager"].includes(role) && <p className="tiny muted" style={{marginTop:10}}>Muốn thêm hoặc thay đổi kệ? Chọn Chỉnh sửa sơ đồ và xem hướng dẫn thiết kế ở màn hình đó.</p>}
+        <p className="tiny muted" style={{marginTop:10}}>{isGuest?"Kho mẫu không cho sửa sơ đồ, nhập xuất hoặc lưu dữ liệu doanh nghiệp.":"Chỉ các thao tác được cấp quyền mới hiển thị. Có thể kéo mép trái bảng chi tiết để đổi chiều rộng, kéo thanh dưới để đổi chiều cao."}</p>
+      </details>}
       {isGuest && <section className="panel" style={{padding:18,marginBottom:20,borderTop:`4px solid ${config.primaryColor}`}}>
         <style>{`.guest-workspace{--industry-primary:${config.primaryColor};--teal:${config.primaryColor};--industry-soft:${config.id==="cosmetics"?"#ECFEFF":"#FDF2F8"}}body .guest-workspace .button.primary{background:${config.primaryColor}}body .guest-workspace .button.ghost,body .guest-workspace .button.secondary{color:${config.primaryColor}}`}</style>
         <label>Khám phá kho theo ngành hàng<select value={demoIndustry} onChange={event=>{setDemoIndustry(event.currentTarget.value as Industry);setChosen("");setSelected("");setSelectedBatch("");setLocateRequest(null);setFocusedRack(null);handledLocation.current="";setSearch("")}}><option value="mom-baby">Mẹ &amp; Bé · sữa, bỉm, bình sữa và phụ kiện</option><option value="cosmetics">Mỹ phẩm · son, serum, kem dưỡng và hộp nhỏ</option></select></label>
