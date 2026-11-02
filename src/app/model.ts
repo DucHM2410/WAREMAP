@@ -346,6 +346,7 @@ export interface Activity {
   time: string
 }
 export interface InboundCarton {
+  qrDemo?: { industry: Industry; locationCode: string }
   id: string
   code: string
   product: Product

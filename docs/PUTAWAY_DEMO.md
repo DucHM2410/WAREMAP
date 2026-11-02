@@ -1,5 +1,7 @@
 # Chỉnh kệ đơn giản và nhập thùng lên kệ
 
+Kịch bản QR mới (bộ nhãn mẫu, đọc QR từ ảnh, in nhãn, tồn trước/sau và cách thử lỗi): xem [Hướng dẫn demo QR](QR_DEMO_GUIDE.md).
+
 ## Chỉnh kệ
 
 Màn chi tiết kệ ưu tiên tên dễ nhớ, lựa chọn kích thước **Gọn / Phổ biến / Rộng**, nút tăng giảm tầng / ô và sơ đồ ô minh họa. Đo cm, tọa độ và tùy chỉnh chi tiết ở mục nâng cao. Không được bỏ tầng / ô đang có hàng. Sơ đồ không xác nhận sức chịu tải của kệ.

@@ -1,8 +1,6 @@
 import {
-  LockKeyhole,
   AlertCircle,
   ArrowLeft,
-  Baby,
   BarChart3,
   Bell,
   Building2,
@@ -18,20 +16,20 @@ import {
   Package,
   ScanLine,
   Settings,
-  Sparkles,
   Truck,
+  UserRound,
   Users,
   X,
 } from "lucide-react"
-import { useEffect, useState, type ReactNode } from "react"
-import { branches, daysLeft, roleNames, type Screen } from "./model"
+import { useEffect, useRef, useState, type ReactNode } from "react"
+import { daysLeft, roleNames, type Screen } from "./model"
 import { useApp } from "./store"
 import { useIndustry } from "../shared/context/IndustryContext"
 import { Badge, Brand, Button, SearchInput } from "./ui"
+import { canAccessScreen } from "./access"
+import "./sidebar.css"
 import waremapLogo from "../assets/brand/waremap-logo.jpg"
 
-import { roleDescription } from "../shared/config/demoRoles"
-import "./sidebar.css"
 
 interface NavItem {
   screen: Screen
@@ -131,6 +129,7 @@ export function Shell({ children }: { children: ReactNode }) {
     setBranch,
     accessibleBranches,
     role,
+    accessMode,
     logout,
     search,
     setSearch,
@@ -140,27 +139,33 @@ export function Shell({ children }: { children: ReactNode }) {
     setScanTask,
   } = useApp()
   const [open, setOpen] = useState(false)
-  const [moreOpen, setMoreOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const accountPopover = useRef<HTMLDivElement>(null)
+  const [accountPosition, setAccountPosition] = useState({ left: 16, bottom: 80, maxHeight: 480, width: 240 })
+  useEffect(() => {
+    const close = () => accountPopover.current?.hidePopover()
+    window.addEventListener("resize", close)
+    return () => window.removeEventListener("resize", close)
+  }, [])
   const [collapsed, setCollapsed] = useState(readCollapsedPreference)
   const [isMobile, setIsMobile] = useState(
     () => window.matchMedia("(max-width: 700px)").matches,
   )
   const rail = collapsed && !isMobile
   const { config } = useIndustry()
-  const IndustryIcon = config.icon === "Baby" ? Baby : Sparkles
-  const visibleMore = moreNavigation.filter(
-    (n) => !n.roles || n.roles.includes(role),
-  )
   const fefoAlertCount = visibleProducts.filter(
     (product) =>
       product.qty > 0 && daysLeft(product.expiry) <= data.settings.expiryDays,
   ).length
+  const operations = [...primaryNavigation, ...moreNavigation.filter(n => ["batches", "onboarding", "mobile"].includes(n.screen))].filter(n => canAccessScreen(accessMode, role, n.screen))
+  const management = moreNavigation.filter(n => ["roi", "account", "settings"].includes(n.screen) && canAccessScreen(accessMode, role, n.screen))
+  const accountNavigate = (next: Screen) => { accountPopover.current?.hidePopover(); setOpen(false); go(next) }
   const current = allNavigation.find((n) => n.screen === screen) || {
     label: screen === "putaway" ? "Quét & nhập hàng lên kệ" : screen === "admin" ? "Quản trị WareMap" : screen === "website-editor" ? "Chỉnh sửa trang chủ" : "Thiết lập sơ đồ kho",
     group: screen === "admin" ? "Nội bộ" : "Xem thêm",
   }
   const isActive = (target: Screen) =>
-    screen === target
+    screen === target || (target === "warehouse" && ["builder", "putaway"].includes(screen))
   useEffect(() => {
     try {
       window.localStorage.setItem(
@@ -178,11 +183,6 @@ export function Shell({ children }: { children: ReactNode }) {
     media.addEventListener("change", handleChange)
     return () => media.removeEventListener("change", handleChange)
   }, [])
-  useEffect(() => {
-    setMoreOpen(moreNavigation.some((n) => isActive(n.screen)))
-    // Only react to screen changes; the menu stays toggleable afterwards.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen])
   const navButton = (n: NavItem) => {
     const Icon = n.icon
     return (
@@ -203,10 +203,7 @@ export function Shell({ children }: { children: ReactNode }) {
         title={n.label}
       >
         <Icon size={18} />
-        <span>
-          {n.label}
-          <small>{n.screen === "warehouse" ? "Kệ · sản phẩm · vị trí" : n.screen === "inventory" ? "Tra cứu và vận hành tồn kho" : n.screen === "dashboard" ? "Việc cần làm hôm nay" : ""}</small>
-        </span>
+        <span>{n.label === "Nhân viên & RBAC" ? "Nhân viên" : n.label === "Báo cáo ROI" ? "Báo cáo" : n.label}</span>
         {n.screen === "onboarding" && fefoAlertCount > 0 && (
           <span className="nav-item__fefo-count" aria-hidden="true">
             {fefoAlertCount}
@@ -245,25 +242,9 @@ export function Shell({ children }: { children: ReactNode }) {
           </span>
           <div>
             <strong>{data.company}</strong>
-            <span>Không gian doanh nghiệp mẫu</span>
+            <span>{role === "platform" ? "Quản trị WareMap" : config.shortLabel}</span>
           </div>
         </div>
-        {role !== "platform" && (
-          <div
-            className="industry-pill"
-            aria-label={`Phân hệ doanh nghiệp: ${config.label}. Đã khóa`}
-            title="Phân hệ khóa trong phiên demo. Đăng xuất rồi đăng nhập lại Chủ doanh để chọn lại"
-          >
-            <span className="industry-pill__icon">
-              <IndustryIcon size={16} />
-            </span>
-            <span className="industry-pill__copy">
-              <small>Ngành hàng</small>
-              <strong>{config.shortLabel}</strong>
-            </span>
-            <LockKeyhole size={14} />
-          </div>
-        )}
         <nav>
           {role === "platform" ? (
             <button
@@ -276,96 +257,34 @@ export function Shell({ children }: { children: ReactNode }) {
             </button>
           ) : (
             <>
-              <div className="nav-group">
-                <span className="nav-caption">Công việc chính</span>
-                {primaryNavigation
-                  .filter((n) => !n.roles || n.roles.includes(role))
-                  .map(navButton)}
-                {["owner", "manager"].includes(role) && (
-                  <button
-                    className={`builder-shortcut ${screen === "builder" ? "active" : ""}`}
-                    aria-current={screen === "builder" ? "page" : undefined}
-                    title="Thiết kế kho 3D"
-                    onClick={() => { go("builder"); setOpen(false) }}
-                  >
-                    <span className="builder-shortcut__glyph" aria-hidden="true">↳</span>
-                    <span className="builder-shortcut__label">Thiết kế kho 3D</span>
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className={`nav-item nav-cta ${isActive("scanner") ? "active" : ""}`}
-                  onClick={() => {
-                    setScanTask({ mode: "lookup" })
-                    go("scanner")
-                    setOpen(false)
-                  }}
-                  aria-current={screen === "scanner" ? "page" : undefined}
-                  title="Quét QR nhanh"
-                >
-                  <ScanLine size={18} />
-                  <span>Quét QR nhanh</span>
-                </button>
-              </div>
-              <button
-                type="button"
-                className={`nav-more ${moreOpen ? "is-open" : ""}`}
-                aria-expanded={moreOpen}
-                aria-controls="nav-more-items"
-                title="Xem thêm"
-                onClick={() => setMoreOpen((value) => !value)}
-              >
-                <ChevronDown size={17} />
-                <span className="nav-more__label">Xem thêm</span>
-                <span className="nav-more__count">{visibleMore.length}</span>
-              </button>
-              {moreOpen && (
-                <div className="nav-group nav-group--more" id="nav-more-items">
-                  <span className="nav-caption">Công cụ quản lý</span>
-                  {visibleMore.map(navButton)}
-                </div>
-              )}
+              <div className="nav-group"><span className="nav-caption">Vận hành</span>{operations.map(navButton)}</div>
+              {management.length > 0 && <div className="nav-group"><span className="nav-caption">Quản lý</span>{management.map(navButton)}</div>}
             </>
           )}
         </nav>
-        {["owner", "platform"].includes(role) && <button className={`nav-item website-editor-link ${screen === "website-editor" ? "active" : ""}`} aria-current={screen === "website-editor" ? "page" : undefined} title="Chỉnh sửa trang chủ" onClick={() => { go("website-editor"); setOpen(false) }}><PanelsTopLeft size={18}/><span>Chỉnh sửa trang chủ<small>Nội dung · hình ảnh · ngành hàng</small></span></button>}
         <div className="sidebar-footer">
-          {data.trialDemo && role !== "platform" && (
-            <section className="trial-plan-card" aria-label="Quyền lợi Free Trial">
-              <strong>Free Trial · 0đ / 7 ngày</strong>
-              <span>1 cơ sở · Tổng cộng 5 tài khoản</span>
-              <ul>
-                <li>1 Chủ doanh</li>
-                <li>1 Quản lý kho</li>
-                <li>3 Nhân viên</li>
-              </ul>
-            </section>
-          )}
-          <div className="demo-label">
-            <span />
-            Tài khoản demo đã đăng nhập
-          </div>
-          <Button
-            variant="secondary"
-            className="sidebar-logout"
-            onClick={logout}
-            title="Đăng xuất / Đổi tài khoản"
-            aria-label={rail ? "Đăng xuất / Đổi tài khoản" : undefined}
-          >
-            {rail ? <LogOut size={18} /> : "Đăng xuất / Đổi tài khoản"}
-          </Button>
-          <details className="role-permissions"><summary>Quyền của {roleNames[role]}</summary><p>{roleDescription(role)}</p><small>Phạm vi: {role === "owner" || role === "platform" ? "Tất cả cơ sở" : branches[0]}</small></details>
-          <button
-            className="back-home"
-            onClick={() => go("home")}
-            title="Về trang chủ"
-            aria-label={rail ? "Về trang chủ" : undefined}
-          >
-            <ArrowLeft size={15} />
-            {!rail && <span>Về trang chủ</span>}
+          <button className="sidebar-account" popoverTarget="sidebar-account-menu" aria-expanded={accountOpen} aria-controls="sidebar-account-menu" onClick={e => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            const width = Math.min(rail ? 280 : rect.width, window.innerWidth - 24)
+            setAccountPosition({ left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)), bottom: window.innerHeight - rect.top + 8, maxHeight: Math.max(120, rect.top - 24), width })
+          }} aria-label="Tài khoản và gói dịch vụ" title="Tài khoản và gói dịch vụ">
+            <span className="sidebar-account-avatar"><UserRound size={19}/></span>
+            {!rail && <span className="sidebar-account-copy"><strong>{roleNames[role]}</strong><small>{role === "platform" ? "Nội bộ WareMap" : data.trialDemo ? "Free Trial · 7 ngày" : data.locations === 1 ? "Gói Đơn lẻ" : "Gói Chuỗi"}</small></span>}
+            {!rail && <ChevronDown size={15}/>}
           </button>
         </div>
       </aside>
+      <div id="sidebar-account-menu" ref={accountPopover} popover="auto" className="sidebar-account-popover" role="navigation" aria-label="Menu tài khoản"
+        style={{ left: accountPosition.left, bottom: accountPosition.bottom, maxHeight: accountPosition.maxHeight, width: accountPosition.width }}
+        onToggle={e => setAccountOpen((e.nativeEvent as ToggleEvent).newState === "open")}>
+        <div className="account-menu-identity"><span className="sidebar-account-avatar"><UserRound size={18}/></span><div><strong>{roleNames[role]}</strong><small>{role === "platform" ? "Nội bộ WareMap" : data.trialDemo ? "Free Trial · 7 ngày" : data.locations === 1 ? "Gói Đơn lẻ" : "Gói Chuỗi"}</small></div></div>
+        <div className="account-menu-divider" />
+        {canAccessScreen(accessMode, role, "settings") && <button onClick={() => accountNavigate("settings")}><Settings size={17}/>Cài đặt & gói dịch vụ</button>}
+        {canAccessScreen(accessMode, role, "website-editor") && <button onClick={() => accountNavigate("website-editor")}><PanelsTopLeft size={17}/>Chỉnh sửa trang chủ</button>}
+        <button onClick={() => accountNavigate("home")}><ArrowLeft size={17}/>Về trang chủ</button>
+        <div className="account-menu-divider" />
+        <button onClick={() => { accountPopover.current?.hidePopover(); setOpen(false); logout() }}><LogOut size={17}/>Đăng xuất / Đổi tài khoản</button>
+      </div>
       {open && (
         <button
           className="mobile-backdrop"
@@ -394,7 +313,7 @@ export function Shell({ children }: { children: ReactNode }) {
             {rail ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />}
           </button>
           <div className="breadcrumb"><strong>{current.label}</strong></div>
-          {role !== "platform" && <span className="header-industry-pill" title="Phân hệ đã được Chủ doanh xác nhận"><IndustryIcon size={17} />{config.shortLabel}<LockKeyhole size={14} /></span>}
+
           {role !== "platform" && (
             <>
               <div className="global-search">
@@ -423,6 +342,7 @@ export function Shell({ children }: { children: ReactNode }) {
                   ))}
                 </select>
               </label>
+              <Button className="header-qr-action" onClick={() => { setScanTask({ mode: "lookup" }); go("scanner") }} title="Quét QR nhanh" aria-label="Quét QR nhanh"><ScanLine size={18}/><span>Quét QR</span></Button>
               <Button
                 variant="ghost"
                 onClick={() => go("onboarding")}
