@@ -1,6 +1,6 @@
 import test from "node:test"
 import assert from "node:assert/strict"
-import { seed } from "../src/app/model.ts"
+import { ensureIndustrySamples, seed } from "../src/app/model.ts"
 import { INDUSTRIES } from "../src/shared/config/industries.ts"
 import { beginIndustryDemoSession, confirmBusinessIndustry } from "../src/app/industryPolicy.ts"
 import { canAccessScreen } from "../src/app/access.ts"
@@ -12,6 +12,33 @@ test("only the owner can confirm a business industry", () => {
     assert.equal(canAccessScreen("authenticated", role, "industry-picker"), false)
   }
   assert.equal(canAccessScreen("authenticated", "owner", "industry-picker"), true)
+})
+
+test("industry demo seed contains eight FEFO alerts and upgrades older saved samples", () => {
+  for (const config of Object.values(INDUSTRIES)) {
+    const data = seed(config)
+    assert.equal(config.sampleSKUs.length, 9)
+    assert.equal(config.sampleBatches.length, 9)
+    assert.equal(
+      data.products.filter(
+        (product) => product.qty > 0 && product.expiry <= "2026-12-02",
+      ).length,
+      8,
+    )
+
+    const olderData = { ...data, products: data.products.slice(0, 3) }
+    const upgraded = ensureIndustrySamples(olderData, config)
+    const industryIds = new Set(config.sampleSKUs.map(product => product.sku))
+    const industryRows = upgraded.products.filter(product => industryIds.has(product.id))
+    assert.equal(industryRows.length, 9)
+    assert.equal(upgraded.products[0], olderData.products[0])
+    assert.deepEqual(
+      industryRows.slice(3).map((product) => product.id),
+      config.sampleSKUs.slice(3).map((product) => product.sku),
+    )
+    assert.ok(upgraded.products.some(product => product.id.startsWith("DEMO-")))
+    assert.equal(ensureIndustrySamples(upgraded, config), upgraded)
+  }
 })
 
 test("legacy preferences remain unconfirmed until the owner explicitly chooses", () => {

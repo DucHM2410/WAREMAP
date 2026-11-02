@@ -11,6 +11,7 @@ import {
   seed,
   withIndustrySamples,
   ensureTransferSamples,
+  ensureIndustrySamples,
   industryProducts,
   type DemoData,
   type AccessRequest,
@@ -78,7 +79,7 @@ export function Provider({ children }: { children: ReactNode }) {
       if (saved?.version === 3 && saved.allowance === 5) saved.allowance = saved.locations === 1 ? 4 : 18
       if (saved?.version === 3) {
         const restored = saved.industryConfirmed || saved.industry === config.id
-          ? (saved as DemoData)
+          ? ensureIndustrySamples(saved as DemoData, INDUSTRIES[(saved as DemoData).industry] ?? config)
           : withIndustrySamples(saved, config)
         const restoredConfig = INDUSTRIES[restored.industry] ?? config
         return ensureTransferSamples(withShelfSamples(restored, restoredConfig), restoredConfig)
