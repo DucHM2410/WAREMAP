@@ -376,3 +376,8 @@
     margin-left: auto;
   }
 }
+.batches-pagination{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.batches-pagination nav{display:flex;align-items:center;gap:12px}
+.batches-pagination nav>span{white-space:nowrap}
+.batches-list__heading{scroll-margin-top:100px}
+@media(max-width:650px){.batches-pagination{justify-content:center}.batches-pagination>span{width:100%;text-align:center}}

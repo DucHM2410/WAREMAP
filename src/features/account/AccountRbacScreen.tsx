@@ -282,6 +282,12 @@ export default function Accounts() {
         </div>
       </header>
 
+      <aside className="callout" style={{ marginBottom: 20 }} aria-label="Cách thử phân quyền trong demo">
+        <strong>Trang này mô phỏng việc cấp tài khoản và phân quyền.</strong>
+        <p>Thay đổi vai trò hoặc trạng thái ở đây chỉ cập nhật hồ sơ mẫu, chưa đổi quyền đăng nhập. Để thử quyền của từng vai trò, đăng xuất rồi chọn tài khoản mẫu tương ứng ở trang Đăng nhập.</p>
+        <p>Các tài khoản mẫu Quản lý kho, Nhân viên kho và Nhân viên bán hàng luôn dùng Kho trung tâm. Chọn cơ sở khác trong yêu cầu cấp tài khoản chỉ để minh họa, chưa thay đổi phạm vi của các tài khoản mẫu này.</p>
+      </aside>
+
       <section
         className="account-rbac__overview"
         aria-label="Hạn mức tài khoản"

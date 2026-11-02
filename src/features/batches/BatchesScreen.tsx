@@ -8,7 +8,7 @@ import {
   ShieldCheck,
 } from "lucide-react"
 
-import { lazy, Suspense, useState } from "react"
+import { lazy, Suspense, useEffect, useRef, useState } from "react"
 
 import { useApp } from "../../app/store"
 
@@ -70,6 +70,11 @@ export default function Batches() {
     [search, setSearch] = useState(""),
     [detailKey, setDetailKey] = useState("")
 
+  const [page, setPage] = useState(1)
+  const listRef = useRef<HTMLDivElement>(null)
+  const pageSize = 10
+  useEffect(() => setPage(1), [search, filter, branch, data.settings.expiryDays])
+
   const middleRange = `Từ ${data.settings.expiryDays + 1}–90 ngày`
 
   const filters = [
@@ -105,6 +110,15 @@ export default function Batches() {
     .filter((product) => matches(product) && matchesProduct(product, search))
 
     .sort((a, b) => daysLeft(a.expiry) - daysLeft(b.expiry))
+
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize))
+  const currentPage = Math.min(page, pageCount)
+  const pageRows = rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  useEffect(() => setPage(previous => Math.min(previous, pageCount)), [pageCount])
+  const changePage = (next: number) => {
+    setPage(Math.max(1, Math.min(next, pageCount)))
+    listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
 
   const inStock = visibleProducts.filter((product) => product.qty > 0)
 
@@ -304,7 +318,7 @@ export default function Batches() {
       </Panel>
 
       <Panel className="batches-list">
-        <div className="batches-list__heading">
+        <div className="batches-list__heading" ref={listRef}>
           <div>
             <h2>Danh sách lô hàng</h2>
             <p>Sắp xếp theo hạn dùng tăng dần để hỗ trợ xuất hàng FEFO.</p>
@@ -381,7 +395,7 @@ export default function Batches() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((product) => (
+                  {pageRows.map((product) => (
                     <tr key={productKey(product)}>
                       <td>
                         <strong>{product.name}</strong>
@@ -422,9 +436,13 @@ export default function Batches() {
                 </tbody>
               </table>
             </div>
-            <div className="table-footer">
-              Hiển thị {rows.length} / {visibleProducts.length} lô hàng trong
-              phạm vi đang xem · Lô hết hạn trước được xếp trước
+            <div className="table-footer batches-pagination">
+              <span role="status">Hiển thị {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, rows.length)} / {rows.length} lô hàng</span>
+              <nav aria-label="Phân trang lô hàng">
+                <Button variant="secondary" disabled={currentPage === 1} onClick={() => changePage(currentPage - 1)}>Trước</Button>
+                <span>Trang {currentPage} / {pageCount}</span>
+                <Button variant="secondary" disabled={currentPage === pageCount} onClick={() => changePage(currentPage + 1)}>Sau</Button>
+              </nav>
             </div>
           </>
         ) : (

@@ -392,3 +392,18 @@
   .wm-site .wm-industry-features-visual .wm-content-photo { min-height:240px; }
   .wm-site .wm-value-image .wm-content-photo,.wm-site .wm-showcase-art .wm-content-photo { aspect-ratio:3/2; }
 }
+
+.wm-account-identity{display:grid;gap:2px;line-height:1.4;min-width:0;color:var(--wm-navy)}
+.wm-account-identity strong{font-size:13px}
+.wm-account-identity small{font-size:11px;color:#64748b;overflow-wrap:anywhere}
+@media(max-width:600px){.wm-account-identity{max-width:160px}.wm-nav-actions:has(.wm-account-identity){gap:10px;flex-wrap:wrap}}
+
+/* Compare the three plans in equal columns with aligned actions. */
+.wm-pricing-plans{grid-template-columns:repeat(3,minmax(0,1fr))}
+.wm-pricing-card>p{min-height:66px}
+.wm-pricing-card--chain{background:#0D2B45;border-color:#0D2B45}
+.wm-pricing-card--chain h3,.wm-pricing-card--chain .wm-pricing-price{color:white}
+.wm-pricing-card--chain>p,.wm-pricing-card--chain .wm-pricing-features li,.wm-pricing-card--chain .wm-pricing-price small{color:#C7D9EC}
+.wm-pricing-card--chain .wm-pricing-card-divider{background:#ffffff26}
+.wm-pricing-card--chain .wm-btn-outline{background:white;color:#102A43}
+@media(max-width:760px){.wm-pricing-plans{grid-template-columns:1fr}.wm-pricing-card>p{min-height:0}}
