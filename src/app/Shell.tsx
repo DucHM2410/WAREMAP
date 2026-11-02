@@ -24,13 +24,14 @@ import {
   X,
 } from "lucide-react"
 import { useEffect, useState, type ReactNode } from "react"
-import { branches, roleNames, type Screen } from "./model"
+import { branches, daysLeft, roleNames, type Screen } from "./model"
 import { useApp } from "./store"
 import { useIndustry } from "../shared/context/IndustryContext"
 import { Badge, Brand, Button, SearchInput } from "./ui"
 import waremapLogo from "../assets/brand/waremap-logo.jpg"
 
 import { roleDescription } from "../shared/config/demoRoles"
+import "./sidebar.css"
 
 interface NavItem {
   screen: Screen
@@ -135,6 +136,7 @@ export function Shell({ children }: { children: ReactNode }) {
     setSearch,
     storageError,
     data,
+    visibleProducts,
     setScanTask,
   } = useApp()
   const [open, setOpen] = useState(false)
@@ -149,6 +151,10 @@ export function Shell({ children }: { children: ReactNode }) {
   const visibleMore = moreNavigation.filter(
     (n) => !n.roles || n.roles.includes(role),
   )
+  const fefoAlertCount = visibleProducts.filter(
+    (product) =>
+      product.qty > 0 && daysLeft(product.expiry) <= data.settings.expiryDays,
+  ).length
   const current = allNavigation.find((n) => n.screen === screen) || {
     label: screen === "putaway" ? "Quét & nhập hàng lên kệ" : screen === "admin" ? "Quản trị WareMap" : screen === "website-editor" ? "Chỉnh sửa trang chủ" : "Thiết lập sơ đồ kho",
     group: screen === "admin" ? "Nội bộ" : "Xem thêm",
@@ -182,17 +188,30 @@ export function Shell({ children }: { children: ReactNode }) {
     return (
       <button
         key={n.screen}
-        className={`nav-item ${isActive(n.screen) ? "active" : ""}`}
+        className={`nav-item ${n.screen === "onboarding" ? `nav-item--fefo ${fefoAlertCount ? "has-alerts" : ""}` : ""} ${isActive(n.screen) ? "active" : ""}`}
         onClick={() => {
           if (n.screen === "scanner") setScanTask({ mode: "lookup" })
           go(n.screen)
           setOpen(false)
         }}
         aria-current={screen === n.screen ? "page" : undefined}
+        aria-label={
+          n.screen === "onboarding" && fefoAlertCount
+            ? `${n.label}, ${fefoAlertCount} lô cần chú ý`
+            : undefined
+        }
         title={n.label}
       >
         <Icon size={18} />
-        <span>{n.label}<small>{n.screen === "warehouse" ? "Kệ · sản phẩm · vị trí" : n.screen === "inventory" ? "Tra cứu và vận hành tồn kho" : n.screen === "dashboard" ? "Việc cần làm hôm nay" : ""}</small></span>
+        <span>
+          {n.label}
+          <small>{n.screen === "warehouse" ? "Kệ · sản phẩm · vị trí" : n.screen === "inventory" ? "Tra cứu và vận hành tồn kho" : n.screen === "dashboard" ? "Việc cần làm hôm nay" : ""}</small>
+        </span>
+        {n.screen === "onboarding" && fefoAlertCount > 0 && (
+          <span className="nav-item__fefo-count" aria-hidden="true">
+            {fefoAlertCount}
+          </span>
+        )}
       </button>
     )
   }
