@@ -396,6 +396,18 @@ export function withIndustrySamples(
     ],
   }
 }
+export function ensureIndustrySamples(
+  data: DemoData,
+  config: IndustryConfig,
+): DemoData {
+  const existingIds = new Set(data.products.map((product) => product.id))
+  const missing = industryProducts(config).filter(
+    (product) => !existingIds.has(product.id),
+  )
+  return missing.length
+    ? { ...data, products: [...data.products, ...missing] }
+    : data
+}
 export function ensureTransferSamples(
   data: DemoData,
   config: IndustryConfig,
