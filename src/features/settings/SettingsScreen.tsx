@@ -6,7 +6,7 @@ import {
 } from "lucide-react"
 import { useState } from "react"
 import { useApp } from "../../app/store"
-import { branches, money, quote, today } from "../../app/model"
+import { branches, money, quote, today, roleNames } from "../../app/model"
 import { Badge, Button, Modal, PageTitle, Panel } from "../../app/ui"
 export default function Settings() {
   const { data, update, notify, role } = useApp()
@@ -18,6 +18,7 @@ export default function Settings() {
     [locations, setLocations] = useState(data.locations),
     [staff, setStaff] = useState(data.allowance),
     [connection, setConnection] = useState("")
+  const canManageAlerts = role === "owner"
   const price = quote(data.locations, data.allowance)
   const preview = quote(locations, staff)
   const tabs =
@@ -178,9 +179,11 @@ export default function Settings() {
         {active === "Thông báo" && (
           <Panel title="Cảnh báo hạn dùng">
             <div className="panel-body">
+              <p className="callout">{canManageAlerts ? "Cài đặt này áp dụng chung cho các cơ sở của doanh nghiệp." : "Bạn đang xem cài đặt chung của doanh nghiệp. Chỉ Chủ doanh được thay đổi. Nếu cần điều chỉnh, hãy gửi yêu cầu tại mục Dữ liệu & hỗ trợ."}</p>
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
+                  if (!canManageAlerts) return
                   update((d) => ({
                     ...d,
                     settings: {
@@ -200,6 +203,7 @@ export default function Settings() {
                     min={1}
                     max={90}
                     required
+                    readOnly={!canManageAlerts}
                     value={threshold}
                     onChange={(e) => setThreshold(Number(e.target.value))}
                   />
@@ -211,6 +215,7 @@ export default function Settings() {
                 <label className="check-row">
                   <input
                     type="checkbox"
+                    disabled={!canManageAlerts}
                     checked={enabled}
                     onChange={(e) => setEnabled(e.target.checked)}
                   />
@@ -220,9 +225,9 @@ export default function Settings() {
                   Kênh Zalo/email chưa được kết nối. Thiết lập này không tự gửi
                   tin ra bên ngoài.
                 </div>
-                <div className="form-actions">
+                {canManageAlerts && <div className="form-actions">
                   <Button type="submit">Lưu cài đặt</Button>
-                </div>
+                </div>}
               </form>
             </div>
           </Panel>
@@ -294,7 +299,7 @@ export default function Settings() {
                         id: "HT-" + Date.now().toString().slice(-6),
                         kind: "Hỗ trợ tài khoản",
                         company: d.company,
-                        name: "Chủ doanh nghiệp",
+                        name: roleNames[role],
                         email: String(f.get("email")),
                         branches: d.locations,
                         count: 0,
@@ -312,6 +317,7 @@ export default function Settings() {
                   notify("Đã lưu yêu cầu hỗ trợ trong bản demo.")
                 }}
               >
+                <p className="tiny">Người gửi: {roleNames[role]}</p>
                 <label className="field">
                   Email liên hệ
                   <input name="email" type="email" required />
@@ -358,7 +364,7 @@ export default function Settings() {
                     id: "HM-" + Date.now().toString().slice(-6),
                     kind: "Tăng hạn mức",
                     company: d.company,
-                    name: "Chủ doanh nghiệp",
+                    name: roleNames[role],
                     email: String(f.get("email")),
                     branches: locations,
                     count: staff,
