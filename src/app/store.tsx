@@ -224,6 +224,7 @@ export function Provider({ children }: { children: ReactNode }) {
   }
   const startGuest = (mode: "explore" | "trial") => {
     if (!mayLeave()) return
+    if (screen !== "warehouse") navigationHistory.current.push({ screen, requestFromExperience })
     setAccessMode(mode)
     setRole("sales")
     setBranch(branches[0])

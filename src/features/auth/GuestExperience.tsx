@@ -6,7 +6,7 @@ import { useApp } from "../../app/store"
 
 import { PublicFlowLayout, PublicFlowHeading } from "./PublicFlowLayout"
 
-import { Brand, Button } from "../../app/ui"
+import { Button } from "../../app/ui"
 
 export function TrialInfo() {
   const { go, startGuest, startTrialDemo, setRequestedPlan } = useApp()
@@ -82,55 +82,22 @@ export function TrialInfo() {
 }
 
 export function GuestWorkspace({ children }: { children: ReactNode }) {
-  const { accessMode, screen, go } = useApp()
-
-  const trial = accessMode === "trial"
-
+  const { go } = useApp()
   return (
-    <div className="guest-workspace">
-      <header className="guest-header">
-        <button className="brand-button" onClick={() => go("home")}>
-          <Brand />
-        </button>
-        <nav aria-label="Trải nghiệm khách">
-          <Button
-            variant={screen === "warehouse" ? "primary" : "ghost"}
-            onClick={() => go("warehouse")}
-          >
-            Kho 3D mẫu
-          </Button>
-          {trial && (
-            <Button
-              variant={screen === "inventory" ? "primary" : "ghost"}
-              onClick={() => go("inventory")}
-            >
-              Hàng mẫu
-            </Button>
-          )}
-        </nav>
-        <Button variant="secondary" onClick={() => go("login")}>
-          Đăng nhập
-        </Button>
-      </header>
-      <aside className="guest-banner" aria-label="Giới hạn trải nghiệm">
+    <PublicFlowLayout current="Khám phá kho 3D" experienceParent wide>
+      <PublicFlowHeading
+        eyebrow="Kho mẫu · Chỉ xem"
+        title="Khám phá kho 3D"
+        description="Tìm sản phẩm, chọn kệ để xem hàng đang ở đâu. Kéo để xoay kho và cuộn để phóng to."
+      />
+      <aside className="guest-banner guest-map-banner" aria-label="Giới hạn trải nghiệm">
         <div>
-          <strong>
-            {trial
-              ? "Dùng thử miễn phí · Chưa đăng nhập"
-              : "Khám phá kho 3D · Chỉ xem"}
-          </strong>
-          <p>
-            1 kho mẫu · tối đa 3 mã hàng mẫu. Không lưu / sửa sơ đồ, nhập xuất,
-            quét QR hoặc quản trị.
-          </p>
+          <strong>Bạn đang xem kho mẫu</strong>
+          <p>1 kho mẫu · tối đa 3 mã hàng mẫu. Chỉ xem và tìm hàng; chưa thể sửa sơ đồ, nhập xuất hàng hoặc quét QR.</p>
         </div>
-        <Button variant="secondary" onClick={() => go("trial-info")}>
-          Xem giới hạn & đăng ký
-        </Button>
+        <Button variant="secondary" onClick={() => go("trial-info")}>Xem thêm cách trải nghiệm</Button>
       </aside>
-      <main id="main-content" className="guest-content">
-        {children}
-      </main>
-    </div>
+      <div className="guest-map-content">{children}</div>
+    </PublicFlowLayout>
   )
 }

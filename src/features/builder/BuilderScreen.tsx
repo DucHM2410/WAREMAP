@@ -291,7 +291,7 @@ export default function Warehouse() {
   return (
     <>
       {accessMode === "authenticated" && <WarehouseLocations />}
-      <PageTitle
+      {accessMode === "authenticated" && <PageTitle
         eyebrow={
           editing
             ? "Tạo một vị trí rõ ràng cho từng mặt hàng"
@@ -325,7 +325,7 @@ export default function Warehouse() {
             </Button>
           ) : undefined
         }
-      />
+      />}
       {!editing && accessMode === "authenticated" && WAREHOUSE_PERMISSIONS[role].putaway && <div className="putaway-shortcut"><div><strong>Có hàng mới cần lên kệ?</strong><p>Quét vị trí → mã thùng → xác nhận. Tồn kho và bản đồ cập nhật cùng nhau.</p></div><Button onClick={()=>go("putaway")}>Quét & nhập hàng lên kệ</Button></div>}
       {!editing && (
         <div className="toolbar">

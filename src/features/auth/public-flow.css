@@ -90,3 +90,8 @@
 .industry-option-categories { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
 .industry-option-categories>span { padding:4px 10px; border-radius:999px; background:#f1f5f9; color:#52657c; font-size:12px; line-height:1.5; }
 .industry-option.is-selected .industry-option-categories>span { background:#e3edfc; color:#365c91; }
+.public-flow-main-wide{max-width:1600px}
+.guest-map-banner{border:1px solid #d5e2ff;border-radius:14px;margin-bottom:28px;padding:16px 20px;font-size:13px;line-height:1.7}
+.guest-map-banner .button{flex-shrink:0}
+.guest-map-content{min-width:0}
+@media(max-width:680px){.guest-map-banner{padding:16px}.guest-map-banner .button{white-space:normal}}

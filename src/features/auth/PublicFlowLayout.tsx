@@ -21,11 +21,15 @@ export function PublicFlowLayout({
 
   experienceParent = false,
 
+  wide = false,
+
   children,
 }: {
   current: string
 
   experienceParent?: boolean
+
+  wide?: boolean
 
   children: ReactNode
 }) {
@@ -51,7 +55,7 @@ export function PublicFlowLayout({
         onRegister={onRegister}
         onLogin={() => go("login")}
       />
-      <main id="main-content" className="public-flow-main">
+      <main id="main-content" className={`public-flow-main${wide ? " public-flow-main-wide" : ""}`}>
         <nav
           className="public-flow-breadcrumb"
           aria-label="Đường dẫn điều hướng"
