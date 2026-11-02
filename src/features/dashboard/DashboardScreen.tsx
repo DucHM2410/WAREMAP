@@ -92,7 +92,9 @@ export default function Dashboard() {
   return (
     <>
       <section className="today-hero">
+        <style>{`.today-map{grid-template-columns:minmax(0,3fr) minmax(220px,1fr)}.today-map .today-map__canvas{height:460px;min-height:460px}.today-role-context{display:inline-flex;padding:6px 10px;border-radius:20px;background:var(--industry-soft);color:var(--industry-primary);font-size:12px;margin-bottom:12px}@media(max-width:800px){.today-map{grid-template-columns:1fr}.today-map .today-map__canvas{height:330px;min-height:330px}}`}</style>
         <div className="today-hero__copy">
+          <span className="today-role-context">Chế độ xem: {{owner:"Chủ doanh nghiệp",manager:"Quản lý kho",warehouse:"Nhân viên kho",sales:"Nhân viên bán hàng",platform:"Admin hệ thống"}[role]}</span>
           <div className="today-hero__meta">
             <span className="today-hero__industry">
               <IndustryIcon size={14} />
@@ -104,6 +106,7 @@ export default function Dashboard() {
           {critical ? (
             <>
               <h1>{critical.name}</h1>
+              <p>Kệ {critical.rack} chứa {critical.qty} sản phẩm {critical.name} {daysLeft(critical.expiry) < 0 ? "đã hết hạn" : "sắp hết hạn"}. Cần kiểm tra.</p>
               <p className="today-hero__line">
                 <AlertCircle size={18} />
                 <strong>{expiryLabel(critical.expiry)}</strong>

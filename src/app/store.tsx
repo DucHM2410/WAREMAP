@@ -23,6 +23,7 @@ import { useIndustry } from "../shared/context/IndustryContext"
 import { canAccessScreen, type AccessMode } from "./access"
 import { guestData } from "./guestData"
 import { withShelfSamples } from "./shelfSamples"
+import { activityId } from "./activity"
 import { beginIndustryDemoSession, confirmBusinessIndustry } from "./industryPolicy"
 import { INDUSTRIES, type Industry } from "../shared/config/industries"
 import { warehouseScope } from "./warehouseScope"
@@ -188,15 +189,11 @@ export function Provider({ children }: { children: ReactNode }) {
   })
   const log = (title: string, detail: string) => {
     if (accessMode !== "authenticated") return
+    const activity = { id: activityId(), title, detail, time: new Date().toISOString() }
     setData((d) => ({
       ...d,
       activities: [
-        {
-          id: crypto.randomUUID(),
-          title,
-          detail,
-          time: new Date().toISOString(),
-        },
+        activity,
         ...d.activities,
       ].slice(0, 40),
     }))

@@ -1153,7 +1153,7 @@ body { --industry-primary: #DB2777; --industry-accent: #7C3AED; --industry-soft:
 @media(max-height:760px) { .sidebar { padding-top:18px; }.sidebar .workspace-name { margin-top:12px; }.sidebar-footer .demo-label { margin-bottom:8px; }.role-permissions { margin:8px 0; padding:7px; } }
 
 /* Official WareMap identity — October 2026 brand specification. */
-:root, body, body.industry-mom, body.industry-cosmetics {
+:root, body {
   font-family:'Be Vietnam Pro',system-ui,sans-serif;
   --ink:#192C45; --navy:#192C45; --muted:#64748B; --line:#E2E8F0; --bg:#F5F9FF; --teal:#0B57C7;
   --industry-primary:#0B57C7; --industry-accent:#1685F9; --industry-soft:#EAF3FF; --industry-tint:#F5F9FF;
@@ -1165,14 +1165,14 @@ h1,h2 { color:#192C45; } h3 { color:#243B57; }
 .sidebar .brand.brand-logo { width:180px; height:42px; }
 .auth-story .brand-logo { background:#A9CFF8; border-radius:0; mix-blend-mode:screen; }
 .auth-story .brand-logo img { filter:grayscale(1) invert(1); mix-blend-mode:multiply; }
-body.industry-mom .button.primary, body.industry-cosmetics .button.primary { background:#0B57C7; color:#fff; }
-body.industry-mom .button.primary:hover, body.industry-cosmetics .button.primary:hover { background:#0846A6; }
+body.industry-mom .button.primary, body.industry-cosmetics .button.primary { background:var(--industry-primary); color:#fff; }
+body.industry-mom .button.primary:hover, body.industry-cosmetics .button.primary:hover { background:color-mix(in srgb,var(--industry-primary) 85%,black); }
 body .button.secondary { border-color:#c5d8f2; color:#0B57C7; background:white; }
 body .button.secondary:hover { background:#EAF3FF; }
 body .eyebrow { color:#0B57C7; }
 body .workspace-name { background:#F5F9FF; }
 body .industry-pill,body .header-industry-pill { background:#EAF3FF; color:#0B57C7; border-color:#cfe2fa; }
-body.industry-mom .nav-item.active,body.industry-cosmetics .nav-item.active { background:#EAF3FF; color:#0B57C7; }
+body.industry-mom .nav-item.active,body.industry-cosmetics .nav-item.active { background:var(--industry-soft); color:var(--industry-primary); }
 body .nav-item.nav-cta { background:#0B57C7; color:white; }
 .website-editor-link { flex-shrink:0; border:1px solid #d7e6fa; margin-top:10px; }
 body .auth-story { background:linear-gradient(145deg,#192C45,#0B3677); }
@@ -1259,3 +1259,10 @@ body .auth-story h1 { color:#FFFFFF; }
 @media (max-width: 700px) { .sidebar-toggle { display: none; } }
 @media (prefers-reduced-motion: reduce) { .workspace .sidebar, .workspace .workspace-main { transition: none; } }
 @media print { .workspace .workspace-main { margin-left: 0; } }
+/* Keep industry cues visible above the shared WareMap brand defaults. */
+body.industry-mom { --industry-primary:#DB2777; --industry-accent:#7C3AED; --industry-soft:#FDF2F8; --industry-tint:#FDF7FA; --teal:#DB2777; --bg:#FDF7FA; background:var(--industry-tint); }
+body.industry-cosmetics { --industry-primary:#0891B2; --industry-accent:#2563EB; --industry-soft:#ECFEFF; --industry-tint:#F2FBFC; --teal:#0891B2; --bg:#F2FBFC; background:var(--industry-tint); }
+body:is(.industry-mom,.industry-cosmetics) :is(.industry-pill,.header-industry-pill,.workspace-name) { background:var(--industry-soft);color:var(--industry-primary);border-color:color-mix(in srgb,var(--industry-primary) 25%,white); }
+body:is(.industry-mom,.industry-cosmetics) .nav-item.nav-cta { background:var(--industry-primary);color:white; }
+body:is(.industry-mom,.industry-cosmetics) :is(.button.secondary,.eyebrow) { color:var(--industry-primary); }
+body:is(.industry-mom,.industry-cosmetics) .button.secondary:hover { background:var(--industry-soft); }

@@ -8,7 +8,8 @@ import {
   type ReactNode,
 } from "react"
 import { Canvas } from "@react-three/fiber"
-import { Grid, OrbitControls } from "@react-three/drei"
+import { Grid, Html, OrbitControls } from "@react-three/drei"
+import { slotLayout } from "./slotLayout"
 import { WarehouseRack } from "./WarehouseRack"
 import { RACK_TEMPLATES, createRack, fitToFloor } from "./rackLibrary"
 import { CanvasPlacement, type PlacementProjector } from "./CanvasPlacement"
@@ -97,6 +98,11 @@ export default function Warehouse() {
     scanTask,
   } = useApp()
   const { config } = useIndustry()
+  const [groupByCategory, setGroupByCategory] = useState(false)
+  const [rackLabels, setRackLabels] = useState<Record<string, { category: string; full: boolean }>>(() => {
+    try { return JSON.parse(localStorage.getItem("waremap-rack-labels-v1") || "{}") || {} } catch { return {} }
+  })
+  const [labelWarning, setLabelWarning] = useState("")
   const [allTemplates,setAllTemplates] = useState(false)
   const [tool, setTool] = useState<"select" | "move" | "rotate">("select")
   const [selectedBatch, setSelectedBatch] = useState("")
@@ -141,6 +147,26 @@ export default function Warehouse() {
   )
   const activeId = editing ? chosen : product?.rack || chosen
   const rack = racks.find((r) => r.id === activeId)
+  const categories = ["Chưa phân nhóm", "Đồ chơi", "Sữa", "Bỉm", "Mỹ phẩm", ...config.sampleCategories].filter((value,index,all)=>all.indexOf(value)===index)
+  const labelKey = (id: string) => `${config.id}|${warehouse}|${id}`
+  const categoryOf = (r: Rack) => rackLabels[labelKey(r.id)]?.category || "Chưa phân nhóm"
+  const categoryColor = (r: Rack) => ["#94a3b8","#8b5cf6","#db2777","#f59e0b","#0891b2","#2563eb","#059669"][Math.max(0,categories.indexOf(categoryOf(r))) % 7]
+  const setRackLabel = (r: Rack, patch: Partial<{category: string; full: boolean}>) => {
+    const previous = rackLabels[labelKey(r.id)] ?? {category:categoryOf(r),full:false}
+    const next = {...rackLabels, [labelKey(r.id)]:{...previous,...patch}}
+    setRackLabels(next)
+    try { localStorage.setItem("waremap-rack-labels-v1", JSON.stringify(next)); setLabelWarning("") } catch { setLabelWarning("Không lưu được nhãn kệ; thay đổi chỉ tồn tại trong phiên này.") }
+  }
+  const fullRack = (r: Rack) => {
+    if (rackLabels[labelKey(r.id)]?.full) return true
+    // Only certify a full base surface when every compartment has measured data.
+    return Array.from({length:r.levels},(_,i)=>i+1).every(level=>Array.from({length:r.bins},(_,i)=>i+1).every(bin=>{
+      const items=data.products.filter(p=>p.branch===warehouse&&p.rack===r.id&&p.level===level&&p.bin===bin&&p.qty>0)
+      if (!items.length) return false
+      const layout=slotLayout(r,items)
+      return layout.fits&&!layout.uncertain&&layout.freeAreaCm2<1
+    }))
+  }
   const displayedUnits=product&&rack?productUnits(product,rack,displayMode,data.products.filter(p=>p.branch===warehouse&&p.rack===product.rack&&p.level===product.level&&p.bin===product.bin&&p.qty>0)):[]
   const unitIndex=displayedUnits.some(unit=>unit.index===selectedUnit)?selectedUnit:displayedUnits[0]?.index||0
   useEffect(() => {
@@ -219,6 +245,7 @@ export default function Warehouse() {
     setChosen(next.id)
     setTool("move")
     notify(`${next.name} đã được thêm. Kéo kệ để bố trí, rồi lưu sơ đồ.`)
+    return next
   }
   const dropTemplate = (event: React.DragEvent<HTMLDivElement>) => {
     if (!editing) return
@@ -232,6 +259,8 @@ export default function Warehouse() {
   }
   const matches = searchWarehouseProducts(visibleProducts, search)
   const rackColor = (id: string) => {
+    const grouped = racks.find(r => r.id === id)
+    if (groupByCategory && grouped) return categoryColor(grouped)
     if (layer === "Hạn dùng") {
       const items = data.products.filter(
         (p) => p.branch === warehouse && p.rack === id,
@@ -291,7 +320,7 @@ export default function Warehouse() {
             width: `${(r.width / 16) * 100}%`,
             height: `${(r.depth / 14) * 100}%`,
             transform: `translate(-50%,-50%) rotate(${r.rotation}deg)`,
-            background: layer === "Hạn dùng" ? rackColor(r.id) : undefined,
+            background: groupByCategory || layer === "Hạn dùng" ? rackColor(r.id) : undefined,
           }}
           onClick={() => {
             setChosen(r.id)
@@ -310,7 +339,7 @@ export default function Warehouse() {
             }
           }}
         >
-          {r.id}
+          {r.id}{fullRack(r) ? " · Full" : ""}
         </button>
       ))}
     </div>
@@ -356,6 +385,13 @@ export default function Warehouse() {
           ) : undefined
         }
       />
+      <div className="toolbar" role="group" aria-label="Nhóm kệ theo hàng hóa">
+        <Button variant={!groupByCategory ? "primary" : "secondary"} aria-pressed={!groupByCategory} onClick={()=>setGroupByCategory(false)}>Xem theo Kệ</Button>
+        <Button variant={groupByCategory ? "primary" : "secondary"} aria-pressed={groupByCategory} onClick={()=>setGroupByCategory(true)}>Xem theo Nhóm Hàng</Button>
+        {groupByCategory && <span className="tiny muted">Cùng màu = cùng nhóm · {layer === "Hạn dùng" ? "Tạm thay màu hạn dùng" : "Nhãn bố trí, không giới hạn loại hàng nhập"}</span>}
+      </div>
+      {groupByCategory && <div className="toolbar">{Array.from(new Set(racks.map(categoryOf))).map(category=>{const sample=racks.find(r=>categoryOf(r)===category)!;return <span className="badge" key={category} style={{borderLeft:`5px solid ${categoryColor(sample)}`}}>{category}</span>})}</div>}
+      {labelWarning && <p role="alert">{labelWarning}</p>}
       {!editing && accessMode === "authenticated" && WAREHOUSE_PERMISSIONS[role].putaway && <div className="putaway-shortcut"><div><strong>Có hàng mới cần lên kệ?</strong><p>Quét vị trí → mã thùng → xác nhận. Tồn kho và bản đồ cập nhật cùng nhau.</p></div><Button onClick={()=>go("putaway")}>Quét & nhập hàng lên kệ</Button></div>}
       {!editing && (
         <div className="toolbar" onKeyDown={event => {
@@ -402,6 +438,20 @@ export default function Warehouse() {
           <h2>Kho của bạn, cách bạn muốn.</h2>
           <p>Chọn một mẫu. Đặt vào kho. Hoàn tất.</p>
           <Button onClick={() => add("shelf")}><Plus size={20} /> Thêm Kệ</Button>
+          {rack && fullRack(rack) && <div role="status" style={{padding:12,border:"1px solid #f59e0b",borderRadius:12,background:"#fffbeb"}}>
+            <strong>Kệ hiện tại đã đầy.</strong>
+            <p>Tạo thêm Kệ {categoryOf(rack)} 2?</p>
+            <Button onClick={()=>{
+              const category=categoryOf(rack)
+              const next=add("shelf")
+              if(!next)return
+              let number=2
+              while(draft.some(r=>r.name===`Kệ ${category} ${number}`))number++
+              setDraft(current=>current.map(r=>r.id===next.id?{...r,name:`Kệ ${category} ${number}`}:r))
+              setRackLabel(next,{category,full:false})
+            }}>Tạo kệ cùng nhóm</Button>
+            <small>Chỉ tạo kệ trống. Dùng Quét &amp; nhập hàng để đưa hàng lên kệ.</small>
+          </div>}
           <Button variant="ghost" onClick={()=>setAllTemplates(value=>!value)}>{allTemplates ? "Mẫu phù hợp ngành hàng" : "Xem thêm mẫu kho lớn"}</Button>
           {RACK_TEMPLATES.filter(template => allTemplates || (config.id === "cosmetics" ? ["micro","tray","drawers","shelf","cabinet","packing"] : ["medium","shelf","tray","micro","stack","packing"]).includes(template.id)).map(template => <button draggable className={`rack-library-card rack-preview--${template.id}`} key={template.id}
             onDragStart={event => { event.dataTransfer.setData("application/waremap-rack", template.id); event.dataTransfer.effectAllowed = "copy"; setDraggingTemplate(template.name) }}
@@ -472,8 +522,10 @@ export default function Warehouse() {
                       position={[0, -0.03, 0]}
                     />
                     {racks.filter(r => !focusedRack || r.id === focusedRack).map((r) => (
+                      <group key={r.id}>
+                      {groupByCategory && <mesh position={[r.x,.015,r.z]} rotation={[-Math.PI/2,0,0]} raycast={()=>null}><ringGeometry args={[Math.max(r.width,r.depth)*.65,Math.max(r.width,r.depth)*.65+.07,48]}/><meshBasicMaterial color={categoryColor(r)} transparent opacity={.65} depthWrite={false}/></mesh>}
+                      {fullRack(r) && <Html position={[r.x,r.height+.6,r.z]} center style={{pointerEvents:"none"}}><span style={{background:"#b91c1c",color:"white",padding:"4px 9px",borderRadius:8,whiteSpace:"nowrap",fontSize:12}}>Full · Hết mặt kệ</span></Html>}
                       <WarehouseRack
-                        key={r.id}
                         rack={r}
                         displayMode={displayMode}
                         inspecting={!editing}
@@ -501,6 +553,7 @@ export default function Warehouse() {
                           if (!editing) {setLocateRequest(null);setSelected("")}
                         }}
                       />
+                      </group>
                     ))}
                     <OrbitControls
                       key={cameraKey}
@@ -686,6 +739,11 @@ export default function Warehouse() {
             <div className="panel-body stack">
               {editing ? (
                 <>
+                  <label>Nhóm hàng / Product Category
+                    <select value={categoryOf(rack)} onChange={event=>setRackLabel(rack,{category:event.currentTarget.value})}>{categories.map(category=><option key={category}>{category}</option>)}</select>
+                  </label>
+                  <label style={{display:"flex",gap:8,alignItems:"center"}}><input type="checkbox" style={{width:"auto"}} checked={!!rackLabels[labelKey(rack.id)]?.full} onChange={event=>setRackLabel(rack,{full:event.currentTarget.checked})}/>Xác nhận thực tế: kệ đã đầy</label>
+                  <small className="muted">Nhãn nhóm và xác nhận đầy lưu riêng trên trình duyệt này. Full tự động chỉ xét hết diện tích đáy theo số đo; không đánh giá tải trọng hoặc chỗ xếp chồng. Không tự chuyển hàng.</small>
                   <RackInspector rack={rack} onPatch={patchRack}/>
                   <Button
                     variant="danger"
