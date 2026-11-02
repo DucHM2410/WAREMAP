@@ -6,6 +6,7 @@ import {
   daysLeft,
   locationLabel,
   positionCode,
+  transferDisplayId,
 } from "../../app/model"
 import { Badge, Button, PageTitle, Panel } from "../../app/ui"
 import { productKey } from "../../app/catalog"
@@ -200,7 +201,10 @@ export default function Scanner() {
             : t,
         ),
       }))
-      log("Đã gửi hàng", `${transfer.id} · ${transfer.qty} sản phẩm · ${transfer.from} → ${transfer.to}`)
+      log(
+        "Đã gửi hàng",
+        `${transferDisplayId(transfer)} · ${transfer.qty} sản phẩm · ${transfer.from} → ${transfer.to}`,
+      )
     } else {
       const targetRack = data.racks[targetBranch]?.find((r) => r.id === rackId)
       if (
@@ -274,7 +278,7 @@ export default function Scanner() {
       })
       log(
         "Đã kiểm nhận hàng",
-        `${transfer.id} · ${received}/${transfer.qty} sản phẩm · ${transfer.to}`,
+        `${transferDisplayId(transfer)} · ${received}/${transfer.qty} sản phẩm · ${transfer.to}`,
       )
     }
     setDone(true)
@@ -310,7 +314,7 @@ export default function Scanner() {
                 scanTask.mode === "dispatch"
                   ? "Xác minh gửi hàng"
                   : "Kiểm nhận hàng"
-              } · ${transfer?.id || "Không tìm thấy phiếu"}`}
+              } · ${transfer ? transferDisplayId(transfer) : "Không tìm thấy phiếu"}`}
         </div>
         {scanTask.mode === "lookup" && (
           <label className="field">

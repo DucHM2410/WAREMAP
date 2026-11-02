@@ -10,6 +10,7 @@ import {
 import {
   seed,
   withIndustrySamples,
+  ensureTransferSamples,
   industryProducts,
   type DemoData,
   type AccessRequest,
@@ -73,9 +74,14 @@ export function Provider({ children }: { children: ReactNode }) {
       const saved = raw ? JSON.parse(raw) : null
       if (saved?.version === 3 && saved.allowance === 5) saved.allowance = saved.locations === 1 ? 4 : 18
       if (saved?.version === 3) {
-        return saved.industryConfirmed || saved.industry === config.id
-          ? (saved as DemoData)
-          : withIndustrySamples(saved, config)
+        const base =
+          saved.industryConfirmed || saved.industry === config.id
+            ? (saved as DemoData)
+            : withIndustrySamples(saved, config)
+        return ensureTransferSamples(
+          base,
+          INDUSTRIES[base.industry] ?? config,
+        )
       }
       return seed(config)
     } catch {
