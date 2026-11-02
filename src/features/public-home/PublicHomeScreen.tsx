@@ -18,7 +18,7 @@ import "./public-site.css"
 import { withSitePhotos } from "./sitePhotos"
 import { useSiteMotion } from "./useSiteMotion"
 import "./site-motion.css"
-import warehouseScreen from "../../assets/site-photos/waremap-3d-screen.png"
+import warehouseScreen from "../../assets/site-photos/waremap-warehouse-current.jpg"
 
 export function MiniMap({ highlight = "A2" }: { highlight?: string }) {
   return (

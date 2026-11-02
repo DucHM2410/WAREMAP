@@ -11,7 +11,7 @@ import { branches, money, quote, today } from "../../app/model"
 import { PublicFlowLayout, PublicFlowHeading } from "./PublicFlowLayout"
 
 import warehousePhoto from "../../assets/site-photos/inventory-tablet.jpg"
-import warehouseScreen from "../../assets/site-photos/waremap-3d-screen.png"
+import warehouseScreen from "../../assets/site-photos/waremap-warehouse-current.jpg"
 
 import { DEMO_ACCOUNTS, DEMO_PASSWORD } from "../../shared/config/demoRoles"
 

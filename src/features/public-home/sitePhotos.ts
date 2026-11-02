@@ -7,7 +7,7 @@ import babyFeeding from "../../assets/site-photos/baby-feeding.jpg"
 import inventoryTablet from "../../assets/site-photos/inventory-tablet.jpg"
 import inventoryComputer from "../../assets/site-photos/inventory-computer.jpg"
 import inventoryCheck from "../../assets/site-photos/inventory-check.jpg"
-import warehouseScreen from "../../assets/site-photos/waremap-3d-screen.png"
+import warehouseScreen from "../../assets/site-photos/waremap-warehouse-current.jpg"
 import type { PublicPage, SitePage } from "../site-content/types"
 
 const photos = {
@@ -20,7 +20,7 @@ const photos = {
   tablet: { image: inventoryTablet, imageAlt: "Nhân viên dùng máy tính bảng và đầu đọc mã để kiểm tra hàng trong kho" },
   computer: { image: inventoryComputer, imageAlt: "Nhân viên xử lý thông tin hàng hóa trên máy tính tại bàn đóng gói" },
   check: { image: inventoryCheck, imageAlt: "Nhân viên đối chiếu thông tin tồn kho trên thiết bị cầm tay giữa các dãy kệ" },
-  system: { image: warehouseScreen, imageAlt: "Giao diện WareMap thực tế: kệ A1 được chọn trên bản đồ 3D cùng vị trí và thông tin lô sản phẩm mẫu" },
+  system: { image: warehouseScreen, imageAlt: "Kho mẫu WareMap hiện tại: tám kệ đa dạng, khay chia ngăn, bàn soạn đơn và sản phẩm theo từng lô" },
 }
 const heroPhotos = { home: photos.picking, solution: photos.system, mom: photos.feeding, cosmetics: photos.cosmetics }
 

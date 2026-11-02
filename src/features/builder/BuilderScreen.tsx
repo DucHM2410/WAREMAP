@@ -7,8 +7,11 @@ import {
   useMemo,
   useState,
   type ReactNode,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
 } from "react"
 import { Canvas } from "@react-three/fiber"
+import { MOUSE } from "three"
 import { Grid, Html, OrbitControls } from "@react-three/drei"
 import { slotLayout } from "./slotLayout"
 import { WarehouseRack } from "./WarehouseRack"
@@ -42,6 +45,8 @@ import {
   Eye,
   Grid2X2,
   MapPin,
+  Maximize2,
+  Minimize2,
   Plus,
   RotateCcw,
   Save,
@@ -127,6 +132,22 @@ export default function Warehouse() {
   })
   const [labelWarning, setLabelWarning] = useState("")
   const [allTemplates,setAllTemplates] = useState(false)
+  const [panView,setPanView] = useState(false)
+  const [inspectorWidth,setInspectorWidth]=useState(330)
+  const [inspectorHeight,setInspectorHeight]=useState(620)
+  const panelResize=useRef<{axis:"width"|"height";x:number;y:number;width:number;height:number}|null>(null)
+  const beginPanelResize=(event:ReactPointerEvent<HTMLElement>,axis:"width"|"height")=>{
+    event.preventDefault()
+    panelResize.current={axis,x:event.clientX,y:event.clientY,width:inspectorWidth,height:inspectorHeight}
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+  const movePanelResize=(event:ReactPointerEvent<HTMLElement>)=>{
+    const start=panelResize.current
+    if(!start)return
+    if(start.axis==="width")setInspectorWidth(Math.max(280,Math.min(520,start.width+start.x-event.clientX)))
+    else setInspectorHeight(Math.max(360,Math.min(1000,start.height+event.clientY-start.y)))
+  }
+  const stopPanelResize=()=>{panelResize.current=null}
   const [tool, setTool] = useState<"select" | "move" | "rotate">("select")
   const [selectedBatch, setSelectedBatch] = useState("")
   const [selectedUnit,setSelectedUnit]=useState(0)
@@ -136,6 +157,34 @@ export default function Warehouse() {
   const [locateRequest, setLocateRequest] = useState<LocateRequest | null>(null)
   const locateSequence = useRef(0)
   const mapStage = useRef<HTMLDivElement>(null)
+  const mapViewport = useRef<HTMLDivElement>(null)
+  const [expandedView,setExpandedView] = useState(false)
+  const fullscreenButton = useRef<HTMLButtonElement>(null)
+  useEffect(()=>{
+    const changed=()=>setExpandedView(document.fullscreenElement===mapViewport.current)
+    const escape=(event:KeyboardEvent)=>{if(event.key==="Escape"&&!document.fullscreenElement)setExpandedView(false)}
+    document.addEventListener("fullscreenchange",changed)
+    document.addEventListener("keydown",escape)
+    return ()=>{document.removeEventListener("fullscreenchange",changed);document.removeEventListener("keydown",escape)}
+  },[])
+  useEffect(()=>{
+    if(!expandedView)return
+    const previous=document.body.style.overflow
+    document.body.style.overflow="hidden"
+    return ()=>{document.body.style.overflow=previous;fullscreenButton.current?.focus()}
+  },[expandedView])
+  const toggleFullscreen=async()=>{
+    const target=mapViewport.current
+    if(!target)return
+    if(expandedView){
+      if(document.fullscreenElement===target)await document.exitFullscreen().catch(()=>{})
+      setExpandedView(false)
+      return
+    }
+    setExpandedView(true)
+    // Embedded previews may disallow the Fullscreen API; fixed viewport mode still works.
+    if(target.requestFullscreen)await target.requestFullscreen().catch(()=>{})
+  }
   const [showQR, setShowQR] = useState(false)
   const [draggingTemplate, setDraggingTemplate] = useState("")
   const placement = useRef<PlacementProjector | null>(null)
@@ -470,7 +519,22 @@ export default function Warehouse() {
             </Empty>}
         </div>
       )}
-      <div className={editing ? "map-layout builder-workspace" : "map-layout"}>
+      <style>{`
+        .warehouse-inspection{align-items:start;grid-template-columns:minmax(0,1fr) clamp(280px,var(--inspector-width,330px),45vw)}
+        .warehouse-inspection>.warehouse-info-panel{display:flex;flex-direction:column;height:min(var(--inspector-height,620px),calc(100dvh - 110px));min-height:360px;overflow:hidden;position:sticky;top:90px}
+        .inspector-width-grip{position:absolute;left:0;top:0;bottom:24px;width:7px;cursor:col-resize;touch-action:none;z-index:5}.inspector-width-grip:hover,.inspector-width-grip:focus-visible{background:var(--industry-soft);outline:2px solid var(--industry-primary);outline-offset:-2px}
+        .inspector-height-grip{flex-shrink:0;padding:7px;text-align:center;cursor:row-resize;touch-action:none;font-size:10px;background:#f8fafc;border-top:1px solid var(--line);color:var(--muted);user-select:none}
+        .warehouse-info-panel>.panel-heading{flex-shrink:0;padding:16px 18px;background:#fff;gap:8px}.warehouse-info-panel>.panel-heading h2{font-size:16px;overflow-wrap:anywhere}
+        .warehouse-info-panel>.panel-body{overflow-y:auto;overscroll-behavior:contain;min-height:0;padding:18px;gap:16px;scrollbar-gutter:stable}
+        .warehouse-info-panel h3{font-size:18px;line-height:1.5}.warehouse-info-panel .detail-list dd{overflow-wrap:anywhere}.warehouse-info-panel .callout{margin:0}
+        .warehouse-info-panel details{border-top:1px solid var(--line);padding-top:6px}.warehouse-info-panel summary{font-size:13px;color:var(--ink);padding:10px 0;line-height:1.6}
+        .warehouse-info-panel details>div{margin-top:8px}.warehouse-info-panel .rack-stock-list{max-height:260px;overflow-y:auto;gap:8px}.warehouse-info-panel .list-choice{padding:10px;border-radius:10px}.warehouse-info-panel .list-choice p{font-size:11px;line-height:1.7;overflow-wrap:anywhere}
+        .warehouse-info-panel .lot-location{background:var(--industry-soft);border-left:3px solid var(--industry-primary);padding:12px;border-radius:10px;line-height:1.7;font-size:13px}
+        .warehouse-info-panel .lot-summary-label{font-size:10px;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+        .warehouse-inspection .map-canvas:not(.warehouse-expanded){height:min(720px,calc(100dvh - 110px));min-height:460px}
+        @media(max-width:960px){.warehouse-inspection{grid-template-columns:1fr}.warehouse-inspection>.warehouse-info-panel{position:static;height:var(--inspector-height,620px);min-height:360px;max-height:1000px}.inspector-width-grip{display:none}.warehouse-inspection .map-canvas:not(.warehouse-expanded){height:500px;min-height:380px}}
+      `}</style>
+      <div className={editing ? "map-layout builder-workspace" : "map-layout warehouse-inspection"} style={{"--inspector-width":`${inspectorWidth}px`,"--inspector-height":`${inspectorHeight}px`} as CSSProperties}>
         {editing && <aside className="builder-toolbox panel">
           <span className="eyebrow">THƯ VIỆN KỆ</span>
           <h2>Kho của bạn, cách bạn muốn.</h2>
@@ -505,11 +569,22 @@ export default function Warehouse() {
         </aside>}
         <div className="builder-stage" ref={mapStage} style={{scrollMarginTop:90}}>
           {!editing && locateRequest && <div className="warehouse-located" role="status"><div><strong>Đã định vị: {locateRequest.product.name}</strong><p>{locationLabel(locateRequest.product)} · Lô {locateRequest.product.batch} · {warehouse}</p></div><Button variant="ghost" onClick={() => locateProduct(locateRequest.product,unitIndex,wholeLot)}>Định vị lại</Button><Button variant="ghost" onClick={()=>setLocateRequest({...locateRequest,id:++locateSequence.current,scope:"slot",cancelled:false})}>Xem toàn ô</Button><Button variant="ghost" onClick={() => {setLocateRequest(null);setFocusedRack(null);controls.current?.reset();setCameraKey(k=>k+1)}}>Xem toàn kho</Button></div>}
-          <div className={`map-canvas ${draggingTemplate ? "is-drop-target" : ""}`} onDragOver={event => { if (editing && event.dataTransfer.types.includes("application/waremap-rack")) { event.preventDefault(); event.dataTransfer.dropEffect = "copy" } }} onDrop={dropTemplate}>
+          <style>{`
+            .map-canvas.warehouse-expanded,.map-canvas:fullscreen{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;min-height:0!important;max-height:none!important;z-index:1000;border-radius:0;background:#edf3f5}
+            .warehouse-fullscreen-button{position:absolute;top:16px;right:16px;z-index:12;box-shadow:0 4px 16px #192c4515}
+            .warehouse-expanded .map-controls{max-width:calc(100% - 24px);flex-wrap:wrap;justify-content:center;bottom:20px;z-index:12}
+            .warehouse-expanded .map-help{bottom:84px;display:block;max-width:calc(100% - 32px);font-size:11px}
+            .warehouse-fullscreen-info{position:absolute;top:75px;left:16px;z-index:11;max-width:min(420px,calc(100% - 32px));padding:10px 14px;border-radius:12px;background:#ffffffed;border:1px solid #dbe4eb;font-size:12px;pointer-events:none}
+            .warehouse-fullscreen-info p{margin-top:4px;font-size:11px}
+            @media(max-width:700px){.warehouse-fullscreen-button{top:58px;right:10px;font-size:11px;padding:7px 10px}.warehouse-fullscreen-info{top:110px}.warehouse-expanded .map-help{bottom:120px}.warehouse-expanded .map-controls{bottom:12px;gap:2px}.warehouse-expanded .map-controls .button{padding:6px 8px;font-size:10px}}
+          `}</style>
+          <div ref={mapViewport} className={`map-canvas ${expandedView ? "warehouse-expanded" : ""} ${draggingTemplate ? "is-drop-target" : ""}`} onDragOver={event => { if (editing && event.dataTransfer.types.includes("application/waremap-rack")) { event.preventDefault(); event.dataTransfer.dropEffect = "copy" } }} onDrop={dropTemplate}>
+            <button ref={fullscreenButton} type="button" className="button secondary warehouse-fullscreen-button" aria-pressed={expandedView} onClick={toggleFullscreen}>{expandedView?<Minimize2 size={16}/>:<Maximize2 size={16}/>} {expandedView?"Thu nhỏ · Esc":"Toàn màn hình"}</button>
+            {expandedView && <div className="warehouse-fullscreen-info"><strong>{warehouse} · {editing?"Bố trí kệ":"Bản đồ kho 3D"}</strong><p>{product&&!editing?`${product.name} · Lô ${product.batch} · ${locationLabel(product)}`:"Kéo để xoay · Chuột phải để dịch góc nhìn · Cuộn để zoom"}</p><p>Esc hoặc Thu nhỏ để quay lại bảng chi tiết{editing?" và lưu sơ đồ":""}.</p></div>}
             {draggingTemplate && <div className="rack-drop-hint">Thả để đặt {draggingTemplate} tại đây</div>}
             {editing && <div className="builder-modebar" role="toolbar" aria-label="Công cụ bố trí">
-              <Button variant={tool === "select" ? "primary" : "ghost"} onClick={() => setTool("select")}><MousePointer2 size={15} />Chọn</Button>
-              <Button variant={tool === "move" ? "primary" : "ghost"} onClick={() => setTool("move")}><Move size={15} />Di chuyển</Button>
+              <Button variant={tool === "select" ? "primary" : "ghost"} onClick={() => {setPanView(false);setTool("select")}}><MousePointer2 size={15} />Chọn</Button>
+              <Button variant={tool === "move" ? "primary" : "ghost"} onClick={() => {setPanView(false);setTool("move")}}><Move size={15} />Di chuyển</Button>
               <Button variant="ghost" disabled={!rack} onClick={() => {
                 if (!rack) return
                 if (data.products.some(p => p.branch === warehouse && p.rack === rack.id && p.qty > 0)) return setError("Kệ đang có hàng. Hãy chuyển hàng trước khi xóa.")
@@ -517,7 +592,7 @@ export default function Warehouse() {
               }}><Trash2 size={15} />Xóa</Button>
               <details className="builder-more"><summary>Thêm công cụ</summary><div>
                 <Button variant="ghost" disabled={!history.length} onClick={() => { setDraft(history[history.length - 1]); setHistory(h => h.slice(0, -1)) }}><Undo2 size={15} />Hoàn tác</Button>
-                <Button variant="ghost" disabled={!rack} onClick={() => { setTool("rotate"); setView("3d") }}>Xoay kệ trong 3D</Button>
+                <Button variant="ghost" disabled={!rack} onClick={() => { setPanView(false); setTool("rotate"); setView("3d") }}>Xoay kệ trong 3D</Button>
                 <Button variant="ghost" onClick={() => { controls.current?.reset(); setCameraKey(k => k + 1) }}>Đặt lại góc nhìn</Button>
                 <small>Lưới kệ 50 cm; khay nhỏ 10 cm. Đổi kích thước tại bảng chi tiết kệ.</small>
               </div></details>
@@ -580,7 +655,7 @@ export default function Warehouse() {
                         onProductSelect={chooseProduct}
                         expiryLayer={!editing && layer === "Hạn dùng"}
                         expiryDays={data.settings.expiryDays}
-                        draggable={editing && tool === "move"}
+                        draggable={editing && tool === "move" && !panView}
                         onDragging={onDragging}
                         transform={editing && r.id === activeId && tool === "rotate" ? "rotate" : undefined}
                         onTransform={(x, z, rotation) => {
@@ -609,6 +684,10 @@ export default function Warehouse() {
                       minDistance={4}
                       maxDistance={25}
                       maxPolarAngle={Math.PI / 2.05}
+                      enablePan
+                      screenSpacePanning
+                      panSpeed={.8}
+                      mouseButtons={{LEFT:panView?MOUSE.PAN:MOUSE.ROTATE,MIDDLE:MOUSE.DOLLY,RIGHT:MOUSE.PAN}}
                       onStart={() => setLocateRequest(current=>current?{...current,cancelled:true}:null)}
                     />
                     {!editing && locateRequest && locateRequest.product.branch === warehouse && racks.find(r => r.id === locateRequest.product.rack) && <ProductLocator key={`${locateRequest.id}-${displayMode}`} request={locateRequest} rack={racks.find(r => r.id === locateRequest.product.rack)!} controls={controls} mode={displayMode} siblings={data.products.filter(p=>p.branch===warehouse&&p.rack===locateRequest.product.rack&&p.level===locateRequest.product.level&&p.bin===locateRequest.product.bin&&p.qty>0)}/>}
@@ -623,9 +702,11 @@ export default function Warehouse() {
                 : editing && tool === "move" ? "Kéo trực tiếp kệ để di chuyển · Nền trống để xoay · Kệ: lưới 50 cm · Khay nhỏ: 10 cm"
                 : editing && tool === "rotate" ? "Kéo vòng tròn quanh kệ để xoay · Lưu sơ đồ khi xong"
                 : editing ? "Chọn kệ để chỉnh kích thước · Di chuyển để bố trí trực tiếp trong 3D"
-                : "Nhấn kiện hàng để xem sản phẩm · Kéo nền để xoay · Cuộn để phóng to"}
+                : panView ? "Kéo chuột trái để dịch góc nhìn lên / xuống / trái / phải · Cuộn để zoom"
+                : "Kéo trái để xoay · Kéo chuột phải hoặc Shift + kéo trái để dịch góc nhìn · Cuộn để zoom"}
             </span>
             <div className={`map-controls ${editing ? "builder-view-controls" : ""}`}>
+              <Button variant={panView?"primary":"ghost"} disabled={view!=="3d"} aria-pressed={panView} onClick={()=>{setPanView(value=>!value);setTool("select")}}><Move size={13}/>{panView?"Đang dịch góc nhìn":"Dịch góc nhìn"}</Button>
               <Button
                 variant={view === "plan" ? "primary" : "ghost"}
                 onClick={() => { setLocateRequest(null); setView("plan") }}
@@ -767,7 +848,8 @@ export default function Warehouse() {
           )}
         </div>
         {rack ? (
-          <aside className={`panel ${editing ? "builder-inspector" : ""}`}>
+          <aside className={`panel ${editing ? "builder-inspector" : "warehouse-info-panel"}`} aria-label={editing?"Chỉnh sửa kệ":"Thông tin kệ và lô hàng"}>
+            {!editing&&<div role="separator" aria-label="Kéo thay đổi độ rộng bảng thông tin" aria-orientation="vertical" aria-valuenow={inspectorWidth} aria-valuemin={280} aria-valuemax={520} tabIndex={0} className="inspector-width-grip" onPointerDown={event=>beginPanelResize(event,"width")} onPointerMove={movePanelResize} onPointerUp={stopPanelResize} onPointerCancel={stopPanelResize} onKeyDown={event=>{if(event.key==="ArrowLeft"||event.key==="ArrowRight"){event.preventDefault();setInspectorWidth(width=>Math.max(280,Math.min(520,width+(event.key==="ArrowLeft"?24:-24))))}}}/>}
             <div className="panel-heading">
               <h2>{editing ? "Chi tiết kệ" : rack.name}</h2>
               <Button
@@ -816,14 +898,13 @@ export default function Warehouse() {
                 <>
                   {product ? (
                     <>
-                      <Badge tone="info">{wholeLot?"Cả mã/lô đang chọn":`Bao bì #${unitIndex+1} đang chọn`}</Badge>
-                      <UnitSelectionPanel units={displayedUnits} index={unitIndex} wholeLot={wholeLot} onUnit={index=>locateProduct(product,index)} onLot={()=>locateProduct(product,unitIndex,true)}/>
+                      <span className="lot-summary-label">Thông tin lô hàng đang chọn</span>
                       <h3>{product.name}</h3>
                       <p className="tiny">{product.variant} · {product.id}</p>
                       {product.storage3d?.unitsPerContainer && <p className="callout">Lưu nguyên thùng: {product.storage3d.unitsPerContainer} đơn vị/thùng · hiện chiếm {Math.ceil(product.qty/product.storage3d.unitsPerContainer)} thùng. Hình 3D dùng số đo nguyên thùng.</p>}
                       {product.storage3d && <Badge tone="info">{product.storage3d.stackable ? `Xếp ${product.storage3d.layers} lớp có kiểm soát` : "Một lớp · không chồng"}</Badge>}
                       <ExpiryBadge product={product} threshold={data.settings.expiryDays} />
-                      <div className="callout">
+                      <div className="lot-location">
                         <MapPin
                           size={17}
                           style={{ display: "inline", marginRight: 7 }}
@@ -840,14 +921,21 @@ export default function Warehouse() {
                           <dd>{product.qty}</dd>
                         </div>
                       </dl>
-                      <ProductSizingPanel key={productKey(product)} product={product} rack={rack} readOnly={!wholeLot}/>
-                      {wholeLot&&<ProductPlacementEditor key={`${productKey(product)}-${JSON.stringify(product.storage3d)}`} product={product} rack={rack} products={data.products.filter(p=>p.branch===warehouse&&p.rack===product.rack&&p.level===product.level&&p.bin===product.bin&&p.qty>0)}/>}
+                      <Button onClick={()=>locateProduct(product,unitIndex,true)}><MapPin size={15}/>Đến ô chứa lô này</Button>
+                      <p className="tiny muted">Tồn kho tính theo lô. Các bao bì trong 3D là hình đại diện, không phải từng sản phẩm có serial riêng.</p>
+                      <details key={`units-${productKey(product)}`}><summary>Chọn bao bì minh họa · {wholeLot?"Cả lô":`#${unitIndex+1}`}</summary><UnitSelectionPanel units={displayedUnits} index={unitIndex} wholeLot={wholeLot} onUnit={index=>locateProduct(product,index)} onLot={()=>locateProduct(product,unitIndex,true)}/></details>
+                      <details key={`size-${productKey(product)}`}><summary>Kích thước &amp; cách xếp hàng</summary><div className="stack"><ProductSizingPanel key={productKey(product)} product={product} rack={rack} readOnly={!wholeLot} onEditLot={()=>setWholeLot(true)}/>
+                      {wholeLot&&<ProductPlacementEditor key={`${productKey(product)}-${JSON.stringify(product.storage3d)}`} product={product} rack={rack} products={data.products.filter(p=>p.branch===warehouse&&p.rack===product.rack&&p.level===product.level&&p.bin===product.bin&&p.qty>0)}/>}</div></details>
+                      <details key={`slot-${productKey(product)}`}><summary>Hàng cùng ô &amp; chỗ trống</summary>
                       <SlotContents rack={rack} products={data.products.filter(p=>p.branch===warehouse&&p.rack===product.rack&&p.level===product.level&&p.bin===product.bin&&p.qty>0)} selected={product} onSelect={chooseProduct} onAdd={accessMode === "authenticated" && WAREHOUSE_PERMISSIONS[role].putaway ? ()=>{setScanTask({mode:"receive",locationCode:positionCode(product)});go("putaway")} : undefined}/>
+                      </details>
+                      <details><summary>Mã QR &amp; kiểm tra lô</summary><div className="stack">
                       <Button disabled={accessMode !== "authenticated"} onClick={() => { setScanTask({ mode: "lookup", productKey: productKey(product) }); go("scanner") }}>Quét QR xác minh sản phẩm</Button>
                       <Button disabled={accessMode !== "authenticated"} variant="secondary" onClick={() => setShowQR(true)}><QrCode size={16} />Nhãn QR vị trí & lô</Button>
                       <Button disabled={accessMode !== "authenticated"} variant="secondary" onClick={() => go("batches")}>
                         Xem lô & hạn dùng
                       </Button>
+                      </div></details>
                     </>
                   ) : (
                     <p className="tiny">
@@ -857,11 +945,11 @@ export default function Warehouse() {
                     </p>
                   )}
                   <details open={!product || undefined}>
-                    <summary>Hàng tại kệ này</summary>
-                    <div className="stack">
+                    <summary>Các lô trên kệ · {data.products.filter(p=>p.branch===warehouse&&p.rack===rack.id&&p.qty>0).length} lô</summary>
+                    <div className="stack rack-stock-list">
                       {data.products
                         .filter(
-                          (p) => p.branch === warehouse && p.rack === rack.id,
+                          (p) => p.branch === warehouse && p.rack === rack.id && p.qty > 0,
                         )
                         .map((p) => (
                           <button
@@ -871,7 +959,7 @@ export default function Warehouse() {
                           >
                             <div>
                               <strong className="tiny">{p.name}</strong>
-                              <p>{locationLabel(p)}</p>
+                              <p>Lô {p.batch} · {p.qty} đơn vị<br/>{locationLabel(p)}</p>
                             </div>
                           </button>
                         ))}
@@ -880,6 +968,7 @@ export default function Warehouse() {
                 </>
               )}
             </div>
+            {!editing&&<div role="separator" aria-label="Kéo thay đổi chiều cao bảng thông tin" aria-orientation="horizontal" aria-valuenow={inspectorHeight} aria-valuemin={360} aria-valuemax={1000} tabIndex={0} className="inspector-height-grip" onPointerDown={event=>beginPanelResize(event,"height")} onPointerMove={movePanelResize} onPointerUp={stopPanelResize} onPointerCancel={stopPanelResize} onKeyDown={event=>{if(event.key==="ArrowUp"||event.key==="ArrowDown"){event.preventDefault();setInspectorHeight(height=>Math.max(360,Math.min(1000,height+(event.key==="ArrowDown"?24:-24))))}}}>━━ Kéo để đổi chiều cao · Kéo mép trái để đổi chiều rộng</div>}
           </aside>
         ) : (
           <Panel title={editing ? "Chọn một kệ để chỉnh sửa" : "Tìm một mặt hàng"}>

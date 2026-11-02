@@ -11,7 +11,7 @@ import {
   Sparkles,
   Truck,
 } from "lucide-react"
-import { lazy, Suspense } from "react"
+import { lazy, Suspense, useEffect } from "react"
 import { useApp } from "../../app/store"
 import { Badge, Button, LinkButton, Panel } from "../../app/ui"
 import {
@@ -20,6 +20,8 @@ import {
   expiryLabel,
   locationLabel,
   transferDisplayId,
+  type Product,
+  type Rack,
 } from "../../app/model"
 import { useIndustry } from "../../shared/context/IndustryContext"
 
@@ -53,7 +55,7 @@ function MapSkeleton() {
 }
 
 export default function Dashboard() {
-  const { data, visibleProducts, branch, setBranch, go, setSelected, role } =
+  const { data, visibleProducts, branch, setBranch, go, setSelected, setScanTask, update, role } =
     useApp()
   const { config } = useIndustry()
   const IndustryIcon = config.icon === "Baby" ? Baby : Sparkles
@@ -76,6 +78,36 @@ export default function Dashboard() {
   const mapBranch = branch === "all" ? branches[0] : branch
   const mapRacks = data.racks[mapBranch] ?? []
   const mapAlerts = alerts.filter((p) => p.branch === mapBranch)
+  useEffect(()=>{
+    if(!["owner","manager"].includes(role))return
+    update(current=>{
+      const existing=current.racks[mapBranch]??[]
+      if(!existing.length || existing.some(rack=>rack.id==="DEMO-SHOW-6"))return current
+      const sources=current.products.filter(product=>product.branch===mapBranch&&product.id.startsWith("DEMO-")&&product.package3d)
+      if(!sources.length)return current
+      const additions:Rack[]=[]
+      const items:Product[]=[]
+      const names=config.id==="cosmetics"?["Serum & chăm sóc da","Son & trang điểm","Hộp mỹ phẩm","Phụ kiện làm đẹp","Tủ bảo quản mỹ phẩm","Bàn đóng đơn mỹ phẩm"]:["Bình sữa & phụ kiện","Chăm sóc bé","Đồ dùng mẹ & bé","Hàng soạn đơn","Tủ phụ kiện mẹ và bé","Bàn kiểm đếm"]
+      const positions=[[-5,6],[-1.7,6],[1.7,6],[5,6],[-5,-4],[-1.7,-4],[1.7,-4],[5,-4]]
+      for(let index=0;index<6;index++){
+        if(existing.some(rack=>rack.id===`DEMO-SHOW-${index+1}`))continue
+        const position=positions.find(([x,z])=>[...existing,...additions].every(rack=>Math.abs(x-rack.x)>(1.8+Math.hypot(rack.width,rack.depth))/2+.5 || Math.abs(z-rack.z)>(.7+Math.hypot(rack.width,rack.depth))/2+.5))
+        if(!position)continue
+        const rack:Rack={id:`DEMO-SHOW-${index+1}`,name:`[Mẫu] ${names[index]}`,kind:["Kệ khay nhựa","Kệ chia ô","Kệ V lỗ","Kệ ngăn nhỏ","Tủ bảo quản","Khu kiểm đếm"][index],x:position[0],z:position[1],width:1.8,depth:.7,height:index===5?.9:1.8,levels:index===5?1:3,bins:3,rotation:0}
+        additions.push(rack)
+        for(let slot=0;slot<3;slot++){
+          const source=sources[(index*3+slot)%sources.length],pack=source.package3d!
+          const capacity=Math.floor(rack.width/rack.bins*100/pack.widthCm)*Math.floor(rack.depth*100/pack.depthCm)
+          if(capacity<1||pack.heightCm>rack.height/rack.levels*100-5.5)continue
+          const id=`DEMO-SHOW-${config.id}-${index+1}-${slot+1}`
+          if(current.products.some(product=>product.id===id&&product.branch===mapBranch))continue
+          items.push({...source,id,batch:`LOT-${id}`,rack:rack.id,level:index===5?1:slot+1,bin:slot+1,qty:Math.min(12,capacity),storage3d:{layers:1,stackable:false}})
+        }
+      }
+      if(!additions.length)return current
+      return {...current,racks:{...current.racks,[mapBranch]:[...existing,...additions]},products:[...current.products,...items]}
+    })
+  },[mapBranch,role,config.id])
   const alertRacks = Array.from(new Set(mapAlerts.map((p) => p.rack)))
   const todayLabel = new Date().toLocaleDateString("vi-VN", {
     weekday: "long",
@@ -253,14 +285,21 @@ export default function Dashboard() {
         <div className="today-map">
           <div className="today-map__canvas">
             <Suspense fallback={<MapSkeleton />}>
-              <MiniWarehouse3D racks={mapRacks} alertRacks={alertRacks} />
+              <MiniWarehouse3D racks={mapRacks} alertRacks={alertRacks} products={data.products.filter(product=>product.branch===mapBranch)} onRackSelect={rack=>{
+                const item=data.products.find(product=>product.branch===mapBranch&&product.rack===rack.id&&product.qty>0)
+                setBranch(mapBranch)
+                if(item){setSelected(item.id);setScanTask({mode:"lookup",productKey:[item.id,item.batch,item.branch].join("|")})}
+                go("warehouse")
+              }}/>
             </Suspense>
             <span className="today-map__hint">
-              Chấm đỏ là kệ có lô cần chú ý
+              Kéo để xoay · Bấm kệ để mở kho 3D · Chấm đỏ: cần kiểm tra
             </span>
           </div>
           <aside className="today-map__side">
             <Badge tone="info">{mapBranch}</Badge>
+            <strong>{mapRacks.length} kệ · {data.products.filter(product=>product.branch===mapBranch&&product.qty>0).length} lô đang lưu</strong>
+            <p className="tiny">Kệ DEMO-SHOW và hàng [Mẫu] phục vụ trình diễn, được lưu trong dữ liệu demo trên trình duyệt này.</p>
             <strong>
               {alertRacks.length
                 ? `${alertRacks.length} kệ cần chú ý`

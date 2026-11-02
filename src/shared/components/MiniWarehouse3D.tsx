@@ -1,5 +1,8 @@
 import { Canvas } from '@react-three/fiber'
 import { Component, type ReactNode } from 'react'
+import { Bounds, OrbitControls, Html } from '@react-three/drei'
+import { WarehouseRack } from '../../features/builder/WarehouseRack'
+import type { Product, Rack as WarehouseRackData } from '../../app/model'
 
 export interface MiniRack {
   id: string
@@ -9,21 +12,19 @@ export interface MiniRack {
   width: number
   depth: number
   height: number
+  levels?: number
+  bins?: number
+  rotation?: number
+  kind?: string
 }
 
-function Rack({ rack, alert }: { rack: MiniRack; alert: boolean }) {
+function Rack({ rack, alert, products, onSelect }: { rack: MiniRack; alert: boolean; products: Product[]; onSelect?: (rack: MiniRack) => void }) {
   return (
-    <group position={[rack.x, 0, rack.z]}>
-      <mesh position={[0, rack.height / 2, 0]}>
-        <boxGeometry args={[rack.width, rack.height, rack.depth]} />
-        <meshStandardMaterial
-          color={alert ? '#f59e0b' : '#d7e5ea'}
-          roughness={0.72}
-          metalness={0.04}
-        />
-      </mesh>
+    <group>
+      <WarehouseRack rack={{...rack,levels:rack.levels??3,bins:rack.bins??3,rotation:rack.rotation??0,kind:rack.kind??"Kệ hàng"} as WarehouseRackData} active color={alert?'#d97706':'#7894af'} contents={products} inspecting={false} onSelect={()=>onSelect?.(rack)} onProductSelect={()=>onSelect?.(rack)} onTransform={()=>{}} expiryLayer={false} expiryDays={30}/>
+      <Html position={[rack.x,rack.height+.35,rack.z]} center style={{pointerEvents:'none'}}><span style={{fontSize:10,fontWeight:700,background:alert?'#fff7ed':'#fff',color:alert?'#9a3412':'#334155',padding:'3px 7px',borderRadius:6,whiteSpace:'nowrap'}}>{rack.id}{alert?' · Cần kiểm tra':''}</span></Html>
       {alert && (
-        <mesh position={[0, rack.height + 0.32, 0]}>
+        <mesh position={[rack.x, rack.height + 0.65, rack.z]}>
           <sphereGeometry args={[0.15, 16, 16]} />
           <meshStandardMaterial
             color="#dc2626"
@@ -64,11 +65,21 @@ class SceneBoundary extends Component<
 export function MiniWarehouse3D({
   racks,
   alertRacks,
+  products = [],
+  onRackSelect,
 }: {
   racks: MiniRack[]
   alertRacks: string[]
+  products?: Product[]
+  onRackSelect?: (rack: MiniRack) => void
 }) {
   if (!racks.length) return <Fallback />
+  const minX=Math.min(...racks.map(rack=>rack.x-Math.hypot(rack.width,rack.depth)/2))-1.5
+  const maxX=Math.max(...racks.map(rack=>rack.x+Math.hypot(rack.width,rack.depth)/2))+1.5
+  const minZ=Math.min(...racks.map(rack=>rack.z-Math.hypot(rack.width,rack.depth)/2))-1.5
+  const maxZ=Math.max(...racks.map(rack=>rack.z+Math.hypot(rack.width,rack.depth)/2))+1.5
+  const floorSize=Math.ceil(Math.max(maxX-minX,maxZ-minZ))
+  const centerX=(minX+maxX)/2,centerZ=(minZ+maxZ)/2
   return (
     <SceneBoundary>
       <Canvas
@@ -81,22 +92,27 @@ export function MiniWarehouse3D({
         <ambientLight intensity={1.15} />
         <directionalLight position={[6, 10, 5]} intensity={1.7} />
         <gridHelper
-          args={[14, 14, '#c9dbe2', '#e2edf1']}
-          position={[0, 0, -1.5]}
+          args={[floorSize, floorSize, '#c9dbe2', '#e2edf1']}
+          position={[centerX, 0, centerZ]}
         />
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, -1.5]}>
-          <planeGeometry args={[14, 12]} />
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[centerX, -0.02, centerZ]}>
+          <planeGeometry args={[floorSize, floorSize]} />
           <meshStandardMaterial color="#e7f0f3" />
         </mesh>
-        <group position={[0, 0, -1.5]}>
+        <Bounds fit clip observe margin={1.35}>
+        <group>
           {racks.map((rack) => (
             <Rack
               key={rack.id}
               rack={rack}
               alert={alertRacks.includes(rack.id)}
+              products={products.filter(product=>product.rack===rack.id&&product.qty>0)}
+              onSelect={onRackSelect}
             />
           ))}
         </group>
+        </Bounds>
+        <OrbitControls makeDefault enablePan={false} enableZoom={false} minPolarAngle={.25} maxPolarAngle={Math.PI/2.1}/>
       </Canvas>
     </SceneBoundary>
   )
