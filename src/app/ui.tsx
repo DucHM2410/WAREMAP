@@ -111,10 +111,12 @@ export function Modal({
   title,
   children,
   close,
+  className = "",
 }: {
   title: string
   children: ReactNode
   close: () => void
+  className?: string
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   useEffect(() => {
@@ -125,7 +127,7 @@ export function Modal({
   return createPortal(
     <dialog
       ref={dialog}
-      className="modal"
+      className={`modal ${className}`}
       aria-label={title}
       onCancel={close}
       onClick={(e) => {

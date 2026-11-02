@@ -53,6 +53,11 @@ export const money = (n: number) =>
 const localDate = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
 export const today = () => localDate(new Date())
+const dayOffset = (offset: number) => {
+  const date = new Date()
+  date.setDate(date.getDate() + offset)
+  return localDate(date)
+}
 export const dateLabel = (date: string) =>
   new Date(date + "T00:00:00").toLocaleDateString("vi-VN")
 export const daysLeft = (date: string) =>
@@ -99,7 +104,9 @@ const sampleLocations = [
   { rack: "A2", level: 1, bin: 3 },
   { rack: "B1", level: 2, bin: 1 },
 ]
-const sampleTransferIds = new Set(["CK-001", "CK-002"])
+const sampleTransferIds = new Set(
+  Array.from({ length: 8 }, (_, index) => `CK-00${index + 1}`),
+)
 // Includes the mixed-industry rows seeded before demo data became industry-aware.
 export const sampleProductIds = new Set([
   "WM-001",
@@ -200,6 +207,19 @@ export const initialRacks: Rack[] = [
   },
 ]
 export type TransferStatus = "Chuẩn bị" | "Đang chuyển" | "Kiểm nhận" | "Hoàn tất"
+export interface TransferDetails {
+  plannedDate: string
+  expectedDate: string
+  responsible: string
+  reason: string
+  note: string
+  shippingMethod: string
+  sender: string
+  receiver: string
+  deliveryTime: string
+  trackingCode: string
+  shippingNote: string
+}
 export interface Transfer {
   id: string
   productId: string
@@ -212,24 +232,86 @@ export interface Transfer {
   created: string
   history: string[]
   reserved: boolean
+  details?: TransferDetails
+}
+// Display code for the transfer list. Internal ids stay stable so saved data,
+// scan tasks and history continue to point at the same transfer.
+export function transferDisplayId(
+  transfer: Pick<Transfer, "id" | "created">,
+): string {
+  if (transfer.id.startsWith("TRF-")) return transfer.id
+  const sequence = transfer.id.match(/(\d+)$/)?.[1] ?? "001"
+  return `TRF-${transfer.created.replace(/-/g, "")}-${sequence.padStart(3, "0")}`
 }
 export function industryTransfers(items: Product[]): Transfer[] {
-  return items.slice(0, 2).map(
-    (item, index): Transfer => ({
+  // Keep demo transfers on lots that are still usable; the first sample lot in
+  // some industries is already expired and would be blocked by the create form.
+  const safeItems = items.filter((item) => daysLeft(item.expiry) >= 0)
+  const pool = safeItems.length ? safeItems : items
+  if (!pool.length) return []
+  const creators = ["Nguyễn An", "Minh Anh", "Hoàng Nam"]
+  const times = [
+    "08:45",
+    "09:20",
+    "10:05",
+    "11:10",
+    "13:30",
+    "14:15",
+    "15:40",
+    "16:20",
+  ]
+  const statuses: TransferStatus[] = [
+    "Đang chuyển",
+    "Kiểm nhận",
+    "Hoàn tất",
+    "Chuẩn bị",
+    "Kiểm nhận",
+    "Chuẩn bị",
+    "Hoàn tất",
+    "Đang chuyển",
+  ]
+  return statuses.map((status, index): Transfer => {
+    const item = pool[index % pool.length]
+    const sourceIndex = Math.max(0, branches.indexOf(item.branch))
+    const from = branches[sourceIndex]
+    const to = branches[(sourceIndex + 1) % branches.length]
+    const qty = Math.max(
+      4,
+      Math.min(24, Math.round(item.qty / 10) + (index % 3)),
+    )
+    const received =
+      status === "Hoàn tất"
+        ? qty
+        : status === "Kiểm nhận"
+          ? index === 1
+            ? Math.max(1, qty - 3)
+            : qty
+          : undefined
+    const history = [
+      `Đã tạo phiếu · ${creators[index % creators.length]} · ${times[index]}`,
+    ]
+    if (status !== "Chuẩn bị") {
+      history.push("Đã nhặt hàng & đóng gói · Hoàn tất")
+      history.push("Đã bàn giao cho đơn vị vận chuyển")
+    }
+    if (status === "Kiểm nhận" || status === "Hoàn tất") {
+      history.push(`Đã kiểm nhận ${received ?? 0}/${qty} sản phẩm`)
+    }
+    if (status === "Hoàn tất") history.push("Đã nhập hàng lên kệ")
+    return {
       id: `CK-00${index + 1}`,
       productId: item.id,
       batch: item.batch,
-      from: item.branch,
-      to: branches[(branches.indexOf(item.branch) + 1) % branches.length],
-      qty: index === 0 ? 20 : 10,
-      status: "Chuẩn bị",
-      created: today(),
-      history: [
-        `Đã tạo phiếu · ${index === 0 ? "Nguyễn An" : "Minh Anh"}`,
-      ],
-      reserved: false,
-    }),
-  )
+      from,
+      to,
+      qty,
+      received,
+      status,
+      created: dayOffset(-index),
+      history,
+      reserved: status !== "Chuẩn bị",
+    }
+  })
 }
 export interface Staff {
   id: string
@@ -314,6 +396,29 @@ export function withIndustrySamples(
     ],
   }
 }
+export function ensureTransferSamples(
+  data: DemoData,
+  config: IndustryConfig,
+): DemoData {
+  // Only expand untouched sample data. As soon as the user creates their own
+  // transfer, never inject additional demo rows into their workspace.
+  if (!data.transfers.every((transfer) => sampleTransferIds.has(transfer.id))) {
+    return data
+  }
+  const expected = industryTransfers(industryProducts(config))
+  const missing = expected.filter(
+    (transfer) =>
+      !data.transfers.some((existing) => existing.id === transfer.id),
+  )
+  if (!missing.length) return data
+  return {
+    ...data,
+    transfers: [...data.transfers, ...missing].sort(
+      (a, b) => b.created.localeCompare(a.created) || a.id.localeCompare(b.id),
+    ),
+  }
+}
+
 export function seed(config: IndustryConfig): DemoData {
   const demoProducts = industryProducts(config)
   return {

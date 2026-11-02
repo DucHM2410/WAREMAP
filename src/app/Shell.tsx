@@ -9,8 +9,11 @@ import {
   ChevronDown,
   ClipboardList,
   LayoutDashboard,
+  LogOut,
   Map,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   PanelsTopLeft,
   Package,
   ScanLine,
@@ -25,6 +28,7 @@ import { branches, roleNames, type Screen } from "./model"
 import { useApp } from "./store"
 import { useIndustry } from "../shared/context/IndustryContext"
 import { Badge, Brand, Button, SearchInput } from "./ui"
+import waremapLogo from "../assets/brand/waremap-logo.jpg"
 
 import { roleDescription } from "../shared/config/demoRoles"
 
@@ -108,6 +112,16 @@ const moreNavigation: NavItem[] = [
 ]
 
 const allNavigation = [...primaryNavigation, scanItem, ...moreNavigation]
+const SIDEBAR_STORAGE_KEY = "waremap:sidebar"
+
+function readCollapsedPreference() {
+  try {
+    return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "collapsed"
+  } catch {
+    return false
+  }
+}
+
 export function Shell({ children }: { children: ReactNode }) {
   const {
     screen,
@@ -125,6 +139,11 @@ export function Shell({ children }: { children: ReactNode }) {
   } = useApp()
   const [open, setOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(readCollapsedPreference)
+  const [isMobile, setIsMobile] = useState(
+    () => window.matchMedia("(max-width: 700px)").matches,
+  )
+  const rail = collapsed && !isMobile
   const { config } = useIndustry()
   const IndustryIcon = config.icon === "Baby" ? Baby : Sparkles
   const visibleMore = moreNavigation.filter(
@@ -136,6 +155,23 @@ export function Shell({ children }: { children: ReactNode }) {
   }
   const isActive = (target: Screen) =>
     screen === target
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        SIDEBAR_STORAGE_KEY,
+        collapsed ? "collapsed" : "expanded",
+      )
+    } catch {
+      // The sidebar preference simply is not remembered in restricted browsers.
+    }
+  }, [collapsed])
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 700px)")
+    const handleChange = () => setIsMobile(media.matches)
+    handleChange()
+    media.addEventListener("change", handleChange)
+    return () => media.removeEventListener("change", handleChange)
+  }, [])
   useEffect(() => {
     setMoreOpen(moreNavigation.some((n) => isActive(n.screen)))
     // Only react to screen changes; the menu stays toggleable afterwards.
@@ -153,6 +189,7 @@ export function Shell({ children }: { children: ReactNode }) {
           setOpen(false)
         }}
         aria-current={screen === n.screen ? "page" : undefined}
+        title={n.label}
       >
         <Icon size={18} />
         <span>{n.label}<small>{n.screen === "warehouse" ? "Kệ · sản phẩm · vị trí" : n.screen === "inventory" ? "Tra cứu và vận hành tồn kho" : n.screen === "dashboard" ? "Việc cần làm hôm nay" : ""}</small></span>
@@ -160,10 +197,21 @@ export function Shell({ children }: { children: ReactNode }) {
     )
   }
   return (
-    <div className="workspace">
-      <aside className={`sidebar ${open ? "is-open" : ""}`}>
-        <button className="brand-button" onClick={() => go("home")}>
+    <div className={`workspace ${rail ? "sidebar-collapsed" : ""}`}>
+      <aside
+        id="app-sidebar"
+        className={`sidebar ${open ? "is-open" : ""}`}
+        aria-label="Thanh điều hướng"
+      >
+        <button
+          className="brand-button"
+          onClick={() => go("home")}
+          title="WAREMAP · Về trang chủ"
+        >
           <Brand />
+          <span className="brand-mark" aria-hidden="true">
+            <img src={waremapLogo} alt="" />
+          </span>
         </button>
         <button
           className="mobile-close"
@@ -199,9 +247,13 @@ export function Shell({ children }: { children: ReactNode }) {
         )}
         <nav>
           {role === "platform" ? (
-            <button className={`nav-item ${screen === "admin" ? "active" : ""}`} onClick={() => go("admin")}>
+            <button
+              className={`nav-item ${screen === "admin" ? "active" : ""}`}
+              onClick={() => go("admin")}
+              title="Quản trị khách hàng"
+            >
               <Users size={18} />
-              Quản trị khách hàng
+              <span>Quản trị khách hàng</span>
             </button>
           ) : (
             <>
@@ -210,7 +262,17 @@ export function Shell({ children }: { children: ReactNode }) {
                 {primaryNavigation
                   .filter((n) => !n.roles || n.roles.includes(role))
                   .map(navButton)}
-                {["owner", "manager"].includes(role) && <button className={`builder-shortcut ${screen === "builder" ? "active" : ""}`} aria-current={screen === "builder" ? "page" : undefined} onClick={() => { go("builder"); setOpen(false) }}>↳ Thiết kế kho 3D</button>}
+                {["owner", "manager"].includes(role) && (
+                  <button
+                    className={`builder-shortcut ${screen === "builder" ? "active" : ""}`}
+                    aria-current={screen === "builder" ? "page" : undefined}
+                    title="Thiết kế kho 3D"
+                    onClick={() => { go("builder"); setOpen(false) }}
+                  >
+                    <span className="builder-shortcut__glyph" aria-hidden="true">↳</span>
+                    <span className="builder-shortcut__label">Thiết kế kho 3D</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   className={`nav-item nav-cta ${isActive("scanner") ? "active" : ""}`}
@@ -220,9 +282,10 @@ export function Shell({ children }: { children: ReactNode }) {
                     setOpen(false)
                   }}
                   aria-current={screen === "scanner" ? "page" : undefined}
+                  title="Quét QR nhanh"
                 >
                   <ScanLine size={18} />
-                  Quét QR nhanh
+                  <span>Quét QR nhanh</span>
                 </button>
               </div>
               <button
@@ -230,11 +293,12 @@ export function Shell({ children }: { children: ReactNode }) {
                 className={`nav-more ${moreOpen ? "is-open" : ""}`}
                 aria-expanded={moreOpen}
                 aria-controls="nav-more-items"
+                title="Xem thêm"
                 onClick={() => setMoreOpen((value) => !value)}
               >
                 <ChevronDown size={17} />
-                Xem thêm
-                <span>{visibleMore.length}</span>
+                <span className="nav-more__label">Xem thêm</span>
+                <span className="nav-more__count">{visibleMore.length}</span>
               </button>
               {moreOpen && (
                 <div className="nav-group nav-group--more" id="nav-more-items">
@@ -245,7 +309,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </>
           )}
         </nav>
-        {["owner", "platform"].includes(role) && <button className={`nav-item website-editor-link ${screen === "website-editor" ? "active" : ""}`} aria-current={screen === "website-editor" ? "page" : undefined} onClick={() => { go("website-editor"); setOpen(false) }}><PanelsTopLeft size={18}/><span>Chỉnh sửa trang chủ<small>Nội dung · hình ảnh · ngành hàng</small></span></button>}
+        {["owner", "platform"].includes(role) && <button className={`nav-item website-editor-link ${screen === "website-editor" ? "active" : ""}`} aria-current={screen === "website-editor" ? "page" : undefined} title="Chỉnh sửa trang chủ" onClick={() => { go("website-editor"); setOpen(false) }}><PanelsTopLeft size={18}/><span>Chỉnh sửa trang chủ<small>Nội dung · hình ảnh · ngành hàng</small></span></button>}
         <div className="sidebar-footer">
           {data.trialDemo && role !== "platform" && (
             <section className="trial-plan-card" aria-label="Quyền lợi Free Trial">
@@ -262,11 +326,24 @@ export function Shell({ children }: { children: ReactNode }) {
             <span />
             Tài khoản demo đã đăng nhập
           </div>
-          <Button variant="secondary" onClick={logout}>Đăng xuất / Đổi tài khoản</Button>
+          <Button
+            variant="secondary"
+            className="sidebar-logout"
+            onClick={logout}
+            title="Đăng xuất / Đổi tài khoản"
+            aria-label={rail ? "Đăng xuất / Đổi tài khoản" : undefined}
+          >
+            {rail ? <LogOut size={18} /> : "Đăng xuất / Đổi tài khoản"}
+          </Button>
           <details className="role-permissions"><summary>Quyền của {roleNames[role]}</summary><p>{roleDescription(role)}</p><small>Phạm vi: {role === "owner" || role === "platform" ? "Tất cả cơ sở" : branches[0]}</small></details>
-          <button className="back-home" onClick={() => go("home")}>
+          <button
+            className="back-home"
+            onClick={() => go("home")}
+            title="Về trang chủ"
+            aria-label={rail ? "Về trang chủ" : undefined}
+          >
             <ArrowLeft size={15} />
-            Về trang chủ
+            {!rail && <span>Về trang chủ</span>}
           </button>
         </div>
       </aside>
@@ -285,6 +362,17 @@ export function Shell({ children }: { children: ReactNode }) {
             onClick={() => setOpen(true)}
           >
             <Menu />
+          </button>
+          <button
+            type="button"
+            className="sidebar-toggle"
+            onClick={() => setCollapsed((value) => !value)}
+            aria-controls="app-sidebar"
+            aria-expanded={!rail}
+            aria-label={rail ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
+            title={rail ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
+          >
+            {rail ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />}
           </button>
           <div className="breadcrumb"><strong>{current.label}</strong></div>
           {role !== "platform" && <span className="header-industry-pill" title="Phân hệ đã được Chủ doanh xác nhận"><IndustryIcon size={17} />{config.shortLabel}<LockKeyhole size={14} /></span>}
