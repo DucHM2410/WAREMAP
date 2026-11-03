@@ -1,4 +1,4 @@
-# Hướng dẫn demo QR WareMap (3–5 phút)
+# Hướng dẫn demo QR WareMap — nhập, xuất và nhận chuyển kho
 
 ## Chuẩn bị
 
@@ -11,7 +11,7 @@
 
 | Bước | Thao tác | Điều cần chỉ cho người xem |
 | --- | --- | --- |
-| 1. Tạo hàng chờ nhập | Bấm **Chuẩn bị bộ QR demo** trong khung bên phải. | Có 20 sản phẩm đúng phân hệ, lô mới và hạn dùng sau 180 ngày. Hệ thống chọn ô trống đủ chỗ theo kích thước mẫu. **Tồn chưa tăng**. |
+| 1. Tạo hàng chờ nhập | Trong khung bên phải: chưa có bộ QR thì bấm **Chuẩn bị bộ QR demo**; đã ghi **Đã nhập lên kệ** thì bấm **Tạo lượt demo mới**; đang ghi **Đang chờ nhập · tồn chưa tăng** thì dùng bộ hiện có. | Có 20 sản phẩm đúng phân hệ, lô mới và hạn dùng sau 180 ngày. Hệ thống chọn ô trống đủ chỗ theo kích thước mẫu. **Tồn chưa tăng**. |
 | 2. Xuất nhãn | Bấm **Tải nhãn QR** dưới từng nhãn. Nhãn thứ nhất là vị trí `LOC:...`; nhãn thứ hai là thùng `CTN:...`. | QR vị trí gắn ở ô kệ; QR thùng gắn lên thùng hàng. **In bộ nhãn / Lưu PDF** mở bản hai nhãn để in. |
 | 3. Xác định chỗ đặt | Ở bước 1, bấm **Đọc QR từ ảnh**, chọn ảnh vị trí PNG/JPG vừa tải, rồi **Kiểm tra mã**. | Web đọc nội dung QR thật từ ảnh và kiểm tra cơ sở, kệ, tầng, ô. Việc đọc mã chưa ghi tồn. |
 | 4. Nhận diện thùng | Ở bước 2, bấm **Đọc QR từ ảnh**, chọn ảnh thùng rồi **Kiểm tra mã**. | Web lấy đúng tên hàng, SKU, lô, hạn dùng, số lượng từ thùng đã khai báo; kiểm tra cơ sở nhận. |
@@ -60,3 +60,37 @@ Một thùng chỉ chứa một SKU và một lô, nhập toàn bộ số lượ
 - **Tôi đã đếm đủ hàng, kiểm tra đúng lô và hạn dùng, rồi đặt hàng vào ô kệ đã chọn:** xác nhận cuối cùng bắt buộc để nhập hàng.
 
 Bộ mẫu đã chọn ô trống, có kích thước và không đặt nhiều lớp: chỉ cần tích xác nhận cuối cùng. “Lô hàng” là nhóm sản phẩm có chung mã lô ghi trên bao bì; cần giữ riêng để theo dõi hạn dùng.
+
+
+## Thử nhập hàng bằng nút mã mẫu (không cần camera)
+
+1. Vào **Sản phẩm & tồn kho → Quét nhập lên kệ**.
+2. Chọn trạng thái ở bước 1 của bảng trên. Bộ cũ đã nhập không thể nhập lần hai.
+3. Mở **Hai nhãn QR của lượt demo → Không có ảnh? Dùng mã mẫu để mô phỏng**.
+4. Bấm **Điền mã vị trí demo → Kiểm tra mã** ở bước 1: xác định nơi cất hàng.
+5. Bấm **Điền mã thùng demo → Kiểm tra mã** ở bước 2: lấy thông tin thùng hàng.
+6. Đối chiếu thông tin, tích xác nhận đã đếm và đặt hàng, rồi bấm **Xác nhận nhập 20 đơn vị lên kệ**. Chỉ lúc này tồn lô mới tăng 0 → 20.
+7. Bấm **Xem vị trí trên Kho 3D**. Ghi lại đúng mã lô mới để chuyển kho; cùng tên sản phẩm có thể có nhiều lô.
+
+## Xuất chuyển kho: chỉ quét QR lô
+
+Dùng tài khoản Chủ doanh để trình bày cả kho gửi và kho nhận trên cùng trình duyệt.
+
+1. Vào **Chuyển kho → Tạo phiếu chuyển kho**.
+2. Chọn **Kho xuất**, **Kho nhận** khác nhau. Chọn sản phẩm và đúng lô vừa nhập, số lượng 5. Điền ngày chuyển, ngày nhận dự kiến, người phụ trách, lý do và tạo phiếu.
+3. Tìm sản phẩm trên **Kho 3D** để minh họa nhân viên tới lấy hàng, rồi quay lại phiếu.
+4. Chọn phiếu, bấm **Quét gửi** ở dòng hàng. Phiếu một dòng cũng có **Duyệt · Xác minh & gửi hàng**.
+5. Mở **Dùng mã mẫu để thử thao tác → Dùng mã mẫu lô hàng**. Hoặc nhập mã lô đang hiển thị rồi bấm **Kiểm tra mã**; không cần thêm tiền tố `LOT:`.
+6. Kiểm đếm đủ 5 sản phẩm rồi **Xác nhận gửi hàng**. Kho gửi còn 15 sản phẩm của lô đó. Khi mọi dòng đã gửi, phiếu chuyển sang **Đang chuyển**.
+7. Bấm **Về phiếu chuyển kho**. Phiếu nhiều dòng phải quét gửi từng dòng.
+
+## Nhận chuyển kho: quét vị trí và lô
+
+1. Chọn phiếu đang chuyển → **Quét nhận** tại dòng hàng hoặc **Quét kiểm nhận** với phiếu một dòng.
+2. Chọn kệ, tầng, ô tại **Vị trí xếp hàng tại nơi nhận**. Lô đã có tại kho nhận phải nhập bổ sung cùng vị trí.
+3. Mở **Dùng mã mẫu để thử thao tác** → **Dùng mã mẫu vị trí**, rồi **Dùng mã mẫu lô hàng**.
+4. Điền **Số lượng thực nhận: 5** → **Xác nhận số thực nhận**.
+5. Kho nhận cộng 5; nhận đủ mọi dòng thì **Hoàn tất**. Nhận 4/5 thì chỉ cộng 4 và phiếu sang **Kiểm nhận** chờ đối soát.
+6. Đây đã là thao tác nhập vào kệ tại kho nhận. Không tạo thùng chờ nhập cho cùng số hàng lần nữa.
+
+Quét mã chỉ đối chiếu mã đã khai báo; nhân viên vẫn phải tự kiểm tra loại hàng, lô, hạn dùng, số lượng và tình trạng thực tế. Camera ở màn xác minh chuyển kho phụ thuộc hỗ trợ của trình duyệt; nút mã mẫu và nhập tay vẫn sử dụng được.

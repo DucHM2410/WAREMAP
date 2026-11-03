@@ -60,7 +60,7 @@ const FLOW_STEPS = [
   { label: "Đóng gói & Bàn giao" },
   { label: "In-Transit", sub: "Đang vận chuyển" },
   { label: "Kiểm nhận", sub: "Tại kho nhận" },
-  { label: "Đối soát & Hoàn tất", sub: "Nhập kệ qua luồng QR riêng" },
+  { label: "Đối soát & Hoàn tất", sub: "Đã nhận và ghi vị trí kệ" },
 ] as const
 
 type Incident = { kind: string; assignee: string; note: string; resolved: boolean }
