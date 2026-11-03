@@ -1780,10 +1780,6 @@
 
 /* ── Transfer creation workspace ─────────────────────────────────────────── */
 .modal.trf-create-modal {
-  position: fixed;
-  inset: 50% auto auto 50%;
-  margin: 0;
-  transform: translate(-50%, -50%);
   width: min(1200px, calc(100vw - 32px));
   max-height: min(94vh, 960px);
   padding: 20px;
