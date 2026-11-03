@@ -222,6 +222,9 @@ export interface TransferDetails {
 }
 export interface TransferLine {
   id: string
+  // Unique code for this goods line. The transfer slip keeps its own code;
+  // each line adds a two-digit suffix so every item can be tracked separately.
+  code?: string
   productId: string
   batch: string
   qty: number
@@ -254,11 +257,18 @@ export function createTransferSlip(input: {
 }): Transfer | undefined {
   const firstLine = input.lines[0]
   if (!firstLine) return undefined
+  const lines = input.lines.map((line, index) => ({
+    ...line,
+    code:
+      line.code ??
+      transferLineCode({ id: input.id, created: input.created }, line, index),
+  }))
   return {
     ...input,
+    lines,
     productId: firstLine.productId,
     batch: firstLine.batch,
-    qty: input.lines.reduce((total, line) => total + line.qty, 0),
+    qty: lines.reduce((total, line) => total + line.qty, 0),
     status: "Chuẩn bị",
     reserved: false,
   }
@@ -283,6 +293,33 @@ export function transferDisplayId(
   if (transfer.id.startsWith("TRF-")) return transfer.id
   const sequence = transfer.id.match(/(\d+)$/)?.[1] ?? "001"
   return `TRF-${transfer.created.replace(/-/g, "")}-${sequence.padStart(3, "0")}`
+}
+export function nextTransferCode(
+  created: string,
+  existing: Pick<Transfer, "id" | "created">[],
+): string {
+  const prefix = `TRF-${created.replace(/-/g, "")}-`
+  const used = new Set(existing.map((transfer) => transferDisplayId(transfer)))
+  let sequence = 1
+  let code = `${prefix}${String(sequence).padStart(3, "0")}`
+  while (used.has(code)) {
+    sequence += 1
+    code = `${prefix}${String(sequence).padStart(3, "0")}`
+  }
+  return code
+}
+// Every goods line has its own code under the slip code, e.g.
+// TRF-20261103-001-01, TRF-20261103-001-02. Older rows without a saved code
+// keep working through the same deterministic suffix.
+export function transferLineCode(
+  transfer: Pick<Transfer, "id" | "created">,
+  line: Pick<TransferLine, "id" | "code">,
+  index: number,
+): string {
+  return (
+    line.code ??
+    `${transferDisplayId(transfer)}-${String(index + 1).padStart(2, "0")}`
+  )
 }
 export function industryTransfers(items: Product[]): Transfer[] {
   // Keep demo transfers on lots that are still usable; the first sample lot in
