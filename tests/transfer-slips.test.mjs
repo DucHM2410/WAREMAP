@@ -1,6 +1,11 @@
 import test from "node:test"
 import assert from "node:assert/strict"
-import { createTransferSlip, transferLines } from "../src/app/model.ts"
+import {
+  createTransferSlip,
+  nextTransferCode,
+  transferLineCode,
+  transferLines,
+} from "../src/app/model.ts"
 
 const details = {
   plannedDate: "2026-11-02",
@@ -35,7 +40,13 @@ test("one transfer slip contains all selected items and sums their quantities", 
   assert.ok(slip)
   assert.equal(slip.id, "TRF-20261102-001")
   assert.equal(slip.qty, 6)
-  assert.deepEqual(transferLines(slip), lines)
+  assert.deepEqual(
+    transferLines(slip),
+    lines.map((line, index) => ({
+      ...line,
+      code: `TRF-20261102-001-${String(index + 1).padStart(2, "0")}`,
+    })),
+  )
 })
 
 test("empty transfer slips are rejected and older single-item transfers remain readable", () => {
@@ -75,4 +86,44 @@ test("empty transfer slips are rejected and older single-item transfers remain r
       received: 2,
     },
   ])
+})
+
+test("each new transfer gets a fresh slip code for the same day", () => {
+  assert.equal(
+    nextTransferCode("2026-11-03", [
+      { id: "TRF-20261103-001", created: "2026-11-03" },
+    ]),
+    "TRF-20261103-002",
+  )
+  assert.equal(
+    nextTransferCode("2026-11-03", [
+      { id: "TRF-20261103-001", created: "2026-11-03" },
+      { id: "TRF-20261103-002", created: "2026-11-03" },
+    ]),
+    "TRF-20261103-003",
+  )
+  // Legacy CK-### demo slips still reserve their displayed sequence.
+  assert.equal(
+    nextTransferCode("2026-11-03", [{ id: "CK-001", created: "2026-11-03" }]),
+    "TRF-20261103-002",
+  )
+})
+
+test("older saved transfers get a deterministic code for every goods line", () => {
+  const legacy = {
+    id: "legacy-001",
+    created: "2026-11-02",
+    productId: "BABY-004",
+    batch: "LOT-1",
+    from: "Kho trung tâm",
+    to: "Chi nhánh Quận 3",
+    qty: 4,
+    status: "Chuẩn bị",
+    history: [],
+    reserved: true,
+  }
+  assert.equal(
+    transferLineCode(legacy, transferLines(legacy)[0], 0),
+    "TRF-20261102-001-01",
+  )
 })

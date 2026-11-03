@@ -7,6 +7,7 @@ import {
   locationLabel,
   positionCode,
   transferDisplayId,
+  transferLineCode,
   transferLines,
 } from "../../app/model"
 import { Badge, Button, PageTitle, Panel } from "../../app/ui"
@@ -44,11 +45,19 @@ export default function Scanner() {
     busy = useRef(false),
     submitRef = useRef<(code: string) => void>(() => {})
   const transfer = data.transfers.find((t) => t.id === scanTask.transferId)
+  const transferLineList = transfer ? transferLines(transfer) : []
   const transferLine = transfer
-    ? transferLines(transfer).find(
+    ? transferLineList.find(
         (line) => line.id === scanTask.transferLineId,
-      ) ?? (transferLines(transfer).length === 1 ? transferLines(transfer)[0] : undefined)
+      ) ?? (transferLineList.length === 1 ? transferLineList[0] : undefined)
     : undefined
+  const transferLineIndex = transferLine
+    ? transferLineList.indexOf(transferLine)
+    : -1
+  const transferLineCodeValue =
+    transfer && transferLine && transferLineIndex >= 0
+      ? transferLineCode(transfer, transferLine, transferLineIndex)
+      : ""
   const p =
     scanTask.mode === "lookup"
       ? visibleProducts.find((p) => productKey(p) === lookupKey)
@@ -226,7 +235,7 @@ export default function Scanner() {
       }))
       log(
         "Đã gửi hàng",
-        `${transferDisplayId(transfer)} · ${p.name} · ${transferLine.qty} sản phẩm · ${transfer.from} → ${transfer.to}`,
+        `${transferLineCodeValue || transferDisplayId(transfer)} · ${p.name} · ${transferLine.qty} sản phẩm · ${transfer.from} → ${transfer.to}`,
       )
     } else {
       const targetRack = data.racks[targetBranch]?.find((r) => r.id === rackId)
@@ -322,7 +331,7 @@ export default function Scanner() {
       })
       log(
         "Đã kiểm nhận hàng",
-        `${transferDisplayId(transfer)} · ${p.name} · ${received}/${transferLine.qty} sản phẩm · ${transfer.to}`,
+        `${transferLineCodeValue || transferDisplayId(transfer)} · ${p.name} · ${received}/${transferLine.qty} sản phẩm · ${transfer.to}`,
       )
     }
     setDone(true)
@@ -358,7 +367,15 @@ export default function Scanner() {
                 scanTask.mode === "dispatch"
                   ? "Xác minh gửi hàng"
                   : "Kiểm nhận hàng"
-              } · ${transfer ? transferDisplayId(transfer) : "Không tìm thấy phiếu"}`}
+              } · ${
+                transfer
+                  ? `Phiếu ${transferDisplayId(transfer)}${
+                      transferLineCodeValue
+                        ? ` · Mã dòng ${transferLineCodeValue}`
+                        : ""
+                    }`
+                  : "Không tìm thấy phiếu"
+              }`}
         </div>
         {scanTask.mode === "lookup" && (
           <label className="field">

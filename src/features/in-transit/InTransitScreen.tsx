@@ -34,8 +34,10 @@ import {
   branches,
   createTransferSlip,
   daysLeft,
+  nextTransferCode,
   today,
   transferDisplayId,
+  transferLineCode,
   type Transfer,
   type TransferDetails,
   transferLines,
@@ -246,6 +248,7 @@ export default function Transfers() {
   const [draftExpectedDate, setDraftExpectedDate] = useState(
     dateAfter(today(), 1),
   )
+  const [draftCreated, setDraftCreated] = useState(today)
 
   const scopedTransfers = data.transfers.filter((transfer) => {
     const inBranch =
@@ -269,11 +272,11 @@ export default function Transfers() {
     if (!matchesStatus) return false
     if (!normalizedQuery) return true
     const lineSearch = transferLines(transfer)
-      .map((line) => {
+      .map((line, index) => {
         const product = data.products.find(
           (item) => item.id === line.productId && item.batch === line.batch,
         )
-        return `${line.batch} ${product?.name ?? ""} ${product?.id ?? line.productId}`
+        return `${transferLineCode(transfer, line, index)} ${line.batch} ${product?.name ?? ""} ${product?.id ?? line.productId}`
       })
       .join(" ")
     return `${transferDisplayId(transfer)} ${transfer.id} ${transfer.from} ${transfer.to} ${lineSearch}`
@@ -452,6 +455,7 @@ export default function Transfers() {
     setDraftDestination(destination)
     setDraftPlannedDate(today())
     setDraftExpectedDate(dateAfter(today(), 1))
+    setDraftCreated(today())
     setDraftLines([
       {
         key: 1,
@@ -530,17 +534,8 @@ export default function Transfers() {
       trackingCode: String(form.get("trackingCode") ?? "").trim(),
       shippingNote: String(form.get("shippingNote") ?? "").trim(),
     }
-    const created = today()
-    const prefix = `TRF-${created.replace(/-/g, "")}-`
-    const usedCodes = new Set(
-      data.transfers.map((transfer) => transferDisplayId(transfer)),
-    )
-    let sequence = 1
-    let code = `${prefix}${String(sequence).padStart(3, "0")}`
-    while (usedCodes.has(code)) {
-      sequence += 1
-      code = `${prefix}${String(sequence).padStart(3, "0")}`
-    }
+    const created = draftCreated
+    const code = nextTransferCode(created, data.transfers)
     const transfer = createTransferSlip({
       id: code,
       from: source,
@@ -575,7 +570,7 @@ export default function Transfers() {
     setToDate(today())
     setPage(1)
     setChosen(transfer.id)
-    notify(`Đã tạo một phiếu ${transferDisplayId(transfer)} cho ${validLines.length} mặt hàng.`)
+    notify(`Đã tạo phiếu ${transferDisplayId(transfer)} với ${validLines.length} mã dòng riêng.`)
   }
 
   const reconcileSelected = (event: FormEvent<HTMLFormElement>) => {
@@ -688,6 +683,9 @@ export default function Transfers() {
         product.qty > 0 &&
         daysLeft(product.expiry) >= 0,
   )
+  const draftTransferCode = nextTransferCode(draftCreated, data.transfers)
+  const draftLineCode = (index: number) =>
+    `${draftTransferCode}-${String(index + 1).padStart(2, "0")}`
   const draftChecks = [
       { label: "Kho xuất và kho nhận hợp lệ", valid: draftSource !== draftDestination },
       {
@@ -853,7 +851,7 @@ export default function Transfers() {
                   setPage(1)
                   setChosen("")
                 }}
-                placeholder="Tìm mã phiếu, sản phẩm..."
+                placeholder="Tìm mã phiếu, mã dòng, sản phẩm..."
                 aria-label="Tìm phiếu chuyển"
               />
               {query && (
@@ -1159,13 +1157,14 @@ export default function Transfers() {
                   <strong className="trf-detail__items-title">
                     Mặt hàng ({selectedLines.length})
                   </strong>
-                  {selectedLines.map((line) => {
+                  {selectedLines.map((line, index) => {
                     const product = data.products.find(
                       (item) =>
                         item.id === line.productId &&
                         item.batch === line.batch,
                     )
                     const sent = line.sent ?? selected.reserved
+                    const lineCode = transferLineCode(selected, line, index)
                     return (
                       <div className="trf-detail__item" key={line.id}>
                         <div>
@@ -1177,6 +1176,12 @@ export default function Transfers() {
                               : sent
                                 ? " · Đã gửi"
                                 : ""}
+                          </small>
+                          <small
+                            className="trf-detail__line-code"
+                            title={lineCode}
+                          >
+                            Mã dòng {lineCode}
                           </small>
                         </div>
                         {selected.status === "Chuẩn bị" &&
@@ -1872,9 +1877,13 @@ export default function Transfers() {
                                   </option>
                                 ))}
                               </select>
-                              {product && (
+                              {product ? (
                                 <small className="trf-create-sku">
-                                  SKU {product.id}
+                                  SKU {product.id} · Mã dòng {draftLineCode(index)}
+                                </small>
+                              ) : (
+                                <small className="trf-create-sku trf-create-muted">
+                                  Mã dòng {draftLineCode(index)}
                                 </small>
                               )}
                             </td>
@@ -1944,7 +1953,7 @@ export default function Transfers() {
                   </div>
                   <div className="trf-create-fefo">
                     <Info size={14} />
-                    Tất cả mặt hàng trong danh sách sẽ nằm trong cùng một phiếu; từng dòng được quét riêng khi giao và nhận.
+                    Tất cả mặt hàng trong danh sách sẽ nằm trong cùng một phiếu; từng dòng có mã riêng và được quét riêng khi giao và nhận.
                     Hàng chưa bị trừ khỏi tồn kho khi tạo phiếu.
                   </div>
                 </section>
@@ -2027,12 +2036,16 @@ export default function Transfers() {
                     <small>Dự kiến: {formatDate(draftExpectedDate)}</small>
                   </div>
                 </div>
+                <div className="trf-create-summary__code">
+                  <span>Mã phiếu</span>
+                  <strong>{draftTransferCode}</strong>
+                </div>
                 <div className="trf-create-summary__items">
                   <div className="trf-create-summary__label">
                     Danh sách hàng hóa
                     <span>{draftLines.length} mặt hàng</span>
                   </div>
-                  {draftItems.map(({ key, product, qty }) => (
+                  {draftItems.map(({ key, product, qty }, index) => (
                     <div className="trf-create-summary__item" key={key}>
                       <PackageCheck size={18} />
                       <div>
@@ -2041,6 +2054,9 @@ export default function Transfers() {
                           {product
                             ? `Lô ${product.batch} · HSD ${formatDate(product.expiry)}`
                             : "Chưa chọn lô hàng"}
+                        </small>
+                        <small className="trf-create-summary__item-code">
+                          Mã dòng: {draftLineCode(index)}
                         </small>
                         <small>Số lượng: {Number(qty) || 0}</small>
                       </div>

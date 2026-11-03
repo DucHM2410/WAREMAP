@@ -523,7 +523,7 @@ Chi tiết từng trạng thái:
 
 ### 5.3 Đúng hàng, đúng nơi
 
-- Mỗi phiếu có **1 mã phiếu** dùng xuyên suốt: tạo → đóng thùng → gửi → nhận → đối soát.
+- Mỗi phiếu có **1 mã phiếu** dùng xuyên suốt: tạo → đóng thùng → gửi → nhận → đối soát. Mỗi dòng hàng trong phiếu có **mã dòng riêng** (`<mã phiếu>-01`, `-02`…) để theo dõi và quét giao/nhận từng mặt hàng; mỗi lần tạo phiếu luôn cấp mã phiếu mới.
 - Mã phiếu in ra dán lên từng thùng; quét mã phiếu là cách duy nhất để mở bước đóng thùng/kiểm hàng.
 - **Đối soát tự động**: so sánh số gửi và số nhận ngay khi nhập số thực nhận. Chênh lệch được **ghi lại, không tự sửa** tồn kho.
 - Hàng đang đi đường **không** cộng vào tồn cơ sở nhận cho tới khi nhận đủ.
