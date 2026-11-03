@@ -78,6 +78,10 @@ export default function Scanner() {
         ? positionCode(p)
         : ""
   const expectedBatch = p ? `LOT:${p.batch}` : ""
+  const dispatch = scanTask.mode === "dispatch"
+  const requiredScans = dispatch ? 1 : 2
+  const scanningLocation = !dispatch && step === 0
+  const currentCode = scanningLocation ? expectedLocation : expectedBatch
   const stopCamera = () => {
     stream.current?.getTracks().forEach((t) => t.stop())
     stream.current = null
@@ -95,25 +99,30 @@ export default function Scanner() {
     setDone(false)
     setReceived(transferLine?.qty ?? transfer?.qty ?? 1)
   }, [scanTask.transferId, scanTask.transferLineId, scanTask.mode, lookupKey, rackId, level, bin])
-  const verify = (code: string) => {
-    if (!p || done) return
-    const expected = step === 0 ? expectedLocation : expectedBatch
-    if (code.trim() !== expected) {
+  const verify = (code: string, manual = false) => {
+    if (!p || done || step >= requiredScans) return
+    const expected = currentCode
+    // Printed lot IDs omit the QR payload prefix. Accept them when typed,
+    // while camera scans must still contain the expected QR payload.
+    const matchesTypedLot = manual && !scanningLocation && code.trim() === p.batch
+    if (code.trim() !== expected && !matchesTypedLot) {
       setGood(false)
       setResult(
         `Mã chưa khớp. Cần ${
-          step === 0 ? "đúng mã vị trí đang chọn" : `lô ${p.batch}`
+          scanningLocation ? "đúng mã vị trí đang chọn" : `lô ${p.batch}`
         }.`,
       )
       return
     }
     setGood(true)
     setResult(
-      step === 0
+      scanningLocation
         ? "Đúng vị trí. Tiếp theo, quét mã lô hàng."
-        : `Đã xác minh đúng vị trí và lô ${p.batch}.`,
+        : dispatch
+          ? `Đúng lô ${p.batch}. Kiểm đếm hàng trước khi xác nhận gửi.`
+          : `Đã xác minh đúng vị trí và lô ${p.batch}.`,
     )
-    setStep((s) => Math.min(2, s + 1))
+    setStep((s) => Math.min(requiredScans, s + 1))
     setInput("")
   }
   submitRef.current = verify
@@ -122,7 +131,7 @@ export default function Scanner() {
       if (!(window as any).BarcodeDetector) {
         setGood(false)
         setResult(
-          "Trình duyệt này chưa hỗ trợ đọc QR bằng camera. Hãy nhập mã hoặc dùng mã mẫu bên dưới.",
+          "Camera trên trình duyệt này chưa hỗ trợ đọc QR. Bạn vẫn có thể nhập mã vào ô bên dưới rồi bấm “Kiểm tra mã”, hoặc mở “Dùng mã mẫu để thử thao tác”.",
         )
         return
       }
@@ -146,7 +155,7 @@ export default function Scanner() {
       formats: ["qr_code"],
     })
     const timer = setInterval(async () => {
-      if (!video.current || busy.current || step >= 2) return
+      if (!video.current || busy.current || step >= requiredScans) return
       busy.current = true
       try {
         const codes = await detector.detect(video.current)
@@ -157,9 +166,9 @@ export default function Scanner() {
       }
     }, 800)
     return () => clearInterval(timer)
-  }, [camera, step])
+  }, [camera, step, requiredScans])
   const finalize = () => {
-    if (!p || step !== 2 || done) return
+    if (!p || step !== requiredScans || done) return
     if (scanTask.mode === "lookup") {
       setDone(true)
       log("Đã xác minh vị trí & lô", `${p.name} · ${p.branch} · ${locationLabel(p)}`)
@@ -209,7 +218,7 @@ export default function Scanner() {
                   reserved: allSent,
                   history: [
                     ...t.history,
-                    `Đã xác minh vị trí & lô ${transferLine.batch}, gửi ${transferLine.qty} sản phẩm`,
+                    `Đã quét QR lô ${transferLine.batch}, gửi ${transferLine.qty} sản phẩm`,
                   ],
                 }
               })(),
@@ -325,7 +334,7 @@ export default function Scanner() {
       {["owner","manager","warehouse"].includes(role) && <div className="putaway-shortcut"><div><strong>Nhập thùng hàng mới?</strong><p>Dùng luồng quét vị trí và mã thùng để cộng tồn sau khi lên kệ.</p></div><Button onClick={()=>go("putaway")}>Quét nhập lên kệ</Button></div>}
       <PageTitle
         title="Quét & xác minh"
-        description="Quét đúng vị trí, sau đó quét đúng lô hàng. Có thể nhập mã thủ công."
+        description={dispatch ? "Tới vị trí lấy hàng, quét QR lô và kiểm đếm trước khi xác nhận gửi. Không cần quét QR vị trí." : "Quét đúng vị trí, sau đó quét đúng lô hàng. Có thể nhập mã thủ công."}
         action={
           <Button
             variant="secondary"
@@ -412,7 +421,7 @@ export default function Scanner() {
           <div className="panel-body">
             <div className="row between" style={{ marginBottom: 16 }}>
               <Badge tone="info">
-                {step >= 2 ? "Đã xác minh 2/2" : `Bước ${step + 1}/2`}
+                {step >= requiredScans ? `Đã xác minh ${requiredScans}/${requiredScans}` : `Bước ${step + 1}/${requiredScans}`}
               </Badge>
               <span className="tiny muted">{p?.name || "Chọn mặt hàng"}</span>
             </div>
@@ -433,14 +442,12 @@ export default function Scanner() {
                 <>
                   <ScanLine size={45} strokeWidth={1.2} />
                   <strong>
-                    {step === 0
-                      ? "Quét mã vị trí"
-                      : step === 1
-                        ? "Quét mã lô hàng"
-                        : "Đúng vị trí · Đúng lô"}
+                    {step >= requiredScans
+                      ? dispatch ? "Đúng lô hàng" : "Đúng vị trí · Đúng lô"
+                      : scanningLocation ? "Quét mã vị trí" : "Quét mã lô hàng"}
                   </strong>
                   <p>
-                    {step === 0
+                    {scanningLocation
                       ? "Xác định nơi lấy hoặc cất hàng"
                       : "Kiểm tra đúng hàng trước khi xác nhận"}
                   </p>
@@ -457,11 +464,11 @@ export default function Scanner() {
                 {camera ? "Tắt camera" : "Mở camera"}
               </Button>
             </div>
-            {step < 2 && (
+            {step < requiredScans && (
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
-                  verify(input)
+                  verify(input, true)
                 }}
               >
                 <label className="field">
@@ -470,9 +477,10 @@ export default function Scanner() {
                     required
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder={step === 0 ? "LOC:…" : "LOT:…"}
+                    placeholder={scanningLocation ? "LOC:…" : p?.batch || "Nhập mã lô trên nhãn"}
                     autoComplete="off"
                   />
+                  {!scanningLocation && <small>Nhập mã lô trên nhãn, ví dụ: {p?.batch}. Không cần thêm “LOT:”.</small>}
                 </label>
                 <Button type="submit" disabled={!p}>
                   Kiểm tra mã
@@ -494,8 +502,9 @@ export default function Scanner() {
                 </div>
               </div>
             )}
-            {step >= 2 && !done && (
+            {step >= requiredScans && !done && (
               <div className="stack" style={{ marginTop: 18 }}>
+                {dispatch && <p className="tiny">Kiểm tra đúng sản phẩm, lô, hạn dùng và đủ {transferLine?.qty} sản phẩm. Chỉ xác nhận sau khi đã kiểm đếm thực tế.</p>}
                 {scanTask.mode === "receive" && (
                   <label className="field">
                     Số lượng thực nhận
@@ -553,18 +562,17 @@ export default function Scanner() {
                 Mã minh họa để kiểm tra luồng khi chưa có nhãn QR thực tế.
               </p>
               <div className="callout">
-                Vị trí: {expectedLocation}
-                <br />
-                Lô: {expectedBatch}
+                {!dispatch && <>Vị trí: {expectedLocation}<br /></>}
+                Mã lô: {p.batch}
               </div>
               <Button
                 variant="secondary"
-                disabled={step >= 2}
+                disabled={step >= requiredScans}
                 onClick={() =>
-                  verify(step === 0 ? expectedLocation : expectedBatch)
+                  verify(scanningLocation ? expectedLocation : p.batch, true)
                 }
               >
-                Dùng mã mẫu {step === 0 ? "vị trí" : "lô hàng"}
+                Dùng mã mẫu {scanningLocation ? "vị trí" : "lô hàng"}
               </Button>
             </div>
           </details>
