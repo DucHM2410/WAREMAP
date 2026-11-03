@@ -28,6 +28,7 @@ import { useIndustry } from "../shared/context/IndustryContext"
 import { Badge, Brand, Button, SearchInput } from "./ui"
 import { canAccessScreen } from "./access"
 import "./sidebar.css"
+import "./business-ui.css"
 import waremapLogo from "../assets/brand/waremap-logo.jpg"
 
 
@@ -165,7 +166,7 @@ export function Shell({ children }: { children: ReactNode }) {
     group: screen === "admin" ? "Nội bộ" : "Xem thêm",
   }
   const isActive = (target: Screen) =>
-    screen === target || (target === "warehouse" && ["builder", "putaway"].includes(screen))
+    screen === target
   useEffect(() => {
     try {
       window.localStorage.setItem(
@@ -213,7 +214,7 @@ export function Shell({ children }: { children: ReactNode }) {
     )
   }
   return (
-    <div className={`workspace ${rail ? "sidebar-collapsed" : ""}`}>
+    <div className={`workspace business-ui ${rail ? "sidebar-collapsed" : ""}`} data-business-screen={screen}>
       <aside
         id="app-sidebar"
         className={`sidebar ${open ? "is-open" : ""}`}
@@ -270,7 +271,8 @@ export function Shell({ children }: { children: ReactNode }) {
             </button>
           ) : (
             <>
-              <div className="nav-group"><span className="nav-caption">Vận hành</span>{operations.map(navButton)}</div>
+              <div className="nav-group"><span className="nav-caption">Tra cứu</span>{operations.filter(item=>["dashboard","inventory","warehouse","batches"].includes(item.screen)).map(navButton)}</div>
+              <div className="nav-group"><span className="nav-caption">Vận hành</span>{canAccessScreen(accessMode,role,"builder")&&navButton({screen:"builder",label:"Thiết kế kho 3D",icon:Map,group:"Vận hành"})}{canAccessScreen(accessMode,role,"putaway")&&navButton({screen:"putaway",label:"Quét nhập lên kệ",icon:ScanLine,group:"Vận hành"})}{operations.filter(item=>!["dashboard","inventory","warehouse","batches"].includes(item.screen)).map(navButton)}</div>
               {management.length > 0 && <div className="nav-group"><span className="nav-caption">Quản lý</span>{management.map(navButton)}</div>}
             </>
           )}
@@ -356,6 +358,7 @@ export function Shell({ children }: { children: ReactNode }) {
           )}
         </header>
         <div className="demo-strip">
+          <span className="business-scope"><Building2 size={14}/><strong>{role === "platform"?"Nội bộ WareMap":branch==="all"?"Tất cả cơ sở được cấp quyền":branch}</strong><span>· {roleNames[role]}</span></span>
           <span>
             <span className="status-dot" />
             {data.trialDemo ? "Free Trial demo · 0đ/7 ngày · 1 cơ sở · 1 Chủ doanh + 1 Quản lý kho + 3 Nhân viên · Không đếm hạn thật" : "Dữ liệu minh họa · Thay đổi lưu trên trình duyệt này"}

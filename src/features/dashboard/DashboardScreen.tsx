@@ -112,7 +112,9 @@ export default function Dashboard() {
     month: "2-digit",
   })
 
-  const showProduct = (id: string, b: string) => {
+  const showProduct = (id: string, b: string, batch: string) => {
+    const item = visibleProducts.find(product => product.id === id && product.branch === b && product.batch === batch)
+    if (item) setScanTask({ mode: "lookup", productKey: [item.id, item.batch, item.branch].join("|") })
     setSelected(id)
     setBranch(b)
     go("warehouse")
@@ -143,7 +145,7 @@ export default function Dashboard() {
               </p>
               <div className="today-hero__actions">
                 <Button
-                  onClick={() => showProduct(critical.id, critical.branch)}
+                  onClick={() => showProduct(critical.id, critical.branch, critical.batch)}
                 >
                   {role === "sales" ? `Xem sản phẩm tại Kệ ${critical.rack}` : `Đi đến Kệ ${critical.rack} để xử lý lô hàng`}
                   <ArrowRight size={15} />
@@ -291,7 +293,7 @@ export default function Dashboard() {
             {critical ? (
               <Button
                 variant="secondary"
-                onClick={() => showProduct(critical.id, critical.branch)}
+                onClick={() => showProduct(critical.id, critical.branch, critical.batch)}
               >
                 Tìm hàng nhanh
               </Button>
@@ -339,7 +341,7 @@ export default function Dashboard() {
                     </div>
                     <Button
                       variant="secondary"
-                      onClick={() => showProduct(p.id, p.branch)}
+                      onClick={() => showProduct(p.id, p.branch, p.batch)}
                     >
                       Vị trí
                     </Button>

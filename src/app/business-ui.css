@@ -1,0 +1,78 @@
+/* Adapted from the Claude handoff; scoped to the real workspace, never public/auth pages. */
+.workspace.business-ui{--ink:#192c45;--muted:#55657d;--line:#d6e0ee;--bg:#f4f7fb;--teal:#0b57c7;color:var(--ink);background:var(--bg);font-size:14px}
+.business-ui .workspace-main{background:var(--bg)}
+.business-ui .page-content{max-width:1580px;margin-inline:auto;width:100%;padding:28px 28px 40px}
+.business-ui .page-content.map-page{max-width:none;padding:24px}
+.business-ui .app-header{background:#fff;border-bottom:3px solid var(--industry-primary);box-shadow:none}
+.business-ui .demo-strip{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:10px 26px;background:#fffaf0;border-bottom:1px dashed #e0c681;color:#725617;font-size:11px}
+.business-ui .demo-strip>span{display:flex;align-items:center;gap:6px}
+.business-ui .demo-strip .business-scope{font-size:12px;color:#192c45;flex-shrink:0}
+.business-ui .demo-strip>.badge{margin-left:auto}
+.business-ui .sidebar{background:#fff;border-right:1px solid var(--line)}
+.business-ui .sidebar .nav-caption{font-size:11px;letter-spacing:.7px;color:#55657d;margin-top:12px}
+.business-ui .sidebar .nav-item{min-height:42px;border-radius:10px;font-size:13px;color:#334155;gap:10px}
+body .business-ui .sidebar .nav-item.active{background:#0b57c7;color:#fff;border-color:#0b57c7;box-shadow:none}
+.business-ui .sidebar .nav-item.active svg{color:inherit}
+.business-ui .sidebar .nav-item:not(.active):hover{background:#edf3fb}
+.business-ui .page-heading{margin-bottom:22px;gap:16px}.business-ui .page-heading h1{font-size:28px;font-weight:700;letter-spacing:-.7px}
+.business-ui .page-heading p{font-size:14px;line-height:1.8;max-width:760px}
+.business-ui .eyebrow{color:#55657d;font-size:10px;letter-spacing:1px}
+.business-ui .panel{border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 2px #192c4510}
+.business-ui .panel-heading{padding:16px 20px}.business-ui .panel-heading h2{font-size:16px}.business-ui .panel-body{padding:20px}
+body .business-ui .button.primary{background:#0b57c7;color:#fff;border-color:#0b57c7;box-shadow:none}
+body .business-ui .button.primary:hover{background:#0846a6}
+body .business-ui .button.secondary{color:#0b57c7;border-color:#bfd0e8;background:#fff}
+body .business-ui .button.ghost{color:#0b57c7}
+.business-ui .button{font-size:13px;min-height:40px;border-radius:9px;padding:9px 13px;white-space:normal;line-height:1.5}
+.business-ui .button:disabled{opacity:.45}
+.business-ui :is(button,a,input,select,summary,[role=separator]):focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
+.business-ui :is(input:not([type=checkbox]):not([type=range]),select,textarea){border-color:var(--line);border-radius:8px;font-size:14px;min-height:42px}
+.business-ui label.field{font-size:13px;gap:7px}.business-ui .toolbar{gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.business-ui .table-scroll table{font-size:13px;min-width:760px}.business-ui .table-scroll th{background:#f6f8fc;color:#55657d;font-size:11px;letter-spacing:.3px;padding:13px 16px;white-space:nowrap}
+.business-ui .table-scroll td{padding:15px 16px;border-color:#e6ecf4;vertical-align:middle}.business-ui .table-scroll tbody tr:hover{background:#f6f9fe}
+.business-ui .table-scroll td small{font-size:11px;line-height:1.7;color:#64748b}.business-ui .pagination{padding:14px 18px;font-size:12px}
+.business-ui .callout{font-size:13px;line-height:1.8;border-radius:9px;background:#eef3fa;border-left:3px solid #7895c0}
+.business-ui .callout.success{background:#e7f6ee;color:#0b6b45;border-color:#9ad3b6}.business-ui .callout.danger{background:#fdecea;color:#b42318;border-color:#f0a8a0}
+.business-ui .badge{font-size:11px;border-radius:20px;line-height:1.5;padding:4px 9px}
+.business-ui .business-summary{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;font-size:12px;color:#55657d}
+.business-ui .business-summary strong{color:#192c45}.business-ui .business-summary>span{background:#fff;border:1px solid var(--line);padding:8px 12px;border-radius:8px}
+.business-ui .today-hero{background:#fff;border:1px solid var(--line);border-left:4px solid var(--industry-primary);border-radius:12px;box-shadow:none}
+.business-ui .today-hero h1{font-size:27px}.business-ui .today-hero__aside{background:#f5f8fc;border-radius:10px;padding:18px}
+.business-ui .today-kpis{gap:12px}.business-ui .today-kpi{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:none}
+.business-ui .today-map{padding:16px;gap:18px}.business-ui .today-map__side{padding:12px;gap:12px}.business-ui .today-map__racks{gap:6px}
+.business-ui .builder-workspace{grid-template-columns:180px minmax(0,1fr) 300px;gap:14px;align-items:start}
+.business-ui .builder-toolbox{padding:14px}.business-ui .builder-toolbox>h2{font-size:16px}.business-ui .builder-toolbox>p{font-size:12px;line-height:1.7}
+.business-ui .rack-library-card{border-radius:10px;border-color:var(--line);background:#fff}.business-ui .rack-library-card:hover{border-color:#0b57c7;background:#f5f9ff}
+.business-ui .builder-inspector .panel-body{font-size:13px;gap:15px}.business-ui .builder-inspector .field{font-size:12px}
+.business-ui .map-canvas{border:1px solid var(--line);border-radius:12px}.business-ui .map-overlay .badge{background:#fff;color:#334155}
+.business-ui .warehouse-info-panel{border-color:var(--line)}.business-ui .warehouse-info-panel .lot-location{border-left-color:#0b57c7;background:#edf4ff}
+.business-ui .warehouse-located{border:1px solid #a9c4ee;background:#edf4ff;border-radius:10px}.business-ui .warehouse-located strong{color:#192c45}
+.business-ui .save-bar{padding:14px;background:#fff;border:1px solid var(--line);border-radius:10px;gap:8px}
+.business-ui .putaway-layout{grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}.business-ui .putaway-layout>aside{max-height:calc(100dvh - 150px);overflow:auto;position:sticky;top:100px;padding:2px}
+.business-ui .putaway-progress{display:flex;gap:8px;flex-wrap:wrap;padding:14px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.business-ui .putaway-progress span{font-size:13px;flex:1;min-width:120px;border:1px solid var(--line);border-radius:20px;background:#fff;color:#55657d;padding:10px 14px;text-align:center}
+.business-ui .putaway-progress span.active{background:#0b57c7;color:#fff;border-color:#0b57c7}.business-ui .putaway-progress span.complete{background:#e7f6ee;color:#0b6b45;border-color:#9ad3b6}
+.business-ui .putaway-layout .check-row{padding:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:9px;align-items:flex-start;font-size:13px;line-height:1.7}
+.business-ui .putaway-layout input[type=checkbox]{flex-shrink:0;margin-top:3px;accent-color:#0b57c7}
+.business-ui .putaway-stock-change{border:1px solid #bfd0e8;background:#f5f9ff;border-radius:10px;padding:16px}
+.business-ui .trf-hero{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:none;padding:22px}.business-ui .trf-hero>svg{display:none}
+.business-ui .trf-hero h1{font-size:28px}.business-ui .trf-hero p{font-size:13px;line-height:1.7}.business-ui .trf-kpi{box-shadow:none;border-radius:12px;border-color:var(--line)}
+.business-ui .trf-flow{background:#fff;box-shadow:none!important;border-color:var(--line)!important}.business-ui .trf-workspace{gap:18px}.business-ui .trf-detail{border-radius:12px;border-color:var(--line)}
+.business-ui .trf-detail__body{padding:18px}.business-ui .trf-table{font-size:13px}.business-ui .trf-table td{padding:14px 12px}.business-ui .trf-status{font-size:11px}
+.business-ui .setting-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:8px;background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:20px}
+@media(max-width:1200px){.business-ui .builder-workspace{grid-template-columns:160px minmax(0,1fr)}.business-ui .builder-inspector{grid-column:1/-1}.business-ui .putaway-layout{grid-template-columns:minmax(0,1fr) 280px}}
+@media(max-width:960px){.business-ui .page-content{padding:22px 18px}.business-ui .page-content.map-page{padding:18px}.business-ui .putaway-layout{grid-template-columns:1fr}.business-ui .putaway-layout>aside{position:static;max-height:none}.business-ui .app-header{flex-wrap:wrap}.business-ui .demo-strip{padding:10px 18px}}
+@media(max-width:700px){.business-ui .page-content,.business-ui .page-content.map-page{padding:18px 14px}.business-ui .page-heading{align-items:flex-start}.business-ui .page-heading h1{font-size:24px}.business-ui .page-heading p{font-size:13px}.business-ui .builder-workspace{grid-template-columns:1fr}.business-ui .builder-toolbox{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.business-ui .builder-toolbox>.eyebrow,.business-ui .builder-toolbox>.button,.business-ui .builder-toolbox>small{grid-column:1/-1}.business-ui .demo-strip>span:not(.business-scope){display:none}.business-ui .business-scope{flex-wrap:wrap}.business-ui .putaway-progress span{font-size:11px;min-width:90px;padding:8px}.business-ui .trf-hero{padding:16px}.business-ui .today-map{padding:10px}}
+@media(prefers-reduced-motion:reduce){.business-ui *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+/* Override earlier body industry selectors without changing the industry itself. */
+body:is(.industry-mom,.industry-cosmetics) .workspace.business-ui .button.primary{background:#0b57c7;color:#fff;border-color:#0b57c7}
+body:is(.industry-mom,.industry-cosmetics) .workspace.business-ui .button.primary:hover{background:#0846a6}
+body:is(.industry-mom,.industry-cosmetics) .workspace.business-ui .button.secondary,body:is(.industry-mom,.industry-cosmetics) .workspace.business-ui .button.ghost{color:#0b57c7}
+body:is(.industry-mom,.industry-cosmetics) .workspace.business-ui .sidebar .nav-item.active{background:#0b57c7;color:#fff}
+@media(max-width:700px){
+  .business-ui .app-header .breadcrumb{flex:1 1 calc(100% - 50px);min-width:0}
+  .business-ui .app-header .breadcrumb strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+  .business-ui .app-header .branch-picker{margin-left:0;max-width:none;flex:1;min-width:0}
+  .business-ui .demo-strip .business-scope{flex-shrink:1;max-width:100%;min-width:0;font-size:11px}
+  .business-ui .business-scope strong{overflow-wrap:anywhere}
+}

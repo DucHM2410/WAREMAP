@@ -72,6 +72,10 @@ export default function Inventory() {
   }
   const actualDetail =
     detail && data.products.find((p) => productKey(p) === productKey(detail))
+  const locateLot=(item:Product)=>{
+    setScanTask({mode:"lookup",productKey:productKey(item)})
+    setSelected(item.id);setBranch(item.branch);setSearch("");go("warehouse")
+  }
   return (
     <>
       <PageTitle
@@ -138,6 +142,7 @@ export default function Inventory() {
         </div>
       )}
       <Panel>
+        <div className="business-summary" style={{padding:"16px 18px 0"}}><span><strong>{filtered.length}</strong> lô phù hợp</span><span><strong>{filtered.reduce((total,item)=>total+item.qty,0)}</strong> đơn vị tồn</span><span>Mỗi dòng = một mã hàng / lô / cơ sở</span></div>
         {filtered.length ? (
           <>
             <div className="table-scroll">
@@ -145,6 +150,7 @@ export default function Inventory() {
                 <thead>
                   <tr>
                     <th>Sản phẩm</th>
+                    <th>Mã lô</th>
                     <th>Tồn kho</th>
                     <th>Cơ sở</th>
                     <th>Vị trí</th>
@@ -170,6 +176,7 @@ export default function Inventory() {
                             </div>
                           </div>
                         </td>
+                        <td><strong>{p.batch}</strong><small>{dateLabel(p.expiry)}</small></td>
                         <td>
                           <strong>{p.qty}</strong>
                           <small>sản phẩm</small>
@@ -188,6 +195,7 @@ export default function Inventory() {
                           />
                         </td>
                         <td>
+                          <Button variant="secondary" onClick={()=>locateLot(p)} aria-label={`Định vị lô ${p.batch}`}><MapPin size={14}/>Định vị lô</Button>
                           <Button variant="ghost" onClick={() => setDetail(p)}>
                             Chi tiết
                           </Button>
@@ -271,13 +279,7 @@ export default function Inventory() {
               <QRLabels product={actualDetail} />
             </details>}
             <Button
-              onClick={() => {
-                setScanTask({mode:"lookup",productKey:productKey(actualDetail)})
-                setSelected(actualDetail.id)
-                setBranch(actualDetail.branch)
-                setSearch("")
-                go("warehouse")
-              }}
+              onClick={() => locateLot(actualDetail)}
             >
               <MapPin size={16} />
               Định vị lô {actualDetail.batch} trong kho 3D

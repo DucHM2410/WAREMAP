@@ -123,6 +123,7 @@ export default function Admin() {
         Môi trường quản trị minh họa. Việc duyệt chỉ cập nhật dữ liệu trên trình
         duyệt, không tạo thông tin đăng nhập thật.
       </div>
+      <div className="business-summary"><span><strong>{data.requests.filter(request=>request.status==="Chờ duyệt").length}</strong> yêu cầu chờ duyệt</span><span><strong>{data.requests.filter(request=>request.status==="Cần bổ sung").length}</strong> yêu cầu cần bổ sung</span><span>Quản trị hệ thống · Tách biệt kho khách hàng</span></div>
       <div className="setting-tabs">
         {["Yêu cầu", "Doanh nghiệp", "Tài khoản", "Cập nhật sản phẩm"].map(
           (t) => (

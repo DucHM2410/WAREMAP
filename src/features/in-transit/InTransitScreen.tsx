@@ -839,6 +839,7 @@ export default function Transfers() {
         </div>
       </section>
 
+      <div className="business-summary"><span>1. Chọn phiếu → 2. Kiểm tra lô / số lượng → 3. Xác minh giao nhận</span><span>Tạo phiếu chưa trừ tồn · Báo sự cố khi có chênh lệch</span></div>
       <div className="trf-workspace">
         <div className="trf-list">
           <section className="trf-filters" aria-label="Bộ lọc phiếu chuyển">

@@ -502,6 +502,7 @@ export default function Warehouse() {
         {!isGuest && ["owner","manager"].includes(role) && <p className="tiny muted" style={{marginTop:10}}>Muốn thêm hoặc thay đổi kệ? Chọn Chỉnh sửa sơ đồ và xem hướng dẫn thiết kế ở màn hình đó.</p>}
         <p className="tiny muted" style={{marginTop:10}}>{isGuest?"Kho mẫu không cho sửa sơ đồ, nhập xuất hoặc lưu dữ liệu doanh nghiệp.":"Chỉ các thao tác được cấp quyền mới hiển thị. Có thể kéo mép trái bảng chi tiết để đổi chiều rộng, kéo thanh dưới để đổi chiều cao."}</p>
       </details>}
+      {editing && <div className="business-summary" aria-live="polite"><span><strong>{warehouse}</strong></span><span>{draft.length} kệ trong sơ đồ</span><span style={{color:dirty?"#8a5200":"#0b6b45"}}>{dirty?"● Chưa lưu · Lưu sơ đồ để áp dụng":"✓ Sơ đồ đã lưu"}</span><span>Thêm kệ → Bố trí → Lưu → Xuất QR</span></div>}
       {isGuest && <section className="guest-industry-control">
         <label>Ngành hàng mẫu<select value={demoIndustry} onChange={event=>{setDemoIndustry(event.currentTarget.value as Industry);setChosen("");setSelected("");setSelectedBatch("");setLocateRequest(null);setFocusedRack(null);handledLocation.current="";setSearch("")}}><option value="mom-baby">Mẹ &amp; Bé</option><option value="cosmetics">Mỹ phẩm</option></select></label>
       </section>}

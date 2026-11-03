@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUpRight, Check, Pause, Play } from "lucide-react"
+import { ArrowRight, ArrowUpRight, Check, Pause, Play, MapPin, ScanLine, Truck } from "lucide-react"
 
 import { useEffect, useState } from "react"
 
@@ -220,16 +220,16 @@ export function PublicSite({
             .wm-site .wm-zalo-preview{position:absolute;right:16px;bottom:62px;max-width:260px;padding:18px;background:white;border:1px solid #dbeafe;border-radius:16px;box-shadow:0 16px 40px #192c4520;color:#192c45}
             .wm-zalo-preview strong{color:#0876dd}.wm-zalo-preview small{font-weight:400;color:#64748b;margin-left:8px}.wm-zalo-preview p{font-size:14px;margin:8px 0}.wm-zalo-preview span{font-size:12px}
             .wm-advisor-section{padding-block:56px}.wm-advisor-section h2{font-size:clamp(24px,3vw,36px);margin:12px 0}.wm-advisor-section>p{color:#64748b;max-width:760px;line-height:1.8}
-            .wm-value-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:28px}.wm-value-card{border:1px solid #e2e8f0;border-radius:18px;padding:28px;background:#fff}.wm-value-card p{font-size:14px;line-height:1.7;color:#64748b}.wm-value-card strong{display:block;font-size:22px;color:#0b57c7;margin:14px 0}.wm-value-card span{color:#64748b}.wm-advisor-note{font-size:12px;margin-top:20px}
+            .wm-value-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:28px}.wm-value-card{display:flex;flex-direction:column;text-align:left;border:1px solid #e2e8f0;border-radius:15px;padding:24px;background:#fff;box-shadow:0 2px 4px #18354303}.wm-value-card p{font-size:13px;line-height:1.8;color:#64748b;margin:0 0 20px}.wm-value-card h3{font-size:19px;color:#192c45;line-height:1.5;margin:14px 0 10px}.wm-value-card .wm-value-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#eaf3ff;color:#0b57c7}.wm-value-card .wm-value-problem{font-size:11px;color:#64748b;margin-top:14px}.wm-value-card .wm-value-flow{margin-top:auto;padding:12px;background:#f5f9ff;border-radius:9px;color:#334155;font-size:12px;line-height:1.9;border:1px solid #e5edf7}.wm-value-card .wm-value-flow b{font-size:10px;display:block;color:#64748b;font-weight:500}.wm-advisor-note{font-size:12px;margin-top:20px}
             @media(max-width:700px){.wm-value-grid{grid-template-columns:1fr}.wm-site .wm-zalo-preview{position:relative;right:auto;bottom:auto;max-width:none;margin:12px 0}.wm-advisor-section{padding-block:32px}}
           `}</style>
-          <section className="wm-section wm-advisor-section" aria-labelledby="wm-value-title">
-            <span className="wm-eyebrow">TỪ VẤN ĐỀ ĐẾN QUY TRÌNH CỤ THỂ</span>
-            <h2 id="wm-value-title">Bài toán thực tế đã giải quyết</h2>
+          <section className="wm-section wm-advisor-section" aria-labelledby="wm-value-title" style={{textAlign:"center"}}>
+            <span className="wm-eyebrow">VẬN HÀNH CÙNG WAREMAP</span>
+            <h2 id="wm-value-title">Từ tìm hàng đến nhập kệ và chuyển kho</h2>
+            <p style={{marginInline:"auto"}}>Ba công việc quen thuộc, được kết nối bằng vị trí lưu trữ và thông tin lô hàng.</p>
             <div className="wm-value-grid">
-              {[{before:"Tìm hàng 5 phút",after:"Còn 30 giây",description:"Tìm mã hàng → định vị đúng kệ, tầng và ô trong 3D."},{before:"Đếm kho thủ công",after:"Đối soát QR 2 chiều, lệch 0%",description:"Quét vị trí và mã lô; ghi nhận chênh lệch để quản lý xử lý."},{before:"Thất lạc hàng đi đường",after:"Theo dõi In-transit minh bạch",description:"Theo dõi phiếu từ lúc tạo đến kiểm nhận, kèm lịch sử và người phụ trách."}].map(value=><article className="wm-value-card" key={value.before}><span>{value.before}</span><strong>→ {value.after}</strong><p>{value.description}</p></article>)}
+              {[{icon:MapPin,problem:"Khó tìm đúng hàng, đúng lô",title:"Định vị lô trên Kho 3D",description:"Tìm theo tên, SKU hoặc mã lô. Bản đồ đưa bạn đến ô chứa hàng, kèm tồn kho và hạn sử dụng của lô đang chọn.",flow:"Tìm lô → Kệ → Tầng → Ô"},{icon:ScanLine,problem:"Dễ đặt nhầm hàng vào vị trí",title:"Quét & nhập hàng lên kệ",description:"Quét QR vị trí, quét hoặc nhập mã thùng, rồi kiểm tra thông tin và xác nhận nhập. Hàng cùng ô được phân biệt theo mã và lô.",flow:"Vị trí → Mã thùng → Xác nhận"},{icon:Truck,problem:"Khó nắm tình trạng hàng chuyển",title:"Theo dõi phiếu chuyển kho",description:"Xem kho xuất, kho nhận và tiến trình của từng phiếu. Xác minh giao nhận bằng QR; ghi nhận chênh lệch hoặc sự cố cùng người xử lý.",flow:"Tạo phiếu → Giao hàng → Kiểm nhận"}].map(({icon:Icon,...value})=><article className="wm-value-card" key={value.title}><span className="wm-value-icon"><Icon size={21}/></span><span className="wm-value-problem">{value.problem}</span><h3>{value.title}</h3><p>{value.description}</p><div className="wm-value-flow"><b>QUY TRÌNH TRONG HỆ THỐNG</b>{value.flow}</div></article>)}
             </div>
-            <p className="wm-advisor-note">30 giây và lệch 0% là mục tiêu minh họa cho quy trình, chưa phải kết quả đo lường hoặc cam kết. Hiệu quả phụ thuộc dữ liệu vị trí, thiết bị và cách vận hành.</p>
           </section>
         </>}
         {page !== "home" && (

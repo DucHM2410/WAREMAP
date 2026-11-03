@@ -1,6 +1,6 @@
 import { Canvas } from '@react-three/fiber'
 import { Component, type ReactNode } from 'react'
-import { Bounds, OrbitControls, Html } from '@react-three/drei'
+import { Bounds, OrbitControls } from '@react-three/drei'
 import { WarehouseRack } from '../../features/builder/WarehouseRack'
 import type { Product, Rack as WarehouseRackData } from '../../app/model'
 
@@ -22,7 +22,6 @@ function Rack({ rack, alert, products, onSelect }: { rack: MiniRack; alert: bool
   return (
     <group>
       <WarehouseRack rack={{...rack,levels:rack.levels??3,bins:rack.bins??3,rotation:rack.rotation??0,kind:rack.kind??"Kệ hàng"} as WarehouseRackData} active color={alert?'#d97706':'#7894af'} contents={products} inspecting={false} onSelect={()=>onSelect?.(rack)} onProductSelect={()=>onSelect?.(rack)} onTransform={()=>{}} expiryLayer={false} expiryDays={30}/>
-      <Html position={[rack.x,rack.height+.35,rack.z]} center style={{pointerEvents:'none'}}><span style={{fontSize:10,fontWeight:700,background:alert?'#fff7ed':'#fff',color:alert?'#9a3412':'#334155',padding:'3px 7px',borderRadius:6,whiteSpace:'nowrap'}}>{rack.id}{alert?' · Cần kiểm tra':''}</span></Html>
       {alert && (
         <mesh position={[rack.x, rack.height + 0.65, rack.z]}>
           <sphereGeometry args={[0.15, 16, 16]} />
