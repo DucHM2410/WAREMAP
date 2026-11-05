@@ -1756,6 +1756,31 @@
 }
 
 @media print {
+  body:has(.trf-carton-labels[open]) > :not(.trf-carton-labels) {
+    display: none !important;
+  }
+
+  .trf-carton-labels[open] {
+    position: static;
+    width: auto;
+    max-width: none;
+    max-height: none;
+    overflow: visible;
+    box-shadow: none;
+  }
+
+  .trf-carton-labels::backdrop {
+    display: none;
+  }
+
+  .trf-carton-labels .button {
+    display: none;
+  }
+
+  .trf-carton-labels figure {
+    break-inside: avoid;
+  }
+
   .trf-page {
     gap: 10px;
   }

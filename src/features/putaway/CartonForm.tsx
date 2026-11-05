@@ -18,8 +18,11 @@ export function CartonForm({onCreated}: {onCreated:(carton:InboundCarton)=>void}
     if(wholeCarton){const pack:ProductPackage={widthCm:Number(f.get('outerWidth')),depthCm:Number(f.get('outerDepth')),heightCm:Number(f.get('outerHeight')),shape:'box'};if(!validPackage(pack))return setError("Nhập kích thước đã đo của nguyên thùng.");product.storage3d={layers:1,stackable:false,unitsPerContainer:product.qty,containerPackage:pack}}
     if(!source&&data.products.some(p=>p.id===product.id))return setError("Mã sản phẩm này đã có. Hãy chọn sản phẩm trong danh sách hàng có sẵn.")
     const carton:InboundCarton={id:crypto.randomUUID(),code:'CTN:'+String(f.get('code')).trim(),product,status:'pending',createdAt:new Date().toISOString()}
+    const usedInTransfer = (current: typeof data) => current.transfers.some(transfer =>
+      transfer.cartons?.some(item => item.code === carton.code))
+    if (usedInTransfer(data)) return setError("Mã thùng này đã có trên phiếu chuyển kho.")
     if(!accessibleBranches.includes(product.branch)||!validCarton(carton,data.inboundCartons||[])||!product.expiry||product.expiry<today())return setError("Kiểm tra lại thông tin: mã thùng không được trùng, chỉ dùng chữ, số, dấu gạch nối hoặc gạch dưới; điền đủ mã sản phẩm, lô, hạn dùng và số lượng từ 1 trở lên.")
-    update(current=>validCarton(carton,current.inboundCartons||[])?{...current,inboundCartons:[carton,...current.inboundCartons||[]]}:current)
+    update(current=>!usedInTransfer(current)&&validCarton(carton,current.inboundCartons||[])?{...current,inboundCartons:[carton,...current.inboundCartons||[]]}:current)
     onCreated(carton)
   }}>
     <p className="callout">Điền thông tin hàng bên trong để tạo nhãn cho thùng. Mỗi thùng demo chỉ chứa một loại sản phẩm, cùng mã lô và hạn dùng. Tạo nhãn chưa làm tăng số lượng trong kho.</p>

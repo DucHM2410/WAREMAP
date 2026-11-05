@@ -186,6 +186,7 @@ export default function Scanner() {
     if (
       role === "sales" ||
       !transfer ||
+      !!transfer.cartons ||
       (role !== "owner" &&
         (scanTask.mode === "dispatch" ? transfer.from : transfer.to) !== branch)
     ) {

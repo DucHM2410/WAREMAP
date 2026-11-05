@@ -44,6 +44,7 @@ import {
 } from "../../app/model"
 import { Button, Empty, Modal } from "../../app/ui"
 import { productKey } from "../../app/catalog"
+import { TransferCartonPanel } from "./TransferCartonPanel"
 import "./transfers.css"
 
 const PAGE_SIZE = 6
@@ -99,6 +100,7 @@ const shortBranch = (branch: string) => BRANCH_SHORT[branch] ?? branch
 
 const isAttention = (transfer: Transfer) =>
   transfer.status === "Kiểm nhận" &&
+  (!transfer.cartons || transfer.cartons.every(carton => carton.received !== undefined)) &&
   transfer.received !== undefined &&
   transfer.received !== transfer.qty
 
@@ -555,7 +557,7 @@ export default function Transfers() {
     if (!transfer) return
     update((current) => ({
       ...current,
-      transfers: [transfer, ...current.transfers],
+      transfers: [{ ...transfer, cartons: [] }, ...current.transfers],
     }))
     log(
       "Đã tạo phiếu chuyển",
@@ -575,7 +577,7 @@ export default function Transfers() {
 
   const reconcileSelected = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!selected || !isAttention(selected)) return
+    if (!selected || selected.cartons || !isAttention(selected)) return
     const reason = String(
       new FormData(event.currentTarget).get("reason") ?? "",
     ).trim()
@@ -604,7 +606,7 @@ export default function Transfers() {
   }
 
   const completeSelected = () => {
-    if (!selected) return
+    if (!selected || selected.cartons) return
     const received = selected.received ?? selected.qty
     update((current) => ({
       ...current,
@@ -1185,7 +1187,7 @@ export default function Transfers() {
                             Mã dòng {lineCode}
                           </small>
                         </div>
-                        {selected.status === "Chuẩn bị" &&
+                        {!selected.cartons && selected.status === "Chuẩn bị" &&
                           canAct(selected.from) &&
                           !sent && (
                             <Button
@@ -1203,7 +1205,7 @@ export default function Transfers() {
                               Quét gửi
                             </Button>
                           )}
-                        {selected.status === "Đang chuyển" &&
+                        {!selected.cartons && selected.status === "Đang chuyển" &&
                           canAct(selected.to) &&
                           line.received === undefined && (
                             <Button
@@ -1225,6 +1227,8 @@ export default function Transfers() {
                     )
                   })}
                 </section>
+                {selected.cartons && <TransferCartonPanel key={selected.id} transfer={selected}
+                  blocked={!!selectedIncident && !selectedIncident.resolved} />}
                 <dl className="trf-detail__list">
                   <div>
                     <dt>Mã phiếu</dt>
@@ -1425,7 +1429,7 @@ export default function Transfers() {
                   }}><label>Kết quả xử lý<input name="resolution" required placeholder="Mô tả cách xử lý và kết quả kiểm tra"/></label><Button type="submit" variant="secondary">Xác nhận đã xử lý sự cố</Button></form>}
                 </div>}
                 {canReport(selected) && <Button variant="danger" onClick={()=>{setIncidentTarget(selected.id);setIncidentError("")}}>Báo Lệch / Sự Cố</Button>}
-                {selected.status === "Chuẩn bị" &&
+                {!selected.cartons && selected.status === "Chuẩn bị" &&
                   canAct(selected.from) && (
                     <Button
                       disabled={!!selectedIncident && !selectedIncident.resolved}
@@ -1441,7 +1445,7 @@ export default function Transfers() {
                       Duyệt · Xác minh &amp; gửi hàng
                     </Button>
                   )}
-                {selected.status === "Đang chuyển" &&
+                {!selected.cartons && selected.status === "Đang chuyển" &&
                   canAct(selected.to) && (
                     <Button
                       disabled={!!selectedIncident && !selectedIncident.resolved}
@@ -1457,7 +1461,7 @@ export default function Transfers() {
                       Quét kiểm nhận
                     </Button>
                   )}
-                {selected.status === "Kiểm nhận" &&
+                {!selected.cartons && selected.status === "Kiểm nhận" &&
                   ["owner", "manager"].includes(role) &&
                   canAct(selected.to) &&
                   (selectedAttention ? (
@@ -1471,7 +1475,7 @@ export default function Transfers() {
                       Hoàn tất kiểm nhận
                     </Button>
                   ))}
-                {selected.status === "Kiểm nhận" &&
+                {!selected.cartons && selected.status === "Kiểm nhận" &&
                   !["owner", "manager"].includes(role) && (
                     <p className="trf-detail__hint">
                       Phiếu đang chờ quản lý xác nhận kiểm nhận.

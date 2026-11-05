@@ -234,6 +234,13 @@ export interface TransferLine {
   sent?: boolean
   received?: number
 }
+export interface TransferCarton {
+  code: string
+  lineId: string
+  quantity: number
+  received?: number
+  placement?: { rack: string; level: number; bin: number }
+}
 export interface Transfer {
   id: string
   productId: string
@@ -248,6 +255,7 @@ export interface Transfer {
   reserved: boolean
   details?: TransferDetails
   lines?: TransferLine[]
+  cartons?: TransferCarton[]
 }
 export function createTransferSlip(input: {
   id: string
